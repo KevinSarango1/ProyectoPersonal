@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  NUTRITIONIST
+}
+
+enum Gender {
+  M
+  F
+  O
+}
+
+// ─── Usuarios (Admin + Nutricionistas) ───────────────────────────────────────
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String
+  fullName       String
+  role           Role      @default(NUTRITIONIST)
+  specialization String?
+  phone          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  patients       Patient[]
+
+  @@map("users")
+}
+
+// ─── Pacientes ────────────────────────────────────────────────────────────────
+model Patient {
+  id               String           @id @default(uuid())
+  firstName        String
+  lastName         String
+  email            String           @unique
+  passwordHash     String
+  phone            String?
+  dateOfBirth      String
+  gender           Gender
+  address          String?
+  occupation       String?
+  nutritionistId   String?
+  nutritionist     User?            @relation(fields: [nutritionistId], references: [id], onDelete: SetNull)
+  clinicalHistory  ClinicalHistory?
+  biometrics       Biometrics[]
+  anthropometry    Anthropometry[]
+  weeklyMenus      WeeklyMenu[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@map("patients")
+}
+
+// ─── Historia Clínica ─────────────────────────────────────────────────────────
+model ClinicalHistory {
+  id                   String   @id @default(uuid())
+  patientId            String   @unique
+  patient              Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  date                 String
+  medicalHistory       String?
+  surgicalHistory      String?
+  familyHistory        String?
+  currentComplaints    String?
+  pastDiseases         String?
+  dietaryHabits        String?
+  physicalActivity     String?
+  alcoholConsumption   String?
+  tobaccoUse           String?
+  currentMedications   String[]
+  allergies            String[]
+  foodIntolerances     String[]
+  nutritionalObjective String?
+  dietaryRestrictions  String?
+  recall24h            Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("clinical_histories")
+}
+
+// ─── Biometría (historial — múltiples registros por paciente) ─────────────────
+model Biometrics {
+  id               String   @id @default(uuid())
+  patientId        String
+  patient          Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  // Metabolismo carbohidratos
+  glucose          Float?
+  hba1c            Float?
+  insulin          Float?
+  homaIndex        Float?
+  // Perfil lipídico
+  totalCholesterol Float?
+  ldl              Float?
+  hdl              Float?
+  triglycerides    Float?
+  vldl             Float?
+  // Función hepática
+  ast              Float?
+  alt              Float?
+  ggt              Float?
+  bilirubin        Float?
+  // Función renal
+  creatinine       Float?
+  bun              Float?
+  urea             Float?
+  sodium           Float?
+  potassium        Float?
+  chloride         Float?
+  // Proteínas
+  totalProteins    Float?
+  albumin          Float?
+  prealbumin       Float?
+  // Hemograma
+  hemoglobin       Float?
+  hematocrit       Float?
+  wbc              Float?
+  platelets        Float?
+  // Micronutrientes
+  vitaminB12       Float?
+  vitaminD         Float?
+  folacin          Float?
+  iron             Float?
+  ferritin         Float?
+  zinc             Float?
+  calcium          Float?
+  magnesium        Float?
+  phosphorus       Float?
+  testDate         String
+  createdAt        DateTime @default(now())
+
+  @@map("biometrics")
+}
+
+// ─── Antropometría (historial — múltiples registros por paciente) ─────────────
+model Anthropometry {
+  id                  String   @id @default(uuid())
+  patientId           String
+  patient             Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  weight              Float
+  height              Float
+  bmi                 Float
+  waistCircumference  Float?
+  hipCircumference    Float?
+  waistHipRatio       Float?
+  armCircumference    Float?
+  thighCircumference  Float?
+  calfCircumference   Float?
+  tricepsSkinfold     Float?
+  bicepsSkinfold      Float?
+  subscapularSkinfold Float?
+  suprailiacSkinfold  Float?
+  bodyFatPercentage   Float?
+  muscleMass          Float?
+  boneMass            Float?
+  waterPercentage     Float?
+  measurementDate     String
+  createdAt           DateTime @default(now())
+
+  @@map("anthropometry")
+}
+
+// ─── Alimentos (base global compartida) ──────────────────────────────────────
+model Food {
+  id            String           @id @default(uuid())
+  name          String
+  description   String?
+  grossWeight   Float
+  netWeight     Float
+  energyKcal    Float
+  energyKj      Float
+  protein       Float            @default(0)
+  fats          Float            @default(0)
+  carbohydrates Float            @default(0)
+  fiber         Float            @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  menuItems     WeeklyMenuItem[]
+
+  @@map("foods")
+}
+
+// ─── Menú Semanal ─────────────────────────────────────────────────────────────
+model WeeklyMenu {
+  id            String           @id @default(uuid())
+  patientId     String
+  patient       Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  weekStartDate String
+  observations  String?
+  items         WeeklyMenuItem[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@map("weekly_menus")
+}
+
+model WeeklyMenuItem {
+  id       String     @id @default(uuid())
+  menuId   String
+  menu     WeeklyMenu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  foodId   String
+  food     Food       @relation(fields: [foodId], references: [id])
+  day      String
+  mealType String
+  foodName String
+  quantity Float
+  unit     String
+  calories Float
+  protein  Float
+  fats     Float
+  carbs    Float
+  fiber    Float
+
+  @@map("weekly_menu_items")
+}
