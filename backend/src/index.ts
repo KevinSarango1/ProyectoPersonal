@@ -6,8 +6,10 @@ import patientRoutes from './routes/patients';
 import foodRoutes from './routes/foods';
 import aiRoutes from './routes/ai';
 import { errorHandler } from './middleware/errorHandler';
+import helmet from 'helmet';
 
 const app = express();
+app.use(helmet());
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
