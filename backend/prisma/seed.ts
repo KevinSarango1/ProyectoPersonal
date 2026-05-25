@@ -12,12 +12,12 @@ async function main() {
     await prisma.user.create({
       data: {
         email: 'admin@nutriapp.com',
-        passwordHash: await bcrypt.hash('admin123', 10),
+        passwordHash: await bcrypt.hash(process.env.ADMIN_SEED_PASSWORD || 'Admin@NutriHealth2026!', 10),
         fullName: 'Administrador',
         role: 'ADMIN',
       },
     });
-    console.log('Admin creado: admin@nutriapp.com / admin123');
+    console.log('Admin creado: admin@nutriapp.com');
   }
 
   const foodCount = await prisma.food.count();
