@@ -47,6 +47,7 @@ export interface ClinicalHistory {
   foodIntolerances: string[];
   nutritionalObjective?: string;
   dietaryRestrictions?: string;
+  observations?: string;
   recall24h?: Recall24h;
   updatedAt: string;
 }
@@ -91,6 +92,7 @@ export interface Biometrics {
   calcium?: number;
   magnesium?: number;
   phosphorus?: number;
+  others?: string;
 }
 
 export interface Anthropometry {

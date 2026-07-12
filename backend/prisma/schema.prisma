@@ -52,6 +52,8 @@ model Patient {
   biometrics       Biometrics[]
   anthropometry    Anthropometry[]
   weeklyMenus      WeeklyMenu[]
+  dietaryHabits    DietaryHabits?
+  chatMessages     ChatMessage[]
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -78,6 +80,7 @@ model ClinicalHistory {
   foodIntolerances     String[]
   nutritionalObjective String?
   dietaryRestrictions  String?
+  observations         String?
   recall24h            Json?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
@@ -132,6 +135,7 @@ model Biometrics {
   calcium          Float?
   magnesium        Float?
   phosphorus       Float?
+  others           String?
   testDate         String
   createdAt        DateTime @default(now())
 
@@ -164,6 +168,44 @@ model Anthropometry {
   createdAt           DateTime @default(now())
 
   @@map("anthropometry")
+}
+
+// ─── Hábitos Dietéticos ───────────────────────────────────────────────────────
+model DietaryHabits {
+  id                 String   @id @default(uuid())
+  patientId          String   @unique
+  patient            Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  recordDate         String
+  breakfast          String?
+  morningSnack       String?
+  lunch              String?
+  afternoonSnack     String?
+  dinner             String?
+  waterIntake        Float?
+  mealsPerDay        Int?
+  eatingOutFrequency String?
+  foodPreferences    String?
+  foodAversions      String?
+  cookingMethods     String?
+  mealEnvironment    String?
+  observations       String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("dietary_habits")
+}
+
+// ─── Mensajes de Chat por Paciente ────────────────────────────────────────────
+model ChatMessage {
+  id        String   @id @default(uuid())
+  patientId String?
+  patient   Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  fileName  String?
+  createdAt DateTime @default(now())
+
+  @@map("chat_messages")
 }
 
 // ─── Alimentos (base global compartida) ──────────────────────────────────────

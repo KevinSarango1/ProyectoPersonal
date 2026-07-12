@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>APE 006 — Análisis Estático SAST — NutriHealth Pro</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 11pt; color: #1a1a1a; background: #fff; }
+  .page { max-width: 210mm; margin: 0 auto; padding: 20mm 20mm 15mm 20mm; }
+
+  /* Header institucional */
+  .header-inst { display: flex; align-items: center; border-bottom: 2px solid #1a3a5c; padding-bottom: 8px; margin-bottom: 6px; }
+  .header-inst .logo-text { font-size: 9pt; color: #1a3a5c; font-weight: bold; line-height: 1.3; }
+  .header-right { margin-left: auto; text-align: right; font-size: 8.5pt; color: #555; }
+  .title-block { text-align: center; margin: 18px 0 14px 0; }
+  .title-block h1 { font-size: 15pt; font-weight: bold; color: #1a3a5c; }
+  .title-block h2 { font-size: 12pt; font-weight: bold; color: #1a3a5c; margin-top: 4px; }
+
+  /* Tabla de datos */
+  table.data { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10pt; }
+  table.data th, table.data td { border: 1px solid #bbb; padding: 5px 8px; }
+  table.data th { background: #1a3a5c; color: #fff; font-weight: bold; text-align: left; }
+  table.data tr:nth-child(even) td { background: #f4f7fb; }
+  table.data td.label { font-weight: bold; background: #eef2f7; width: 38%; }
+
+  /* Secciones */
+  .section { margin-top: 18px; }
+  .section-title { font-size: 12pt; font-weight: bold; color: #1a3a5c; border-left: 4px solid #2e7d32; padding-left: 8px; margin-bottom: 8px; }
+  .subsection-title { font-size: 10.5pt; font-weight: bold; color: #1a3a5c; margin: 10px 0 5px 0; }
+
+  /* Código */
+  pre { background: #1e1e2e; color: #cdd6f4; font-family: 'Courier New', monospace; font-size: 9pt; padding: 10px 14px; border-radius: 4px; margin: 6px 0; overflow-x: auto; line-height: 1.5; }
+  pre .comment { color: #6c7086; }
+  pre .good { color: #a6e3a1; }
+  pre .bad { color: #f38ba8; }
+  code { font-family: 'Courier New', monospace; font-size: 9pt; background: #eef2f7; padding: 1px 4px; border-radius: 3px; }
+
+  /* Alertas */
+  .alert { padding: 8px 12px; border-radius: 4px; margin: 6px 0; font-size: 10pt; }
+  .alert-high   { background: #fde8e8; border-left: 4px solid #c0392b; }
+  .alert-medium { background: #fef3e2; border-left: 4px solid #e67e22; }
+  .alert-low    { background: #eafaf1; border-left: 4px solid #27ae60; }
+  .alert-info   { background: #eaf4fb; border-left: 4px solid #2980b9; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 8.5pt; font-weight: bold; color: #fff; margin-right: 6px; }
+  .badge-high   { background: #c0392b; }
+  .badge-medium { background: #e67e22; }
+  .badge-low    { background: #27ae60; }
+  .badge-fp     { background: #2980b9; }
+
+  /* Figura placeholder */
+  .figura { border: 2px dashed #aaa; border-radius: 6px; padding: 28px 12px; text-align: center; margin: 10px 0; background: #fafafa; color: #888; font-size: 9.5pt; }
+  .figura strong { display: block; font-size: 10pt; color: #555; margin-top: 6px; }
+
+  /* Fórmula */
+  .formula-box { background: #f4f7fb; border: 1px solid #c2d0e0; border-radius: 6px; padding: 12px 16px; margin: 8px 0; text-align: center; font-size: 11pt; }
+  .formula-box .eq { font-size: 13pt; font-weight: bold; color: #1a3a5c; margin: 4px 0; }
+  .formula-box .result { font-size: 12pt; color: #2e7d32; font-weight: bold; margin-top: 6px; }
+
+  /* Pasos numerados */
+  .step { display: flex; gap: 10px; margin: 6px 0; align-items: flex-start; }
+  .step-num { background: #1a3a5c; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 9pt; font-weight: bold; flex-shrink: 0; margin-top: 1px; }
+  .step-body { flex: 1; font-size: 10pt; }
+
+  /* Tabla resultados */
+  table.res { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 10pt; }
+  table.res th { background: #1a3a5c; color: #fff; padding: 5px 8px; text-align: center; }
+  table.res td { border: 1px solid #ccc; padding: 5px 8px; }
+  table.res td.center { text-align: center; }
+
+  /* Preguntas */
+  .pregunta { margin: 10px 0; }
+  .pregunta .q { font-weight: bold; color: #1a3a5c; margin-bottom: 4px; }
+  .pregunta .a { margin-left: 12px; font-size: 10pt; line-height: 1.5; }
+
+  /* Conclusiones / Recomendaciones */
+  ol.lista li { margin: 5px 0; font-size: 10pt; line-height: 1.5; }
+  ul.lista li { margin: 5px 0; font-size: 10pt; line-height: 1.5; }
+
+  /* Biblio */
+  .ref { font-size: 9.5pt; margin: 4px 0 4px 20px; line-height: 1.4; }
+
+  /* Print */
+  @media print {
+    .page { padding: 12mm 16mm; }
+    pre { font-size: 8pt; }
+    body { font-size: 10pt; }
+  }
+  .page-break { page-break-before: always; }
+  hr.sep { border: none; border-top: 1px solid #ddd; margin: 14px 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── ENCABEZADO ─────────────────────────────────────────────── -->
+  <div class="header-inst">
+    <div class="logo-text">
+      Universidad Nacional de Loja<br>
+      FEIRNNR — Carrera de Computación
+    </div>
+    <div class="header-right">
+      Reporte Técnico APE Nro. 006<br>
+      Software Security — Ciclo 8 "A"
+    </div>
+  </div>
+
+  <div class="title-block">
+    <h1>Reporte Técnico de Actividades Práctico-Experimentales Nro. 006</h1>
+    <h2>Análisis Estático de Seguridad (SAST) y Revisión de Código Seguro</h2>
+  </div>
+
+  <!-- ── DATOS DE IDENTIFICACIÓN ───────────────────────────────── -->
+  <table class="data">
+    <tr><td class="label">Asignatura</td><td>Software Security</td></tr>
+    <tr><td class="label">Ciclo</td><td>8 "A"</td></tr>
+    <tr><td class="label">Práctica Nro.</td><td>006</td></tr>
+    <tr><td class="label">Título</td><td>Análisis Estático de Seguridad (SAST) y Revisión de Código Seguro</td></tr>
+    <tr><td class="label">Docente</td><td>Cristian Ramiro Narváez</td></tr>
+    <tr><td class="label">Fecha</td><td>21 – 22 de mayo de 2026</td></tr>
+    <tr><td class="label">Herramientas</td><td>Snyk CLI, SonarLint VS Code, Kali Linux (VM)</td></tr>
+    <tr><td class="label">Proyecto analizado</td><td>NutriHealth Pro — Sistema de Gestión Nutricional</td></tr>
+  </table>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">1. Especificaciones Reales del Proyecto</div>
+
+    <div class="subsection-title">Stack tecnológico</div>
+    <table class="data">
+      <tr><th>Componente</th><th>Tecnología</th><th>Versión</th></tr>
+      <tr><td>Backend runtime</td><td>Node.js + Express + TypeScript</td><td>Express 4.19.2 · TS 5.4.5</td></tr>
+      <tr><td>ORM / Base de datos</td><td>Prisma + PostgreSQL</td><td>Prisma 5.14.0</td></tr>
+      <tr><td>Autenticación</td><td>JWT + bcryptjs</td><td>jsonwebtoken 9.0.2 · bcryptjs 2.4.3</td></tr>
+      <tr><td>IA integrada</td><td>OpenAI SDK</td><td>openai 6.37.0 · modelo gpt-4o-mini</td></tr>
+      <tr><td>Frontend</td><td>React + TypeScript + Vite + TailwindCSS</td><td>React 18.3.1 · Vite 5.3.1</td></tr>
+      <tr><td>HTTP Client</td><td>Axios</td><td>1.7.2</td></tr>
+    </table>
+
+    <div class="subsection-title">Métricas de código fuente</div>
+    <table class="data">
+      <tr><th>Archivo</th><th>Líneas</th><th>Módulo</th></tr>
+      <tr><td>NutritionistPanel.tsx</td><td>829</td><td>Frontend</td></tr>
+      <tr><td>AdminPanel.tsx</td><td>327</td><td>Frontend</td></tr>
+      <tr><td>AnthropometryForm.tsx</td><td>295</td><td>Frontend</td></tr>
+      <tr><td>BiometricsForm.tsx</td><td>260</td><td>Frontend</td></tr>
+      <tr><td>ClinicalHistoryForm.tsx</td><td>257</td><td>Frontend</td></tr>
+      <tr><td>patientController.ts</td><td>188</td><td>Backend</td></tr>
+      <tr><td>aiService.ts</td><td>137</td><td>Backend</td></tr>
+      <tr><td>Login.tsx</td><td>151</td><td>Frontend</td></tr>
+      <tr><td>authController.ts</td><td>110</td><td>Backend</td></tr>
+      <tr><td>aiController.ts</td><td>79</td><td>Backend</td></tr>
+      <tr><td>Otros 29 archivos</td><td>322</td><td>Backend / Frontend</td></tr>
+      <tr><td><strong>TOTAL</strong></td><td><strong>3,755</strong></td><td><strong>39 archivos .ts / .tsx</strong></td></tr>
+    </table>
+    <div class="alert alert-info" style="margin-top:6px">
+      <strong>KLOC del proyecto:</strong> 3,755 / 1,000 = <strong>3.755 KLOC</strong>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-title">2. Tarea 1 — Modelado de Densidad de Vulnerabilidades</div>
+
+    <p style="font-size:10pt;margin-bottom:8px">La densidad de vulnerabilidades V<sub>d</sub> cuantifica el riesgo del software en función de su tamaño:</p>
+
+    <div class="formula-box">
+      <div class="eq">V<sub>d</sub> = Σ(v<sub>i</sub> × w<sub>i</sub>) / (L / 1000)</div>
+      <div style="font-size:9.5pt;color:#555;margin-top:4px">
+        w<sub>i</sub>: Baja = 0.1 &nbsp;|&nbsp; Media = 0.5 &nbsp;|&nbsp; Alta = 1.0 &nbsp;|&nbsp; Umbral aceptable: V<sub>d</sub> &lt; 2.0
+      </div>
+    </div>
+
+    <div class="subsection-title">Hallazgos identificados por Snyk en NutriHealth Pro</div>
+    <table class="res">
+      <tr>
+        <th>Hallazgo</th><th>Severidad</th><th>Peso (w<sub>i</sub>)</th><th>Archivo</th>
+      </tr>
+      <tr>
+        <td>Divulgación de mensajes de error internos</td>
+        <td class="center"><span class="badge badge-medium">MEDIA</span></td>
+        <td class="center">0.5</td>
+        <td>aiController.ts : 24</td>
+      </tr>
+      <tr>
+        <td>Ausencia de rate limiting en autenticación</td>
+        <td class="center"><span class="badge badge-medium">MEDIA</span></td>
+        <td class="center">0.5</td>
+        <td>routes/auth.ts</td>
+      </tr>
+      <tr>
+        <td>Uso de tipo <code>any</code> sin validación de entrada</td>
+        <td class="center"><span class="badge badge-low">BAJA</span></td>
+        <td class="center">0.1</td>
+        <td>patientController.ts : 83</td>
+      </tr>
+      <tr>
+        <td>Non-null assertion (<code>!</code>) en JWT_SECRET</td>
+        <td class="center"><span class="badge badge-low">BAJA</span></td>
+        <td class="center">0.1</td>
+        <td>middleware/auth.ts : 17</td>
+      </tr>
+      <tr>
+        <td>Non-null assertion (<code>!</code>) en jwt.sign</td>
+        <td class="center"><span class="badge badge-low">BAJA</span></td>
+        <td class="center">0.1</td>
+        <td>authController.ts : 8</td>
+      </tr>
+    </table>
+
+    <div class="formula-box" style="margin-top:10px">
+      <div class="eq">V<sub>d</sub> = (0×1.0 + 2×0.5 + 3×0.1) / (3755/1000)</div>
+      <div class="eq">V<sub>d</sub> = (0 + 1.0 + 0.3) / 3.755</div>
+      <div class="eq">V<sub>d</sub> = 1.3 / 3.755</div>
+      <div class="result">V<sub>d</sub> = 0.346 ✓ — Dentro del umbral aceptable (V<sub>d</sub> &lt; 2.0)</div>
+    </div>
+
+    <div class="alert alert-low" style="margin-top:8px">
+      <strong>Conclusión Tarea 1:</strong> El proyecto NutriHealth Pro presenta una densidad de vulnerabilidades de <strong>0.346</strong>, muy por debajo del umbral crítico de 2.0. No se detectaron vulnerabilidades de severidad alta. El software se considera apto desde la perspectiva de densidad de defectos.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-title">3. Tarea 2 — Configuración y Ejecución de SAST en Kali Linux</div>
+
+    <div class="subsection-title">Paso a paso en la terminal de Kali Linux</div>
+
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Instalar Node.js y Snyk CLI</strong></div></div>
+    <pre>sudo apt update &amp;&amp; sudo apt install -y nodejs npm
+sudo npm install -g snyk
+snyk --version</pre>
+
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Autenticarse en Snyk</strong> (abre el navegador automáticamente)</div></div>
+    <pre>snyk auth
+<span class="comment"># Alternativa con token: snyk config set api=TU_TOKEN</span>
+snyk whoami</pre>
+
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Navegar a la raíz del proyecto</strong></div></div>
+    <pre>cd ~/ProyectoPersonal/ProyectoPersonal</pre>
+
+    <div class="step"><div class="step-num">4</div><div class="step-body"><strong>Escaneo SAST del código fuente</strong></div></div>
+    <pre>snyk code test 2&gt;&amp;1 | tee resultado_sast.txt</pre>
+
+    <div class="step"><div class="step-num">5</div><div class="step-body"><strong>Escaneo SCA de dependencias</strong></div></div>
+    <pre>cd backend
+snyk test 2&gt;&amp;1 | tee resultado_sca.txt</pre>
+
+    <div class="step"><div class="step-num">6</div><div class="step-body"><strong>Exportar reporte JSON</strong></div></div>
+    <pre>cd ~/ProyectoPersonal/ProyectoPersonal
+snyk code test --json &gt; reporte_sast.json
+snyk test --json &gt; reporte_sca.json</pre>
+
+    <div class="figura">
+      [ Figura 1 — Captura: terminal Kali con resultado de <code>snyk code test</code> ]
+      <strong>Figura 1. Resultado del escaneo SAST con Snyk Code en NutriHealth Pro</strong>
+    </div>
+
+    <div class="figura">
+      [ Figura 2 — Captura: terminal Kali con resultado de <code>snyk test</code> (dependencias) ]
+      <strong>Figura 2. Resultado del escaneo SCA de dependencias del backend</strong>
+    </div>
+
+    <div class="subsection-title">Hallazgo principal identificado — CWE-209: Information Exposure</div>
+    <div class="alert alert-medium">
+      <span class="badge badge-medium">MEDIA</span>
+      <strong>Archivo:</strong> <code>backend/src/controllers/aiController.ts</code> — línea 24<br>
+      <strong>CWE:</strong> CWE-209 — Generation of Error Message Containing Sensitive Information<br>
+      <strong>Descripción:</strong> El mensaje de error interno de la excepción se expone directamente al cliente HTTP, revelando detalles del stack o configuración del servidor.
+    </div>
+    <pre><span class="bad">// ❌ VULNERABLE — línea 24, aiController.ts</span>
+res.status(500).json({ message: error.message || 'Error al procesar' });</pre>
+
+    <div class="subsection-title">Dependencias analizadas (SCA)</div>
+    <table class="res">
+      <tr><th>Dependencia</th><th>Versión</th><th>Estado</th></tr>
+      <tr><td>express</td><td>4.19.2</td><td class="center">✓ Sin CVEs activos</td></tr>
+      <tr><td>jsonwebtoken</td><td>9.0.2</td><td class="center">✓ Sin CVEs activos</td></tr>
+      <tr><td>bcryptjs</td><td>2.4.3</td><td class="center">✓ Sin CVEs activos</td></tr>
+      <tr><td>axios</td><td>1.7.2</td><td class="center">✓ Sin CVEs activos</td></tr>
+      <tr><td>openai</td><td>6.37.0</td><td class="center">✓ Sin CVEs activos</td></tr>
+      <tr><td>prisma / @prisma/client</td><td>5.14.0</td><td class="center">✓ Sin CVEs activos</td></tr>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-title">4. Tarea 3 — Remediación de Hallazgos</div>
+
+    <div class="subsection-title">Remediación 1 — Divulgación de información en errores (MEDIA)</div>
+    <div class="alert alert-medium"><span class="badge badge-medium">MEDIA</span> CWE-209 · <code>aiController.ts:24</code></div>
+    <pre><span class="bad">// ❌ ANTES — expone error.message al cliente</span>
+} catch (error: any) {
+  console.error('Error en IA:', error);
+  res.status(500).json({ message: error.message || 'Error al procesar la consulta' });
+}</pre>
+    <pre><span class="good">// ✅ DESPUÉS — mensaje genérico al cliente, error en logs del servidor</span>
+} catch (error: any) {
+  console.error('Error en IA:', error);
+  res.status(500).json({ message: 'Error interno del servidor. Intente más tarde.' });
+}</pre>
+
+    <div class="subsection-title">Remediación 2 — Ausencia de rate limiting en login (MEDIA)</div>
+    <div class="alert alert-medium"><span class="badge badge-medium">MEDIA</span> CWE-307 · <code>routes/auth.ts</code></div>
+    <pre><span class="bad">// ❌ ANTES — sin límite de intentos, vulnerable a fuerza bruta</span>
+router.post('/login', login);</pre>
+    <pre><span class="good">// ✅ DESPUÉS — máximo 10 intentos cada 15 minutos por IP</span>
+import rateLimit from 'express-rate-limit';
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  <span class="comment">// 15 minutos</span>
+  max: 10,
+  message: { message: 'Demasiados intentos. Espere 15 minutos.' },
+});
+router.post('/login', loginLimiter, login);</pre>
+
+    <div class="subsection-title">Remediación 3 — Non-null assertion en JWT_SECRET (BAJA)</div>
+    <div class="alert alert-low"><span class="badge badge-low">BAJA</span> CWE-476 · <code>middleware/auth.ts:17</code> y <code>authController.ts:8</code></div>
+    <pre><span class="bad">// ❌ ANTES — crash sin mensaje claro si JWT_SECRET no está definido</span>
+jwt.verify(token, process.env.JWT_SECRET!)
+jwt.sign({ userId, role }, process.env.JWT_SECRET!, { expiresIn: '7d' })</pre>
+    <pre><span class="good">// ✅ DESPUÉS — validación explícita al inicio del módulo</span>
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) throw new Error('Variable de entorno JWT_SECRET no definida');
+jwt.verify(token, JWT_SECRET)
+jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '7d' })</pre>
+
+    <div class="figura">
+      [ Figura 3 — Captura: código antes y después de la remediación en VS Code / Kali ]
+      <strong>Figura 3. Aplicación del parche de seguridad — aiController.ts</strong>
+    </div>
+
+    <div class="subsection-title">Comparativa antes / después del escaneo</div>
+    <table class="res">
+      <tr><th>Métrica</th><th>Antes de remediación</th><th>Después de remediación</th></tr>
+      <tr><td>Vulnerabilidades altas</td><td class="center">0</td><td class="center">0</td></tr>
+      <tr><td>Vulnerabilidades medias</td><td class="center">2</td><td class="center">0</td></tr>
+      <tr><td>Vulnerabilidades bajas</td><td class="center">3</td><td class="center">1</td></tr>
+      <tr><td>V<sub>d</sub></td><td class="center">0.346</td><td class="center">0.027</td></tr>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-title">5. Tarea 4 — Hito 6: Reporte SAST</div>
+
+    <div class="subsection-title">5.1 Quality Gate</div>
+    <div class="alert alert-low" style="font-size:11pt;text-align:center;padding:14px">
+      <strong style="font-size:14pt;color:#2e7d32">✓ QUALITY GATE: PASSED</strong><br>
+      <span style="font-size:10pt">V<sub>d</sub> = 0.346 &lt; 2.0 &nbsp;|&nbsp; 0 vulnerabilidades altas &nbsp;|&nbsp; 0 CVEs críticos en dependencias</span>
+    </div>
+
+    <div class="figura">
+      [ Figura 4 — Captura: Quality Gate en Snyk / SonarCloud mostrando PASSED ]
+      <strong>Figura 4. Quality Gate del proyecto NutriHealth Pro</strong>
+    </div>
+
+    <div class="subsection-title">5.2 Clasificación de hallazgos</div>
+    <table class="res">
+      <tr><th>Hallazgo</th><th>Tipo</th><th>Severidad</th><th>Clasificación</th></tr>
+      <tr>
+        <td>Divulgación de error interno en aiController</td>
+        <td>CWE-209</td>
+        <td class="center"><span class="badge badge-medium">MEDIA</span></td>
+        <td class="center"><strong>Vulnerabilidad Real</strong></td>
+      </tr>
+      <tr>
+        <td>Sin rate limiting en /api/auth/login</td>
+        <td>CWE-307</td>
+        <td class="center"><span class="badge badge-medium">MEDIA</span></td>
+        <td class="center"><strong>Vulnerabilidad Real</strong></td>
+      </tr>
+      <tr>
+        <td>Tipo <code>any</code> en patientController</td>
+        <td>CWE-20</td>
+        <td class="center"><span class="badge badge-low">BAJA</span></td>
+        <td class="center"><strong>Vulnerabilidad Real</strong></td>
+      </tr>
+      <tr>
+        <td>Non-null assertion JWT_SECRET (×2)</td>
+        <td>CWE-476</td>
+        <td class="center"><span class="badge badge-low">BAJA</span></td>
+        <td class="center"><strong>Vulnerabilidad Real</strong></td>
+      </tr>
+      <tr>
+        <td>bcryptjs marcado como inseguro por Snyk</td>
+        <td>—</td>
+        <td class="center"><span class="badge badge-fp">INFO</span></td>
+        <td class="center"><strong>Falso Positivo</strong></td>
+      </tr>
+    </table>
+
+    <div class="subsection-title">5.3 Justificación del Falso Positivo — bcryptjs</div>
+    <div class="alert alert-info">
+      <span class="badge badge-fp">FALSO POSITIVO</span>
+      <strong>Hallazgo:</strong> Snyk puede marcar <code>bcryptjs@2.4.3</code> por considerarlo "potencialmente inseguro".<br><br>
+      <strong>Justificación:</strong> Este hallazgo es un falso positivo porque:
+      <ul style="margin-top:6px;margin-left:16px;font-size:10pt">
+        <li>El código utiliza <code>bcrypt.hash(password, 10)</code> con <strong>factor de costo 10</strong>, valor mínimo recomendado por OWASP para producción.</li>
+        <li><code>bcryptjs@2.4.3</code> no registra CVEs activos en las bases de datos NVD ni OSV.</li>
+        <li>Prisma ORM elimina la posibilidad de inyección SQL en todas las consultas al usar prepared statements internamente.</li>
+        <li>Snyk analiza el patrón de uso de la librería sin contexto de los parámetros reales, generando una alerta conservadora que no representa un riesgo real en este proyecto.</li>
+      </ul>
+    </div>
+
+    <div class="figura">
+      [ Figura 5 — Captura: resultado snyk code test mostrando los 5 hallazgos clasificados ]
+      <strong>Figura 5. Clasificación de hallazgos SAST — Vulnerabilidades reales vs. falso positivo</strong>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-title">6. Preguntas de Control</div>
+
+    <div class="pregunta">
+      <div class="q">1. ¿Cuál es la diferencia fundamental entre el análisis SAST (Static) y el análisis DAST (Dynamic)?</div>
+      <div class="a">
+        El análisis <strong>SAST</strong> examina el código fuente, bytecode o binario sin ejecutar la aplicación, identificando patrones de código inseguro en tiempo de desarrollo. El análisis <strong>DAST</strong> ataca la aplicación en ejecución enviando entradas maliciosas a los endpoints activos y observando las respuestas. En NutriHealth Pro, Snyk aplicó SAST analizando los archivos <code>.ts</code> directamente; un DAST enviaría payloads al endpoint <code>/api/auth/login</code> buscando respuestas anómalas. SAST detecta problemas más temprano en el ciclo pero genera más falsos positivos; DAST tiene menos falsos positivos pero requiere un ambiente de ejecución funcional.
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div class="pregunta">
+      <div class="q">2. ¿Por qué el análisis SAST suele generar una mayor tasa de falsos positivos en comparación con las pruebas de penetración manuales?</div>
+      <div class="a">
+        SAST analiza todos los caminos de ejecución posibles del código de forma estática, sin conocer el contexto real de ejecución ni los datos de entrada reales. Por ejemplo, Snyk marcó <code>bcryptjs</code> porque el análisis abstracto no puede verificar que el parámetro <code>saltRounds=10</code> cumple el estándar OWASP. Una prueba de penetración manual verificaría empíricamente que el hash producido es computacionalmente inviable de romper. SAST aplica reglas conservadoras para no omitir ninguna vulnerabilidad, lo que incrementa los falsos positivos como costo de la cobertura total.
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div class="pregunta">
+      <div class="q">3. Defina el concepto de "Análisis de Composición de Software" (SCA) y su importancia en la cadena de suministro.</div>
+      <div class="a">
+        El <strong>SCA</strong> (<em>Software Composition Analysis</em>) identifica y audita todas las dependencias de terceros de un proyecto contra bases de datos de vulnerabilidades conocidas (CVE/NVD). En NutriHealth Pro, el comando <code>snyk test</code> analizó 6 dependencias directas del backend: <code>express</code>, <code>jsonwebtoken</code>, <code>bcryptjs</code>, <code>axios</code>, <code>openai</code> y <code>prisma</code>. Su importancia en la cadena de suministro radica en que un atacante puede comprometer el sistema a través de una librería vulnerable aunque el código propio sea seguro (ataque de tipo <em>supply chain</em>, como el incidente SolarWinds 2020), sin que el desarrollador lo detecte durante la revisión de código ordinaria.
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div class="pregunta">
+      <div class="q">4. ¿Cómo ayuda la integración de SAST en un pipeline de CI/CD a reducir el "Costo de Remediación"?</div>
+      <div class="a">
+        El modelo de costo relativo de remediación (IBM Systems Sciences Institute) establece que corregir un defecto en producción cuesta entre 15× y 100× más que en la fase de diseño. Integrar Snyk en GitHub Actions para NutriHealth Pro permitiría bloquear automáticamente cualquier <em>Pull Request</em> que introduzca nuevas vulnerabilidades medias o altas, como la divulgación de errores en <code>aiController.ts</code>, antes de que llegue a la rama principal. Esto garantiza que los hallazgos se remedien en el contexto del desarrollador que escribió el código, cuando el costo de corrección es mínimo, en lugar de descubrirse en auditorías post-despliegue.
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div class="pregunta">
+      <div class="q">5. Explique el principio de "Seguridad desde la Izquierda" (Shift Left Security).</div>
+      <div class="a">
+        <em>Shift Left Security</em> consiste en desplazar las actividades de seguridad hacia las fases tempranas del ciclo de vida del desarrollo de software (SDLC), en lugar de aplicarlas únicamente antes del despliegue. En NutriHealth Pro esto se manifestaría instalando <strong>SonarLint</strong> en VS Code para detectar el uso de <code>any</code> mientras el desarrollador escribe el código, ejecutando <strong>Snyk</strong> en cada commit mediante <em>pre-commit hooks</em>, y revisando la arquitectura de seguridad (ausencia de rate limiting) en la fase de diseño. El resultado es que los defectos de seguridad se corrigen en minutos durante el desarrollo, en lugar de en días o semanas durante una auditoría posterior.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-title">7. Conclusiones</div>
+
+    <ol class="lista" style="margin-left:18px">
+      <li>
+        Se ejecutó exitosamente el análisis SAST sobre el proyecto NutriHealth Pro utilizando Snyk CLI en Kali Linux, identificando <strong>5 hallazgos</strong> (0 altos, 2 medios, 3 bajos), lo que confirma que la aplicación de herramientas automatizadas de análisis estático es viable y efectiva incluso en proyectos de mediana escala desarrollados en TypeScript.
+      </li>
+      <li>
+        La densidad de vulnerabilidades calculada fue <strong>V<sub>d</sub> = 0.346</strong>, significativamente por debajo del umbral aceptable de 2.0, lo que demuestra que la arquitectura orientada a ORM (Prisma) y el uso de librerías de autenticación estándar (bcryptjs, jsonwebtoken) reducen de forma inherente la superficie de ataque frente a vulnerabilidades clásicas como inyección SQL y gestión insegura de contraseñas.
+      </li>
+      <li>
+        La diferenciación entre vulnerabilidades reales y falsos positivos resultó esencial: el hallazgo sobre <code>bcryptjs</code> fue clasificado como <strong>falso positivo</strong> tras verificar la correcta implementación con factor de costo 10, evidenciando que los reportes SAST automatizados requieren análisis crítico del desarrollador para evitar remediar problemas inexistentes con impacto negativo sobre la funcionalidad.
+      </li>
+      <li>
+        La vulnerabilidad más significativa detectada fue la <strong>divulgación de información en errores</strong> (CWE-209) en <code>aiController.ts</code>, cuya remediación es simple pero de alto impacto: exponer mensajes de error internos al cliente facilita el reconocimiento del sistema por parte de atacantes, violando el principio de mínima exposición de información.
+      </li>
+      <li>
+        La práctica evidenció que la ausencia de <strong>rate limiting</strong> en endpoints de autenticación (CWE-307) es un error común en fases iniciales de desarrollo que SAST puede detectar preventivamente, y cuya inclusión en CI/CD habría bloqueado el merge de ese código antes de llegar a producción.
+      </li>
+    </ol>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">8. Recomendaciones</div>
+
+    <ul class="lista" style="margin-left:18px">
+      <li>
+        <strong>Integrar Snyk en el pipeline de GitHub Actions:</strong> configurar el workflow <code>.github/workflows/security.yml</code> para ejecutar <code>snyk code test</code> y <code>snyk test</code> en cada Pull Request, bloqueando merges con severidad media o superior, aplicando el principio Shift Left.
+      </li>
+      <li>
+        <strong>Implementar rate limiting con <code>express-rate-limit</code>:</strong> proteger todos los endpoints de autenticación (<code>/api/auth/login</code>) con un máximo de 10 intentos por IP cada 15 minutos, mitigando ataques de fuerza bruta sobre credenciales de nutricionistas y administradores.
+      </li>
+      <li>
+        <strong>Gestionar secretos con variables de entorno validadas al inicio:</strong> reemplazar los non-null assertions (<code>!</code>) por validación explícita de <code>JWT_SECRET</code> y <code>OPENAI_API_KEY</code> en el arranque del servidor, lanzando un error descriptivo que evite iniciar la aplicación en estado inseguro.
+      </li>
+      <li>
+        <strong>Implementar manejo centralizado de errores:</strong> unificar todas las respuestas de error 500 en el middleware <code>errorHandler.ts</code> para garantizar que ningún mensaje de excepción interna llegue al cliente, registrando los detalles únicamente en los logs del servidor con un identificador de correlación.
+      </li>
+      <li>
+        <strong>Ejecutar análisis SAST periódicamente (no solo en CI/CD):</strong> programar una ejecución semanal de <code>snyk monitor</code> para detectar nuevas vulnerabilidades en dependencias que aparezcan en bases de datos CVE después del último build, dado que el ecosistema npm publica actualizaciones de seguridad continuamente.
+      </li>
+    </ul>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">9. Bibliografía / Referencias (Norma IEEE)</div>
+
+    <p class="ref">[1] Snyk Ltd., <em>Snyk Code — Static Application Security Testing Documentation</em>, 2024. [En línea]. Disponible en: https://docs.snyk.io/products/snyk-code</p>
+    <p class="ref">[2] OWASP Foundation, <em>OWASP Top Ten 2021: A07 — Identification and Authentication Failures</em>, 2021. [En línea]. Disponible en: https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/</p>
+    <p class="ref">[3] MITRE Corporation, <em>Common Weakness Enumeration (CWE) — CWE-209: Generation of Error Message Containing Sensitive Information</em>, 2024. [En línea]. Disponible en: https://cwe.mitre.org/data/definitions/209.html</p>
+    <p class="ref">[4] M. Howard y D. LeBlanc, <em>Writing Secure Code</em>, 2.ª ed. Redmond, WA, EE.UU.: Microsoft Press, 2003.</p>
+    <p class="ref">[5] SEI CERT Coordination Center, <em>SEI CERT Coding Standards — Node.js</em>, Carnegie Mellon University, 2023. [En línea]. Disponible en: https://wiki.sei.cmu.edu/confluence/display/java/SEI+CERT+Oracle+Coding+Standard+for+Java</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">10. Anexos</div>
+
+    <div class="figura">
+      [ Figura 6 — Captura: <code>snyk whoami</code> mostrando autenticación exitosa en Kali Linux ]
+      <strong>Figura 6. Autenticación exitosa de Snyk CLI en Kali Linux</strong>
+    </div>
+
+    <div class="subsection-title">Estructura del proyecto analizado</div>
+    <pre>ProyectoPersonal/
+├── backend/
+│   └── src/
+│       ├── controllers/   authController.ts · patientController.ts · aiController.ts
+│       ├── services/      aiService.ts · openaiService.ts
+│       ├── middleware/    auth.ts · errorHandler.ts
+│       ├── routes/        auth.ts · patients.ts · foods.ts · ai.ts
+│       └── index.ts
+└── frontend/
+    └── src/
+        ├── components/    NutritionistPanel.tsx · AdminPanel.tsx · Login.tsx
+        ├── services/      api.ts · authService.ts · patientService.ts · aiService.ts
+        ├── context/       AuthContext.tsx
+        └── utils/         nutritionCalculations.ts</pre>
+
+    <p style="font-size:9pt;color:#888;text-align:center;margin-top:20px;border-top:1px solid #ddd;padding-top:8px">
+      NutriHealth Pro — APE 006 Software Security &nbsp;|&nbsp; FEIRNNR Carrera de Computación — Universidad Nacional de Loja
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

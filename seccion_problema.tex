@@ -1,0 +1,220 @@
+% ============================================================
+%  Archivo: seccion_problema.tex
+%  Uso: pegar en tu proyecto Overleaf o subir como archivo nuevo
+%  Compilar con: pdflatex + bibtex (o biblatex)
+% ============================================================
+
+\documentclass[12pt,a4paper]{article}
+
+% ── Paquetes ─────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\geometry{a4paper, top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm}
+
+\usepackage{setspace}
+\onehalfspacing                  % interlineado 1.5
+
+\usepackage{parskip}             % espacio entre párrafos
+\setlength{\parindent}{0pt}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue}
+
+\usepackage[backend=bibtex, style=ieee, sorting=none]{biblatex}
+\addbibresource{referencias.bib}  % <- nombre de tu archivo .bib
+
+% ── Metadatos ────────────────────────────────────────────────
+\title{\textbf{Problema de Investigación} \\
+       \large Sistema de Gestión Nutricional basado en RAG}
+\author{Kevin Patricio Sarango Olaya \\
+        \small Proyectos Tecnológicos 2 --- Ciclo 8 ``A'' \\
+        \small FEIRNNR --- Universidad Nacional de Loja}
+\date{Mayo 2026}
+
+% ============================================================
+\begin{document}
+\maketitle
+\clearpage
+
+% ============================================================
+\section{Problema de investigación}
+% ============================================================
+
+El problema de investigación se define como la descripción clara, objetiva y
+contextualizada de una realidad que genera una necesidad, conflicto o desafío
+en un entorno determinado. En este sentido, el problema debe sustentarse en
+hechos concretos, tales como datos, observaciones o evidencias provenientes de
+fuentes confiables, evitando juicios de valor o generalizaciones.
+
+Asimismo, es fundamental ubicar el problema dentro de un contexto específico,
+identificando dónde ocurre y a quiénes afecta, lo que permite delimitar
+adecuadamente el alcance de la investigación. En el ámbito de la salud
+nutricional, esto implica considerar tanto a los profesionales de la salud como
+a los pacientes que requieren seguimiento continuo y personalizado.
+
+De esta manera, la formulación del problema de investigación constituye la base
+para el desarrollo del estudio, ya que orienta la definición de objetivos,
+hipótesis y metodología, garantizando la coherencia y pertinencia del proyecto.
+
+% ------------------------------------------------------------
+\subsection{Situación Problemática}
+% ------------------------------------------------------------
+
+En Ecuador, el seguimiento de la salud nutricional enfrenta barreras como la
+falta de tiempo y el desconocimiento del estado físico real del paciente, lo
+que evidencia la necesidad de herramientas tecnológicas que complementen la
+consulta profesional~\cite{vargas2025}. La gestión nutricional en centros
+especializados sigue siendo predominantemente manual, utilizando hojas de
+cálculo o registros en papel, lo que genera vulnerabilidad en los datos,
+ralentiza la atención y dificulta el acceso rápido a la información histórica
+de los pacientes. Esta falta de digitalización incrementa los errores en la
+planificación y obstaculiza el seguimiento de la evolución fisiológica del
+paciente, debilitando el vínculo médico-paciente~\cite{quichimbo2021}.
+A día de hoy, las herramientas digitales disponibles carecen de interfaces
+intuitivas adaptadas al contexto ecuatoriano, lo que provoca el abandono del
+seguimiento ante planes estáticos y una retroalimentación profesional
+insuficiente~\cite{vargas2025,quichimbo2021,siddiqui2025}.
+
+La gestión digital de planes nutricionales se fundamenta en los principios de
+la Nutrición Personalizada~(NP), la cual propone utilizar información
+específica del paciente (patológica, fisiológica y hereditaria) para diseñar
+intervenciones dietéticas más efectivas que las guías
+generales~\cite{siddiqui2025}. Este enfoque busca superar las limitaciones de
+las recomendaciones tradicionales mediante el uso de tecnologías que permitan
+analizar datos individuales de manera eficiente. Los Sistemas de Soporte a la
+Decisión Clínica permiten integrar y procesar datos nutricionales de forma
+ágil, facilitando la toma de decisiones del profesional de salud y reduciendo
+errores en la planificación dietética~\cite{quichimbo2021}. Asimismo, las
+plataformas de salud móvil~(mHealth) fortalecen la interacción entre paciente
+y especialista, promoviendo un seguimiento continuo y una mayor adherencia a
+los planes nutricionales~\cite{ghose2021}. La personalización efectiva de los
+sistemas nutricionales requiere el uso de bases de datos adaptadas al entorno
+local, garantizando pertinencia de las recomendaciones alimentarias en
+contextos específicos~\cite{aldarras2025}.
+
+En los artículos~\cite{cunha2022} y~\cite{theodore2024}, los autores
+demostraron que dispositivos IoT reducen la carga manual de registro en
+pacientes, aunque persisten limitaciones relacionadas con la precisión y la
+privacidad. Las investigaciones~\cite{lee2023} y~\cite{mortazavi2023}
+validaron que plataformas basadas en inteligencia artificial junto con
+monitores continuos de glucosa reportaron reducciones en la~HbA1c
+(hemoglobina glicosilada), aunque evidenciaron errores del~22\% en la
+predicción de macronutrientes. En los artículos~\cite{gavai2025}
+y~\cite{arshad2025}, los autores implementaron sistemas de generación
+aumentada por recuperación~(RAG) con modelos de lenguaje locales, alcanzando
+hasta un~80\% de adherencia y ajustes dinámicos, aunque con una validación
+clínica aún incipiente. Los autores de los artículos~\cite{singar2024}
+y~\cite{xu2025} describen variantes genéticas~(FTO, APOE) y perfiles de
+microbiota como moduladores de la respuesta dietética, aunque su integración
+en plataformas digitales es parcial. En los artículos~\cite{abeltino2025}
+y~\cite{ebadi2025}, los autores señalan que la falta de interoperabilidad, la
+escasa adaptación regional y los altos costos limitan la escalabilidad de
+estas soluciones.
+
+El estudio se enfoca en la integración de sistemas inteligentes en el
+desarrollo de software, permitiendo una transición hacia un modelo proactivo
+en la gestión de la salud nutricional, alineándose con el ODS~9 (Industria,
+Innovación e Infraestructura), el cual promueve el fortalecimiento de la
+infraestructura tecnológica y la innovación como pilares para mejorar la
+eficiencia de los servicios de salud~\cite{un2024}. La línea de investigación
+en la que se enmarca este estudio está orientada al desarrollo tecnológico, la
+innovación y la generación de soluciones basadas en software para problemáticas
+reales, contribuyendo a la transformación digital del sector mediante el uso de
+herramientas avanzadas de análisis de datos~\cite{unl2021}. La incorporación de
+un modelo de lenguaje permitirá asistir al nutricionista en el procesamiento de
+información del paciente, generando planes personalizados y dinámicos,
+reduciendo la carga operativa y mejorando la precisión en la toma de
+decisiones, fortaleciendo así la adherencia del paciente mediante un
+seguimiento continuo.
+
+El propósito del autor es contribuir al fortalecimiento de la gestión
+nutricional mediante el desarrollo de una herramienta tecnológica que apoye al
+nutricionista como núcleo central del sistema. La propuesta se orienta a
+mejorar las funcionalidades de los sistemas existentes, incorporando
+características adaptadas al contexto nacional, como el registro de alimentos
+locales y la gestión eficiente de la información del paciente, apoyándose en
+PostgreSQL como sistema gestor de base de datos relacional, el cual garantiza
+la integridad, persistencia y consulta eficiente de los datos clínicos y
+nutricionales almacenados. Asimismo, se busca innovar mediante la integración
+de un modelo de lenguaje como herramienta de apoyo, que facilite el
+procesamiento de datos y la generación de recomendaciones personalizadas a
+partir de la información estructurada en la base de datos; con ello, se
+pretende reducir las limitaciones presentes en sistemas actuales y mejorar la
+calidad del servicio nutricional, fortaleciendo la toma de decisiones clínicas.
+
+% ------------------------------------------------------------
+\subsection{Pregunta de investigación}
+% ------------------------------------------------------------
+
+¿Qué nivel de satisfacción global reporta el nutricionista con las
+recomendaciones de planes personalizados generadas por un prototipo de sistema
+basado en RAG, utilizando datos antropométricos y bioquímicos del paciente
+junto con un catálogo alimentario ecuatoriano?
+
+% ------------------------------------------------------------
+\subsection{Justificación}
+% ------------------------------------------------------------
+
+En cuanto al aporte al conocimiento, esta investigación contribuye al campo de
+la ingeniería de software y la informática en salud mediante el diseño de un
+prototipo que integra un modelo largo de lenguaje con técnicas de generación
+aumentada por recuperación~(RAG), posicionando al nutricionista como el actor
+central del proceso clínico. En el contexto ecuatoriano, las propuestas
+actuales de gestión nutricional carecen de herramientas inteligentes que
+apoyen al profesional en la selección de recomendaciones dietéticas
+personalizadas a partir de datos del
+paciente~\cite{vargas2025,quichimbo2021}. Por ello, el desarrollo de este
+prototipo constituirá un aporte técnico concreto al campo de los sistemas de
+soporte en la decisión clínica en el contexto ecuatoriano, integrando
+procesamiento de datos antropométricos y bioquímicos con un catálogo de
+alimentos locales.
+
+Desde una perspectiva científica, el estudio se fundamenta en la transición de
+un modelo de gestión nutricional reactivo hacia uno proactivo, sustentado en la
+Nutrición Personalizada~(NP) y la medicina de
+precisión~\cite{siddiqui2025,singar2024}. El sistema sugiere al nutricionista
+un conjunto de recomendaciones fundamentadas en bases de conocimientos
+validadas y bases de datos nutricionales estructuradas, preservando en todo
+momento la confidencialidad de la información del
+paciente~\cite{gavai2025,arshad2025}. La decisión final sobre el plan
+nutricional recae siempre en el profesional, lo que aporta rigor clínico al
+proceso y contribuye a solucionar las limitaciones propias de la planificación
+manual, que es propensa a errores humanos y dificulta el seguimiento continuo
+de la evolución fisiológica del paciente~\cite{mortazavi2023}.
+
+En el ámbito social, el proyecto responde a la necesidad de mejorar el
+bienestar nutricional de la población ecuatoriana, beneficiando directamente a
+los nutricionistas de centros de salud y consultorios privados, quienes
+contarían con una herramienta de apoyo para la selección informada de
+recomendaciones dietéticas; de forma indirecta, los pacientes se beneficiarán
+al recibir planes de mayor calidad y pertinencia, validados por el profesional
+con base en sugerencias del sistema fundamentadas en datos del
+paciente~\cite{ghose2021}. Al fortalecer la capacidad de decisión del
+nutricionista mediante una plataforma digital, se busca incrementar la calidad
+de los planes nutricionales propuestos y evaluar su factibilidad de
+implementación, contribuyendo así a mejorar la atención clínica de los
+pacientes~\cite{abeltino2025,ebadi2025}.
+
+Finalmente, en el aspecto económico, la investigación se vincula con el~ODS~9
+al fortalecer la infraestructura tecnológica e impulsar la innovación en los
+servicios de salud~\cite{un2024}. La implementación de esta herramienta
+reducirá la carga operativa del profesional, permitiéndole centrarse en la
+evaluación clínica y en la selección informada del plan más
+adecuado~\cite{quichimbo2021}. Al trabajar únicamente con los datos bioquímicos
+y antropométricos del paciente, la solución reduce los riesgos legales y éticos
+asociados al manejo de información sensible en salud, promoviendo una
+infraestructura digital segura y escalable. Este estudio se enmarca en las
+líneas de investigación aprobadas de la Universidad Nacional de Loja,
+orientadas al desarrollo tecnológico, la innovación y la generación de
+soluciones basadas en software para problemáticas reales del entorno nacional,
+contribuyendo a la transformación digital del sector salud~\cite{unl2021}.
+
+% ============================================================
+%  BIBLIOGRAFÍA
+% ============================================================
+\clearpage
+\printbibliography[title={Referencias}]
+
+\end{document}

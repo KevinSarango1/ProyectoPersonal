@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte de Actividades — Objetivos — Kevin Sarango</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 11pt; color: #1a1a1a; background: #fff; }
+  .page { max-width: 210mm; margin: 0 auto; padding: 18mm 20mm 15mm 20mm; }
+
+  .header-inst { display: flex; align-items: center; border-bottom: 2px solid #1a3a5c; padding-bottom: 8px; margin-bottom: 6px; }
+  .header-left { font-size: 9pt; color: #1a3a5c; font-weight: bold; line-height: 1.4; }
+  .header-right { margin-left: auto; text-align: right; font-size: 8.5pt; color: #555; }
+
+  .title-block { text-align: center; margin: 16px 0 14px 0; }
+  .title-block h1 { font-size: 16pt; font-weight: bold; color: #1a1a1a; }
+  .title-block h2 { font-size: 13pt; font-weight: bold; color: #1a1a1a; margin-top: 2px; }
+
+  table.ident { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10.5pt; }
+  table.ident td { border: 1px solid #555; padding: 5px 10px; }
+  table.ident td.label { font-weight: bold; width: 40%; }
+
+  table.smart { width: 100%; border-collapse: collapse; margin: 10px 0 18px 0; font-size: 10.5pt; }
+  table.smart th { border: 1px solid #555; padding: 6px 10px; background: #fff; font-weight: bold; }
+  table.smart td { border: 1px solid #555; padding: 6px 10px; vertical-align: top; }
+  table.smart td.criterio { font-weight: bold; width: 38%; }
+
+  .section-label { font-size: 11pt; font-weight: bold; margin: 18px 0 6px 0; }
+  .obj-text { font-size: 11pt; line-height: 1.6; margin: 6px 0 14px 0; text-align: justify; }
+  .table-title { font-size: 11pt; font-weight: bold; margin: 14px 0 6px 0; }
+
+  @media print {
+    .page { padding: 12mm 16mm; }
+    body { font-size: 10.5pt; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ENCABEZADO -->
+  <div class="header-inst">
+    <div class="header-left">
+      Universidad Nacional de Loja<br>
+      FEIRNNR — Carrera de Computación
+    </div>
+    <div class="header-right">
+      Reporte Técnico de Actividades
+    </div>
+  </div>
+
+  <div class="title-block">
+    <h1>Reporte Técnico de Actividades:</h1>
+    <h2>Objetivos Específicos</h2>
+  </div>
+
+  <!-- TABLA IDENTIFICACIÓN -->
+  <table class="ident">
+    <tr><td class="label">Nombre del estudiante(s)</td><td>Kevin Patricio Sarango Olaya</td></tr>
+    <tr><td class="label">Asignatura</td><td>Proyectos Tecnológicos 2</td></tr>
+    <tr><td class="label">Ciclo</td><td>8 "A"</td></tr>
+    <tr><td class="label">Unidad</td><td>2</td></tr>
+    <tr><td class="label">Docente</td><td>Óscar Miguel Cumbicus Pineda</td></tr>
+    <tr><td class="label">Fecha</td><td>20 de mayo de 2026</td></tr>
+  </table>
+
+  <!-- PREGUNTA -->
+  <div class="section-label">Pregunta de investigación:</div>
+  <div class="obj-text">
+    ¿Cuál es el nivel de satisfacción percibido por el nutricionista respecto a las recomendaciones de planes nutricionales personalizados generadas mediante un prototipo de sistema de gestión nutricional basado en RAG, utilizando los datos antropométricos, bioquímicos y un catálogo de alimentos ecuatorianos?
+  </div>
+
+  <!-- OBJETIVO GENERAL -->
+  <div class="section-label">Objetivo General:</div>
+  <div class="obj-text">
+    Evaluar el nivel de satisfacción percibido por el nutricionista, mediante la Escala SUS, respecto a las recomendaciones de planes nutricionales personalizados generadas por un prototipo de sistema de gestión nutricional basado en RAG, utilizando datos antropométricos, bioquímicos y un catálogo de alimentos ecuatorianos.
+  </div>
+
+  <!-- OBJETIVOS ESPECÍFICOS -->
+  <div class="section-label">Objetivos Específicos:</div>
+  <div class="obj-text">
+    <ol style="margin-left:18px;line-height:2">
+      <li>
+        Construir la base de conocimiento RAG mediante la vectorización del catálogo de alimentos ecuatorianos e integración de los perfiles clínicos del paciente —datos antropométricos y bioquímicos— como contexto estructurado para la generación de recomendaciones nutricionales personalizadas.
+      </li>
+      <li>
+        Desarrollar el prototipo del sistema de gestión nutricional integrando el módulo RAG con la interfaz clínica, de forma que el nutricionista pueda ingresar datos del paciente y obtener planes nutricionales personalizados generados por el modelo de lenguaje aumentado con recuperación.
+      </li>
+      <li>
+        Medir el nivel de satisfacción de los nutricionistas con el prototipo desarrollado aplicando la Escala de Usabilidad del Sistema (SUS) a una muestra de profesionales, con el fin de determinar el grado de aceptación de las recomendaciones generadas por el sistema.
+      </li>
+    </ol>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="table-title">Tabla SMART — Objetivo general</div>
+  <table class="smart">
+    <tr><th>Criterio SMART</th><th>Justificación</th></tr>
+    <tr>
+      <td class="criterio">Specific (Específico)</td>
+      <td>Define con precisión qué se quiere lograr: evaluar la satisfacción del nutricionista, con la herramienta de medición concreta (Escala SUS), sobre un sistema igualmente concreto (prototipo RAG) que usa fuentes de datos específicas (datos antropométricos, bioquímicos y catálogo ecuatoriano).</td>
+    </tr>
+    <tr>
+      <td class="criterio">Measurable (Medible)</td>
+      <td>La satisfacción se cuantifica mediante la Escala SUS, que produce un puntaje numérico de 0 a 100 con umbrales de aceptabilidad ampliamente validados en la literatura de usabilidad, permitiendo comparar y replicar los resultados obtenidos.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Achievable (Alcanzable)</td>
+      <td>El prototipo se desarrolla sobre tecnologías accesibles y documentadas (Node.js, React, OpenAI API, técnicas RAG), la Escala SUS es de dominio público y su aplicación no requiere equipamiento especial, siendo viable dentro del contexto académico del proyecto.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Relevant (Relevante)</td>
+      <td>Responde directamente a la pregunta de investigación y aborda una necesidad real: validar si la integración de RAG con datos clínicos ecuatorianos mejora la utilidad percibida del sistema por el profesional de nutrición, aportando evidencia empírica al campo de sistemas de soporte clínico basados en LLM.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Time-bound (Temporal)</td>
+      <td>Se enmarca dentro del período académico del ciclo 8 "A" de la asignatura Proyectos Tecnológicos 2, con una fecha de entrega definida por el calendario institucional de la FEIRNNR.</td>
+    </tr>
+  </table>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="table-title">Tabla SMART — Objetivo específico 1</div>
+  <table class="smart">
+    <tr><th>Criterio SMART</th><th>Justificación</th></tr>
+    <tr>
+      <td class="criterio">Specific (Específico)</td>
+      <td>Define con claridad las acciones concretas: vectorizar el catálogo de alimentos ecuatorianos e integrar los perfiles clínicos del paciente (datos antropométricos y bioquímicos) como contexto estructurado dentro de un pipeline RAG, identificando tanto las fuentes de datos como el propósito de la construcción.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Measurable (Medible)</td>
+      <td>El resultado es verificable: una base de conocimiento RAG funcional, con embeddings generados a partir del catálogo de alimentos y los registros clínicos, que produce contexto recuperable para el modelo de lenguaje. Su correcta construcción se valida comprobando que las consultas de prueba retornan fragmentos de contexto relevantes con métricas de similitud semántica.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Achievable (Alcanzable)</td>
+      <td>Las técnicas de vectorización (embeddings) y los frameworks RAG (LangChain, LlamaIndex u OpenAI Embeddings API) son accesibles, ampliamente documentados y compatibles con el stack tecnológico ya implementado en el proyecto (Node.js + TypeScript + OpenAI API).</td>
+    </tr>
+    <tr>
+      <td class="criterio">Relevant (Relevante)</td>
+      <td>Constituye el paso previo e indispensable para que el sistema pueda generar recomendaciones fundamentadas en información nutricional ecuatoriana real, alineándose directamente con el objetivo general y diferenciando el sistema de una consulta genérica a un LLM sin contexto clínico.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Time-bound (Temporal)</td>
+      <td>Corresponde a la primera fase de desarrollo del proyecto dentro del período académico establecido, siendo el entregable previo al desarrollo de la interfaz clínica del prototipo.</td>
+    </tr>
+  </table>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="table-title">Tabla SMART — Objetivo específico 2</div>
+  <table class="smart">
+    <tr><th>Criterio SMART</th><th>Justificación</th></tr>
+    <tr>
+      <td class="criterio">Specific (Específico)</td>
+      <td>Nombra exactamente la acción (desarrollar el prototipo), el componente técnico central (módulo RAG integrado con la interfaz clínica), los actores involucrados (nutricionista) y el resultado esperado (planes nutricionales personalizados generados por el LLM aumentado con recuperación).</td>
+    </tr>
+    <tr>
+      <td class="criterio">Measurable (Medible)</td>
+      <td>El resultado es verificable mediante la entrega funcional del prototipo: el sistema debe aceptar datos de un paciente real (peso, talla, glucosa, etc.) y producir una recomendación nutricional contextualizada en el catálogo ecuatoriano, comprobable con casos de prueba documentados.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Achievable (Alcanzable)</td>
+      <td>El prototipo se construye sobre la infraestructura ya desarrollada en el proyecto (backend Express + Prisma, frontend React, integración OpenAI), añadiendo el pipeline RAG del objetivo 1. Las tecnologías son compatibles y el equipo cuenta con experiencia previa en el stack utilizado.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Relevant (Relevante)</td>
+      <td>Es la fase central del proyecto: sin el prototipo funcional no es posible aplicar la Escala SUS ni responder la pregunta de investigación. Conecta directamente el objetivo específico 1 (base de conocimiento RAG) con el objetivo específico 3 (evaluación de satisfacción).</td>
+    </tr>
+    <tr>
+      <td class="criterio">Time-bound (Temporal)</td>
+      <td>Corresponde a la segunda etapa del cronograma del proyecto, posterior a la construcción de la base de conocimiento RAG y previa a la aplicación de la evaluación SUS con los nutricionistas participantes.</td>
+    </tr>
+  </table>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="table-title">Tabla SMART — Objetivo específico 3</div>
+  <table class="smart">
+    <tr><th>Criterio SMART</th><th>Justificación</th></tr>
+    <tr>
+      <td class="criterio">Specific (Específico)</td>
+      <td>Define con precisión la acción (aplicar la Escala SUS), el sujeto evaluado (nutricionistas), el objeto de evaluación (el prototipo del sistema) y la finalidad (determinar el grado de aceptación de las recomendaciones generadas), sin ambigüedades sobre qué se mide ni a quién.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Measurable (Medible)</td>
+      <td>La Escala SUS produce un puntaje cuantitativo de 0 a 100 con umbrales definidos: por encima de 68 se considera usabilidad aceptable y por encima de 80.3 se clasifica como excelente. Esto permite comparar el resultado con estándares internacionales y emitir un juicio objetivo sobre la satisfacción percibida.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Achievable (Alcanzable)</td>
+      <td>La Escala SUS es un cuestionario de 10 ítems de dominio público, validado internacionalmente y de aplicación simple, que no requiere equipamiento especial. Su administración a una muestra de nutricionistas es factible dentro del contexto académico y del tiempo disponible en el proyecto.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Relevant (Relevante)</td>
+      <td>Responde directamente a la pregunta de investigación y al objetivo general, siendo la fase de validación empírica del sistema. Sin esta evaluación no es posible afirmar si el prototipo RAG cumple con las expectativas del usuario final (el nutricionista clínico), que es el propósito central del proyecto.</td>
+    </tr>
+    <tr>
+      <td class="criterio">Time-bound (Temporal)</td>
+      <td>Constituye la fase final del proyecto, posterior al desarrollo y prueba del prototipo, y su ejecución se delimita por el calendario académico del ciclo 8 "A" de la asignatura Proyectos Tecnológicos 2.</td>
+    </tr>
+  </table>
+
+  <p style="font-size:9pt;color:#888;text-align:center;margin-top:22px;border-top:1px solid #ddd;padding-top:8px">
+    Kevin Patricio Sarango Olaya &nbsp;|&nbsp; Proyectos Tecnológicos 2 — Ciclo 8 "A" &nbsp;|&nbsp; FEIRNNR — Universidad Nacional de Loja
+  </p>
+
+</div>
+</body>
+</html>

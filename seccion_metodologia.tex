@@ -1,0 +1,206 @@
+\clearpage
+\section{Metodología}
+
+% ============================================================
+\subsection{Técnicas, Métodos y Procedimientos}
+% ============================================================
+
+Para el desarrollo de la aplicación se adopta la metodología RAD (Rapid Application Development / Desarrollo Rápido de Aplicaciones), seleccionando y adaptando sus fases al contexto de un sistema de gestión nutricional con inteligencia artificial. RAD permite construir prototipos funcionales de forma iterativa e incremental con retroalimentación continua, reduciendo los tiempos de desarrollo mediante componentes
+reutilizables y una participación activa del usuario final, lo que resulta adecuado para este proyecto dado que los requisitos se consolidan a partir de la interacción directa con el actor principal (el nutricionista). Se aplican modelos UML (diagramas de casos de uso, modelo de dominio, diagramas de secuencia y diagrama de clases) junto con el modelo de arquitectura C4 en las etapas de Diseño del Usuario y Construcción Rápida, lo que permite mantener una documentación estructurada y coherente con la implementación del sistema. Además, para la evaluación del prototipo se emplea un cuestionario Likert aplicado a expertos en nutrición, que permite medir de forma cuantitativa la percepción de
+adecuación clínica, claridad en recomendaciones, facilidad de uso, confianza en las recomendaciones generadas y eficiencia temporal del sistema. Tras la aplicación del instrumento se analizan los resultados para calcular un índice global de satisfacción y evaluar la pertinencia del prototipo en el contexto clínico nutricional.
+
+% ============================================================
+\subsection{Fases del Proyecto}
+% ============================================================
+
+\subsubsection*{Objetivo Específico 1: Diseñar el prototipo NutriAPP}
+
+\textbf{1. Planificación de Requisitos}
+\begin{itemize}
+  \item \textbf{Requisitos funcionales y no funcionales:} definición del alcance del  sistema, incluyendo los módulos de registro de pacientes, mediciones antropométricas, bioquímicas, historial clínico, hábitos dietéticos y asistente IA con pipeline RAG; así como las condiciones de rendimiento, seguridad y usabilidad.
+  \item \textbf{Identificación de actores:} El nutricionista es actor principal del sistema y definición de los objetivos
+  funcionales de cada módulo.
+  \item \textbf{Identificación del catálogo alimentario:} planificación de la recopilación y organización
+  de datos nutricionales de alimentos ecuatorianos.
+  \item \textbf{Modelo conceptual:} diagrama UML que identifica las entidades
+  principales del dominio (Paciente, Antropometría, HistorialClínico,
+  HábitosDietéticos, MensajeChat, Alimento) y sus relaciones.
+\end{itemize}
+
+\textbf{2. Diseño}
+\begin{itemize}
+  \item \textbf{Diagramas de casos de uso:} mapeo de las interacciones del
+  nutricionista con los módulos del sistema para validar el alcance definido.
+  
+  \item \textbf{Modelo de dominio y comportamiento:} diagrama de clases con
+  atributos y cardinalidades, y diagramas de secuencia que ilustran flujos  principales, incluyendo el pipeline RAG (mensaje del nutricionista
+  $\rightarrow$ backend $\rightarrow$ API Groq con Llama~3.3 $\rightarrow$
+  respuesta al frontend).
+  \item \textbf{Arquitectura C4:} documentación de la arquitectura en cuatro
+  niveles (Contexto, Contenedores, Componentes, Código) describiendo la
+  interacción entre el frontend React, el backend Express y la base de datos
+  PostgreSQL; complementada con diagramas de despliegue y de paquetes.
+\end{itemize}
+
+\textbf{3. Desarrollo}
+
+\textit{3.1 Construcción}
+\begin{itemize}
+  \item \textbf{Backend:} implementación de API REST con Express.js y TypeScript; módulos de gestión de pacientes, datos clínicos, hábitos dietéticos y asistente IA con pipeline RAG (extracción de texto con pdf-parse e inferencia mediante Groq API).
+  \item \textbf{Frontend:} desarrollo de interfaz clínica con React y TailwindCSS; módulos de registro de pacientes, antropometría, historial clínico, hábitos dietéticos y chat con asistente nutricional.
+  \item \textbf{Base de datos:} definición del esquema relacional y migraciones en PostgreSQL mediante Prisma ORM.
+\end{itemize}
+
+\textit{3.2 Pruebas}
+\begin{itemize}
+  \item \textbf{Pruebas de caja negra:} validación de los endpoints críticos del backend (registro de mediciones, generación de recomendaciones, pipeline RAG con documentos PDF).
+\end{itemize}
+
+\textit{3.3 Control de versiones}
+\begin{itemize}
+  \item Gestión del código fuente mediante GitHub, con ramas \texttt{main} y
+  \texttt{develop}.
+\end{itemize}
+
+\textbf{1.4 Documentación de resultados}
+\begin{itemize}
+  \item Redacción de la documentación técnica del prototipo: descripción de la arquitectura implementada, decisiones de diseño, manual de instalación y guía de uso del sistema NutriAPP.
+\end{itemize}
+
+\subsubsection*{Objetivo Específico 2: Evaluar la satisfacción de los nutricionistas}
+
+\textbf{4. Evaluación con Likert}
+
+\textit{4.1 Diseño del cuestionario}
+\begin{itemize}
+  \item \textbf{Diseño del cuestionario Likert:} elaboración de un cuestionario con $\geq$10~ítems que evalúa adecuación clínica, claridad de las recomendaciones, facilidad de uso, confianza y eficiencia temporal, distribuido mediante Google Forms.
+\end{itemize}
+
+\textit{4.2 Aplicación del cuestionario}
+\begin{itemize}
+  \item \textbf{Población objetivo:} nutricionistas que interactúen con el prototipo en el entorno de pruebas mediante los perfiles genéricos establecidos.
+  \item Aplicación del cuestionario a los nutricionistas participantes.
+\end{itemize}
+
+\textit{4.3 Análisis del cuestionario}
+\begin{itemize}
+  \item Tabulación de respuestas, cálculo del índice global de satisfacción y análisis estadístico.
+\end{itemize}
+
+\textit{4.4 Documentación de resultados}
+\begin{itemize}
+  \item Redacción del informe final con los resultados obtenidos, conclusiones y recomendaciones derivadas de la evaluación de satisfacción del prototipo NutriAPP.
+\end{itemize}
+
+% ============================================================
+\subsection{Consideraciones éticas}
+% ============================================================
+
+La presente investigación involucra diferentes aspectos éticos, cada
+uno con sus propias consideraciones:
+
+\textbf{Datos del paciente:}
+El prototipo procesa datos genéricos y anonimizados del paciente como: peso, talla, edad, sexo, nivel de actividad física y enfermedades o condiciones metabólicas
+relevantes con el fin de generar recomendaciones nutricionales
+personalizadas. En el contexto de esta investigación, dichos datos
+corresponden a perfiles de prueba representativos de la población
+ecuatoriana, construidos con fines experimentales y no necesariamente recopilados de pacientes reales. 
+
+\textbf{Catálogo alimentario nutricional ecuatoriano:}
+La base de conocimiento del sistema RAG se construye a partir de datos
+nutricionales de alimentos ecuatorianos obtenidos de fuentes oficiales de
+acceso público, como la Encuesta Nacional de Salud y Nutrición~(ENSANUT). Estos datos
+son de naturaleza nutricional y no constituyen información personal
+identificable; su uso con fines de investigación académica está permitido
+bajo las condiciones de acceso abierto de dichas fuentes, respetando en toda
+publicación derivada la atribución a los autores originales.
+
+\textbf{Uso responsable de la inteligencia artificial:}
+El sistema emplea el modelo de lenguaje de código abierto dentro de un pipeline de generación aumentada por recuperación~(RAG),
+utilizado exclusivamente como herramienta de apoyo como sugerencias de los planes alimenticios para la revisión, aceptación del nutricionista. En la fase de prototipado, el modelo se accede mediante la
+APIS, que proveen inferencias sobre modelos open-source sin retención
+permanente de datos según su política de privacidad~\cite{gavai2025,arshad2025};
+en una implementación bajo un entorno de producción con datos clínicos reales, el modelo de IA deberá
+desplegarse localmente, eliminando cualquier transmisión de información a servicios externos de terceros y
+preservando la confidencialidad del paciente. La decisión final sobre el
+plan nutricional recae siempre en el nutricionista, preservando el rigor y
+la responsabilidad médica. Los resultados generados no serán empleados para
+diagnóstico clínico autónomo ni para ningún uso que comprometa los derechos
+fundamentales o la dignidad de las personas. El alcance del proyecto finaliza
+en la evaluación de la satisfacción percibida por el nutricionista frente a
+las recomendaciones generadas.
+
+\textbf{Privacidad en la evaluación de satisfacción:}
+El cuestionario Likert aplicado a los expertos en nutrición participantes se
+generará de forma anónima; no se recopilarán datos de identificación
+personal de los profesionales encuestados. La participación será voluntaria e informada, y los resultados se utilizarán exclusivamente con fines para esta investigación académica, sin exposición pública de las respuestas.
+
+% ============================================================
+\subsection{Resumen de la metodología}
+% ============================================================
+
+En la Tabla~\ref{tab:metodologia} se presenta el resumen de la metodología del proyecto,
+con las actividades, entregables, métodos y herramientas correspondientes a cada objetivo
+específico.
+
+\clearpage
+\begin{landscape}
+\begin{table}[h]
+\centering
+\caption{Metodología aplicada al proyecto}
+\label{tab:metodologia}
+\small
+\begin{tabular}{|c|p{5.5cm}|p{3.8cm}|p{4cm}|p{4cm}|}
+\hline
+\textbf{Objetivo} & \textbf{Actividades} & \textbf{Entregables} &
+\textbf{Métodos / Técnicas} & \textbf{Herramientas / Tecnologías} \\
+\hline
+
+\multirow{4}{*}{O.E.1}
+& Planificación de Requisitos (Funcionales, No Funcionales, Identificación de actores, Modelo conceptual) e Identificación del catálogo alimentario ecuatoriano.
+& Documento de requisitos, modelo conceptual UML y catálogo de alimentos ecuatorianos.
+& Análisis de requisitos y modelado conceptual.
+& Visual Studio Code, StarUML. \\ \cline{2-5}
+
+& Diseño de la aplicación (Diagramas de casos de uso, Modelo de dominio y comportamiento, Arquitectura C4).
+& Diagramas UML (casos de uso, dominio, secuencia) y arquitectura C4.
+& Modelado UML y arquitectura C4.
+& StarUML, draw.io. \\ \cline{2-5}
+
+& Desarrollo del prototipo web (backend, frontend, BD) con pipeline RAG y catálogo de alimentos ecuatorianos.
+& Prototipo web NutriAPP funcional con pipeline RAG integrado.
+& Desarrollo iterativo de software (RAD).
+& Node.js, Express.js, TypeScript, React, TailwindCSS, PostgreSQL, Prisma ORM, Groq API. \\ \cline{2-5}
+
+& Documentación técnica: arquitectura de la aplicación.
+& Documentación técnica del sistema NutriAPP.
+& Documentación de software.
+& \LaTeX, Visual Studio Code, GitHub. \\
+\hline
+
+\multirow{4}{*}{O.E.2}
+& Diseño del cuestionario Likert (adecuación clínica, claridad, facilidad de uso, confianza y eficiencia temporal).
+& Cuestionario Likert ($\geq$10 ítems) en Google Forms.
+& Diseño de instrumentos de evaluación.
+& Google Forms, Microsoft Excel. \\ \cline{2-5}
+
+& Aplicación del cuestionario a nutricionistas.
+& Cuestionario aplicado y respuestas recopiladas.
+& Recolección de datos primarios.
+& Prototipo NutriAPP, Google Forms. \\ \cline{2-5}
+
+& Tabulación y análisis estadístico descriptivo para calcular el índice global de satisfacción.
+& Informe de satisfacción con índice global de satisfacción.
+& Análisis estadístico descriptivo.
+& Google Forms, Microsoft Excel. \\ \cline{2-5}
+
+& Redacción del informe final con resultados, conclusiones y recomendaciones de la evaluación.
+& Informe final del proyecto.
+& Documentación técnica y académica.
+& \LaTeX, Visual Studio Code. \\ \hline
+
+\end{tabular}
+\end{table}
+\end{landscape}
+
+\clearpage

@@ -33,9 +33,32 @@ export const aiService = {
     return data;
   },
 
-  // Chat libre
-  chat: async (message: string): Promise<{ reply: string }> => {
-    const { data } = await api.post<{ reply: string }>('/ai/chat', { message });
+  // Chat libre (con historial por paciente y contexto clínico opcional)
+  chat: async (message: string, patientId?: string | null, patientContext?: string): Promise<{ reply: string }> => {
+    const { data } = await api.post<{ reply: string }>('/ai/chat', { message, patientId, patientContext });
+    return data;
+  },
+
+  // Historial de chat por paciente
+  getChatHistory: async (patientId: string): Promise<{ id: string; role: string; content: string; fileName?: string; createdAt: string }[]> => {
+    const { data } = await api.get(`/ai/chat-history/${patientId}`);
+    return data;
+  },
+
+  // Limpiar historial de chat
+  clearChatHistory: async (patientId: string): Promise<void> => {
+    await api.delete(`/ai/chat-history/${patientId}`);
+  },
+
+  // Chat con documento PDF/TXT (RAG)
+  chatWithFile: async (message: string, file: File, patientId?: string | null): Promise<{ reply: string; fileName: string }> => {
+    const form = new FormData();
+    form.append('file', file);
+    if (message) form.append('message', message);
+    if (patientId) form.append('patientId', patientId);
+    const { data } = await api.post('/ai/chat-upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return data;
   },
 };

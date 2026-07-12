@@ -4,11 +4,28 @@ import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
 // GET /api/patients
-export const getPatients = async (req: AuthRequest, res: Response) => {
+export const getPatients = async (_req: AuthRequest, res: Response) => {
   const patients = await prisma.patient.findMany({
     select: {
       id: true, firstName: true, lastName: true, email: true,
-      phone: true, dateOfBirth: true, gender: true, createdAt: true,
+      phone: true, dateOfBirth: true, gender: true, occupation: true, createdAt: true,
+      clinicalHistory: {
+        select: {
+          nutritionalObjective: true, pastDiseases: true,
+          allergies: true, foodIntolerances: true, currentMedications: true,
+          physicalActivity: true, dietaryRestrictions: true, observations: true,
+        },
+      },
+      anthropometry: {
+        select: { weight: true, height: true, bmi: true, bodyFatPercentage: true, measurementDate: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+      biometrics: {
+        select: { glucose: true, hba1c: true, totalCholesterol: true, triglycerides: true, testDate: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -101,7 +118,25 @@ export const deletePatient = async (req: Request, res: Response) => {
 // PUT /api/patients/:id/clinical-history
 export const updateClinicalHistory = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const data = req.body;
+  const {
+    date, medicalHistory, surgicalHistory, familyHistory,
+    currentComplaints, pastDiseases, dietaryHabits, physicalActivity,
+    alcoholConsumption, tobaccoUse, currentMedications,
+    allergies, foodIntolerances, nutritionalObjective, dietaryRestrictions,
+    observations, recall24h,
+  } = req.body;
+
+  if (!date) return res.status(400).json({ message: 'La fecha de la consulta es requerida' });
+
+  const data = {
+    date, medicalHistory, surgicalHistory, familyHistory,
+    currentComplaints, pastDiseases, dietaryHabits, physicalActivity,
+    alcoholConsumption, tobaccoUse,
+    currentMedications: currentMedications ?? [],
+    allergies: allergies ?? [],
+    foodIntolerances: foodIntolerances ?? [],
+    nutritionalObjective, dietaryRestrictions, observations, recall24h,
+  };
 
   const history = await prisma.clinicalHistory.upsert({
     where: { patientId: id },
@@ -114,8 +149,31 @@ export const updateClinicalHistory = async (req: Request, res: Response) => {
 
 // POST /api/patients/:id/biometrics
 export const addBiometrics = async (req: Request, res: Response) => {
+  if (!req.body.testDate) return res.status(400).json({ message: 'La fecha del examen es requerida' });
+  const {
+    glucose, hba1c, insulin, homaIndex,
+    totalCholesterol, ldl, hdl, triglycerides, vldl,
+    ast, alt, ggt, bilirubin,
+    creatinine, urea, uricAcid,
+    hemoglobin, hematocrit, leukocytes, platelets,
+    tsh, t3, t4,
+    vitaminD, vitaminB12, ferritin, iron,
+    systolicBP, diastolicBP, heartRate,
+    testDate, others,
+  } = req.body;
   const record = await prisma.biometrics.create({
-    data: { ...req.body, patientId: req.params.id },
+    data: {
+      glucose, hba1c, insulin, homaIndex,
+      totalCholesterol, ldl, hdl, triglycerides, vldl,
+      ast, alt, ggt, bilirubin,
+      creatinine, urea, uricAcid,
+      hemoglobin, hematocrit, leukocytes, platelets,
+      tsh, t3, t4,
+      vitaminD, vitaminB12, ferritin, iron,
+      systolicBP, diastolicBP, heartRate,
+      testDate, others,
+      patientId: req.params.id,
+    },
   });
   res.status(201).json(record);
 };
@@ -131,18 +189,38 @@ export const getBiometrics = async (req: Request, res: Response) => {
 
 // POST /api/patients/:id/anthropometry
 export const addAnthropometry = async (req: Request, res: Response) => {
-  const data = { ...req.body, patientId: req.params.id };
+  const { weight, height, measurementDate } = req.body;
+  if (!measurementDate) return res.status(400).json({ message: 'La fecha de medición es requerida' });
+  if (!weight || weight <= 0) return res.status(400).json({ message: 'El peso debe ser mayor a 0' });
+  if (!height || height <= 0) return res.status(400).json({ message: 'La talla debe ser mayor a 0' });
+  const {
+    waistCircumference, hipCircumference, waistHipRatio,
+    armCircumference, thighCircumference, calfCircumference,
+    tricepsSkinfold, bicepsSkinfold, subscapularSkinfold, suprailiacSkinfold,
+    bodyFatPercentage, muscleMass, boneMass, waterPercentage,
+  } = req.body;
 
-  if (data.weight && data.height && data.height > 0 && !data.bmi) {
-    const hM = data.height / 100;
-    data.bmi = Math.round((data.weight / (hM * hM)) * 10) / 10;
+  let bmi = req.body.bmi;
+  if (weight && height && height > 0 && !bmi) {
+    const hM = height / 100;
+    bmi = Math.round((weight / (hM * hM)) * 10) / 10;
   }
 
-  if (data.waistCircumference && data.hipCircumference && data.hipCircumference > 0 && !data.waistHipRatio) {
-    data.waistHipRatio = Math.round((data.waistCircumference / data.hipCircumference) * 100) / 100;
+  let whr = waistHipRatio;
+  if (waistCircumference && hipCircumference && hipCircumference > 0 && !whr) {
+    whr = Math.round((waistCircumference / hipCircumference) * 100) / 100;
   }
 
-  const record = await prisma.anthropometry.create({ data });
+  const record = await prisma.anthropometry.create({
+    data: {
+      measurementDate, weight, height, bmi,
+      waistCircumference, hipCircumference, waistHipRatio: whr,
+      armCircumference, thighCircumference, calfCircumference,
+      tricepsSkinfold, bicepsSkinfold, subscapularSkinfold, suprailiacSkinfold,
+      bodyFatPercentage, muscleMass, boneMass, waterPercentage,
+      patientId: req.params.id,
+    },
+  });
   res.status(201).json(record);
 };
 
@@ -153,6 +231,25 @@ export const getAnthropometry = async (req: Request, res: Response) => {
     orderBy: { createdAt: 'desc' },
   });
   res.json(records);
+};
+
+// GET /api/patients/:id/dietary-habits
+export const getDietaryHabits = async (req: Request, res: Response) => {
+  const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { id: true } });
+  if (!patient) return res.status(404).json({ message: 'Paciente no encontrado' });
+  const record = await prisma.dietaryHabits.findUnique({ where: { patientId: req.params.id } });
+  res.json(record ?? null);
+};
+
+// POST /api/patients/:id/dietary-habits
+export const saveDietaryHabits = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const record = await prisma.dietaryHabits.upsert({
+    where: { patientId: id },
+    update: req.body,
+    create: { ...req.body, patientId: id },
+  });
+  res.json(record);
 };
 
 // POST /api/patients/:id/weekly-menu

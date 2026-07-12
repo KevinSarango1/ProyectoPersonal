@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Anthropometry } from '../../../types/patient';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
-import { ValidationAlert } from '../../ui/ValidationAlert';
 import {
   calculateBMI, classifyBMI,
   calculateWHR, classifyWHR,
@@ -13,6 +12,7 @@ type AnthropometryInput = Omit<Anthropometry, 'id' | 'patientId' | 'createdAt'>;
 interface AnthropometryFormProps {
   onSubmit: (data: AnthropometryInput) => Promise<void>;
   gender?: Gender;
+  lastRecord?: Partial<AnthropometryInput> | null;
 }
 
 const EMPTY: AnthropometryInput = {
@@ -69,11 +69,20 @@ const MetricCard: React.FC<MetricCardProps> = ({ label, value, classification, s
   </div>
 );
 
-export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, gender = 'M' }) => {
-  const [formData, setFormData] = useState<AnthropometryInput>(EMPTY);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [validationError, setValidationError] = useState('');
-  const [loading, setLoading] = useState(false);
+export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, gender = 'M', lastRecord }) => {
+  const today = new Date().toISOString().split('T')[0];
+  const [formData, setFormData] = useState<AnthropometryInput>(
+    lastRecord ? { ...EMPTY, ...lastRecord, measurementDate: today } : EMPTY
+  );
+
+  // Cuando cambia el paciente, pre-carga la última medición con fecha de hoy
+  useEffect(() => {
+    setFormData(lastRecord ? { ...EMPTY, ...lastRecord, measurementDate: today } : EMPTY);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastRecord]);
+  const [showConfirm, setShowConfirm]   = useState(false);
+  const [fieldErrors, setFieldErrors]   = useState<Record<string, boolean>>({});
+  const [loading, setLoading]           = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     generales: true, circunferencias: true, pliegues: false, composicion: false,
   });
@@ -97,6 +106,9 @@ export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, 
       const num = value === '' ? undefined : (parseFloat(value) || 0);
       setFormData(prev => ({ ...prev, [name]: num }));
     }
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => { const next = { ...prev }; delete next[name]; return next; });
+    }
   };
 
   const val = (field: keyof AnthropometryInput): string => {
@@ -106,15 +118,16 @@ export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const errors: string[] = [];
-    if (!formData.measurementDate) errors.push('📅 Fecha de Medición');
-    if (!formData.weight || formData.weight <= 0) errors.push('⚖️ Peso');
-    if (!formData.height || formData.height <= 0) errors.push('📏 Talla');
-    if (errors.length > 0) {
-      setValidationError('Completa los campos requeridos:\n• ' + errors.join('\n• '));
+    const errors: Record<string, boolean> = {};
+    if (!formData.measurementDate)             errors.measurementDate = true;
+    if (!formData.weight || formData.weight <= 0) errors.weight = true;
+    if (!formData.height || formData.height <= 0) errors.height = true;
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setExpandedSections(prev => ({ ...prev, generales: true }));
       return;
     }
-    setValidationError('');
+    setFieldErrors({});
     setShowConfirm(true);
   };
 
@@ -136,13 +149,14 @@ export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, 
   const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-400 focus:border-transparent';
   const labelCls = 'block text-xs font-medium text-gray-600 mb-1';
 
+  const inp = (name: string) =>
+    fieldErrors[name]
+      ? 'w-full border border-red-400 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent'
+      : inputCls;
+  const errMsg = <p className="text-xs text-red-500 mt-1">Completa este campo</p>;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <ValidationAlert
-        isOpen={validationError !== ''}
-        message={validationError}
-        onClose={() => setValidationError('')}
-      />
 
       {/* Live IMC / ICC cards */}
       <div className="flex gap-4">
@@ -175,17 +189,21 @@ export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, 
           <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className={labelCls}>Fecha de Medición *</label>
-              <input type="date" name="measurementDate" value={formData.measurementDate} onChange={handleChange} className={inputCls} />
+              <input type="date" name="measurementDate" value={formData.measurementDate}
+                onChange={handleChange} max={today} className={inp('measurementDate')} />
+              {fieldErrors.measurementDate && errMsg}
             </div>
             <div>
               <label className={labelCls}>Peso (kg) *</label>
               <input type="number" name="weight" value={val('weight')} onChange={handleChange}
-                className={inputCls} placeholder="70.5" step="0.1" min="0" max="300" />
+                className={inp('weight')} placeholder="70.5" step="0.1" min="0" max="300" />
+              {fieldErrors.weight && errMsg}
             </div>
             <div>
               <label className={labelCls}>Talla (cm) *</label>
               <input type="number" name="height" value={val('height')} onChange={handleChange}
-                className={inputCls} placeholder="170" step="0.1" min="0" max="250" />
+                className={inp('height')} placeholder="170" step="0.1" min="0" max="250" />
+              {fieldErrors.height && errMsg}
             </div>
           </div>
         )}

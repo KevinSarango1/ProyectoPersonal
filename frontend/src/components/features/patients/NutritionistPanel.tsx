@@ -9,13 +9,47 @@ import { ClinicalGauge } from '../../ui/ClinicalGauge';
 import { ClinicalHistoryForm } from '../clinical/ClinicalHistoryForm';
 import { BiometricsForm } from '../biometrics/BiometricsForm';
 import { AnthropometryForm } from '../anthropometry/AnthropometryForm';
+import DietaryHabitsForm from '../dietary/DietaryHabitsForm';
 import { classifyBMI, classifyWHR, getAge, formatGender, type Gender } from '../../../utils/nutritionCalculations';
 import { aiService } from '../../../services/aiService';
 
-type AiMessage = { role: 'user' | 'ai'; text: string };
+type AiMessage = { role: 'user' | 'ai'; text: string; fileName?: string };
 
 type MainView = 'patients' | 'foods';
-type Tab = 'historia' | 'biometria' | 'antropometria';
+type Tab = 'historia' | 'biometria' | 'antropometria' | 'habitos' | 'menu';
+
+function formatChatText(text: string): string {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*\*(.*?)\*\*\*/gs, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/gs, '<em>$1</em>')
+    .replace(/\n/g, '<br/>');
+}
+
+const ACTIVITY_LABELS: Record<string, string> = {
+  '1.2': 'Sedentario',
+  '1.375': 'Ligeramente activo',
+  '1.55': 'Moderadamente activo',
+  '1.725': 'Muy activo',
+  '1.9': 'Extra activo',
+};
+
+function harrisBenedictCalc(weight: number, height: number, age: number, gender: string, factor: number) {
+  const bmr = gender === 'F'
+    ? 655.1 + (9.563 * weight) + (1.85 * height) - (4.676 * age)
+    : 66.47 + (13.75 * weight) + (5.003 * height) - (6.755 * age);
+  return { bmr: Math.round(bmr), tdee: Math.round(bmr * factor), formula: gender === 'F' ? 'Mujeres' : 'Hombres' };
+}
+
+function buildHBMessage(patient: Patient, factor: number): string {
+  const anthro = patient.anthropometry?.[0];
+  if (!anthro) return 'Hola. Soy el Asistente Nutricional IA. Puedo ayudarte a generar recomendaciones nutricionales, analizar alimentos y también puedes subir documentos PDF para que los analice.';
+  const age = Math.floor((Date.now() - new Date(patient.dateOfBirth).getTime()) / (365.25 * 24 * 3600 * 1000));
+  const { bmr, tdee, formula } = harrisBenedictCalc(anthro.weight, anthro.height, age, patient.gender, factor);
+  const label = ACTIVITY_LABELS[String(factor)] ?? 'Sedentario';
+  return `📊 **Harris-Benedict (${formula})**\n\n**${patient.firstName} ${patient.lastName}** · ${age} años · ${anthro.weight} kg / ${anthro.height} cm\n\n**TMB:** ${bmr} kcal/día\n**Factor:** ×${factor} (${label})\n**GET:** ${tdee} kcal/día\n\n¿En qué puedo ayudarte con este paciente?`;
+}
 
 const EMPTY_PATIENT: PatientForm = {
   firstName: '', lastName: '', email: '', password: '',
@@ -30,6 +64,52 @@ const EMPTY_FOOD = {
 const inputCls = 'w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition';
 const labelCls = 'block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5';
 const errCls   = 'text-xs text-red-600 mt-1';
+
+// ─── Construir contexto clínico del paciente para el LLM ─────────────────────
+function buildPatientContext(patient: any): string {
+  const lines: string[] = [];
+  const age = patient.dateOfBirth
+    ? Math.floor((Date.now() - new Date(patient.dateOfBirth).getTime()) / (365.25 * 24 * 3600 * 1000))
+    : null;
+
+  lines.push(`PACIENTE: ${patient.firstName} ${patient.lastName}`);
+  if (age) lines.push(`Edad: ${age} años | Sexo: ${patient.gender === 'M' ? 'Masculino' : patient.gender === 'F' ? 'Femenino' : 'Otro'}`);
+  if (patient.occupation) lines.push(`Ocupación: ${patient.occupation}`);
+
+  const anthro = patient.anthropometry?.[0];
+  if (anthro) {
+    lines.push(`\nANTROPOMETRÍA (${anthro.measurementDate}):`);
+    lines.push(`  Peso: ${anthro.weight} kg | Talla: ${anthro.height} cm | IMC: ${anthro.bmi} kg/m²`);
+    if (anthro.waistHipRatio) lines.push(`  ICC: ${anthro.waistHipRatio}`);
+    if (anthro.bodyFatPercentage) lines.push(`  % Grasa: ${anthro.bodyFatPercentage}%`);
+    if (anthro.muscleMass) lines.push(`  Masa muscular: ${anthro.muscleMass} kg`);
+  }
+
+  const bio = patient.biometrics?.[0];
+  if (bio) {
+    lines.push(`\nBIOMETRÍA (${bio.testDate}):`);
+    if (bio.glucose) lines.push(`  Glucosa: ${bio.glucose} mg/dL`);
+    if (bio.hba1c) lines.push(`  HbA1c: ${bio.hba1c}%`);
+    if (bio.totalCholesterol) lines.push(`  Colesterol total: ${bio.totalCholesterol} mg/dL`);
+    if (bio.ldl) lines.push(`  LDL: ${bio.ldl} | HDL: ${bio.hdl}`);
+    if (bio.triglycerides) lines.push(`  Triglicéridos: ${bio.triglycerides} mg/dL`);
+    if (bio.hemoglobin) lines.push(`  Hemoglobina: ${bio.hemoglobin} g/dL`);
+  }
+
+  const ch = patient.clinicalHistory;
+  if (ch) {
+    lines.push(`\nHISTORIA CLÍNICA:`);
+    if (ch.nutritionalObjective) lines.push(`  Objetivo nutricional: ${ch.nutritionalObjective}`);
+    if (ch.pastDiseases) lines.push(`  Antecedentes patológicos: ${ch.pastDiseases}`);
+    if (ch.allergies?.length) lines.push(`  Alergias: ${ch.allergies.join(', ')}`);
+    if (ch.foodIntolerances?.length) lines.push(`  Intolerancias: ${ch.foodIntolerances.join(', ')}`);
+    if (ch.currentMedications?.length) lines.push(`  Medicación actual: ${ch.currentMedications.join(', ')}`);
+    if (ch.physicalActivity) lines.push(`  Actividad física: ${ch.physicalActivity}`);
+    if (ch.dietaryRestrictions) lines.push(`  Restricciones dietéticas: ${ch.dietaryRestrictions}`);
+  }
+
+  return lines.join('\n');
+}
 
 // ─── AnthroRow (history table) ────────────────────────────────────────────────
 const AnthroRow: React.FC<{ record: Anthropometry; gender: Gender }> = ({ record, gender }) => {
@@ -89,18 +169,33 @@ const NutritionistPanel: React.FC = () => {
   const [foodFormLoading, setFoodFormLoading] = useState(false);
   const [deleteFood, setDeleteFood]           = useState<{ open: boolean; food: Food | null }>({ open: false, food: null });
 
+  // Hábitos dietéticos
+  const [dietaryHabits, setDietaryHabits] = useState<any>(null);
+
+  // Menú — calculadora de macros
+  const [menuCalories, setMenuCalories]       = useState<number>(2000);
+  const [menuProteinPct, setMenuProteinPct]   = useState<number>(20);
+  const [menuCarbsPct, setMenuCarbsPct]       = useState<number>(50);
+  const [menuFatPct, setMenuFatPct]           = useState<number>(30);
+  const [activityFactor, setActivityFactor]   = useState<number>(1.2);
+  const [menuGoal, setMenuGoal]               = useState<'disminuir' | 'mantener' | 'ganar'>('mantener');
+  const [menuGoalPct, setMenuGoalPct]         = useState<number>(15);
+
   // AI panel
-  const [aiOpen, setAiOpen]       = useState(false);
-  const [aiInput, setAiInput]     = useState('');
+  const [aiInput, setAiInput]       = useState('');
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([
-    { role: 'ai', text: 'Hola. Soy el Asistente Nutricional IA. Puedo ayudarte a generar recomendaciones nutricionales, analizar alimentos y sugerir planes alimenticios personalizados.' },
+    { role: 'ai', text: 'Hola. Soy el Asistente Nutricional IA. Puedo ayudarte a generar recomendaciones, analizar alimentos y también puedes subir documentos PDF para que los analice.' },
   ]);
-  const [aiLoading, setAiLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [aiLoading, setAiLoading]   = useState(false);
+  const [aiFile, setAiFile]         = useState<File | null>(null);
+  const fileInputRef                = useRef<HTMLInputElement>(null);
+  const messagesEndRef              = useRef<HTMLDivElement>(null);
 
   // Shared
   const [successAlert, setSuccessAlert] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
+  const [errorAlert,   setErrorAlert]   = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
   const showSuccess = (msg: string) => setSuccessAlert({ isOpen: true, message: msg });
+  const showError   = (msg: string) => setErrorAlert({ isOpen: true, message: msg });
 
   // ── Data loading ──────────────────────────────────────────────────────────
   const loadPatients = useCallback(async () => {
@@ -113,9 +208,30 @@ const NutritionistPanel: React.FC = () => {
   useEffect(() => { if (mainView === 'foods') fetchFoods(); }, [mainView, fetchFoods]);
 
   const selectPatient = async (id: string) => {
-    setSelected(await patientService.getById(id));
+    const patientData = await patientService.getById(id);
+    setSelected(patientData);
     setActiveTab('historia');
     setShowPatientForm(false);
+    // Auto-calcular GET con Harris-Benedict si hay datos antropométricos; si no, resetear
+    const anthro = patientData.anthropometry?.[0];
+    if (anthro) {
+      const age = Math.floor((Date.now() - new Date(patientData.dateOfBirth).getTime()) / (365.25 * 24 * 3600 * 1000));
+      const { tdee } = harrisBenedictCalc(anthro.weight, anthro.height, age, patientData.gender, activityFactor);
+      setMenuCalories(tdee);
+    } else {
+      setMenuCalories(0);
+    }
+    // Cargar hábitos dietéticos
+    try { setDietaryHabits(await patientService.getDietaryHabits(id)); } catch { /* sin datos aún */ }
+    // Cargar historial de chat del paciente
+    try {
+      const history = await aiService.getChatHistory(id);
+      if (history.length > 0) {
+        setAiMessages(history.map(m => ({ role: m.role as 'user' | 'ai', text: m.content, fileName: m.fileName })));
+      } else {
+        setAiMessages([{ role: 'ai', text: buildHBMessage(patientData, activityFactor) }]);
+      }
+    } catch { /* sin historial */ }
   };
 
   const reloadSelected = async () => {
@@ -175,9 +291,22 @@ const NutritionistPanel: React.FC = () => {
   };
 
   // ── Clinical data ─────────────────────────────────────────────────────────
-  const handleSaveClinicalHistory = async (data: any) => { await patientService.updateClinicalHistory(selected!.id, data); await reloadSelected(); showSuccess('Historia clínica guardada'); };
-  const handleAddBiometrics       = async (data: any) => { await patientService.addBiometrics(selected!.id, data);       await reloadSelected(); showSuccess('Biometría registrada'); };
-  const handleAddAnthropometry    = async (data: any) => { await patientService.addAnthropometry(selected!.id, data);    await reloadSelected(); showSuccess('Medición registrada'); };
+  const handleSaveClinicalHistory = async (data: any) => {
+    try { await patientService.updateClinicalHistory(selected!.id, data); await reloadSelected(); showSuccess('Historia clínica guardada'); }
+    catch (e: any) { showError(e?.response?.data?.message || 'Error al guardar historia clínica'); }
+  };
+  const handleAddBiometrics = async (data: any) => {
+    try { await patientService.addBiometrics(selected!.id, data); await reloadSelected(); showSuccess('Biometría registrada'); }
+    catch (e: any) { showError(e?.response?.data?.message || 'Error al registrar biometría'); }
+  };
+  const handleAddAnthropometry = async (data: any) => {
+    try { await patientService.addAnthropometry(selected!.id, data); await reloadSelected(); showSuccess('Medición registrada'); }
+    catch (e: any) { showError(e?.response?.data?.message || 'Error al registrar medición'); }
+  };
+  const handleSaveDietaryHabits = async (data: any) => {
+    try { const saved = await patientService.saveDietaryHabits(selected!.id, data); setDietaryHabits(saved); showSuccess('Hábitos dietéticos guardados'); }
+    catch (e: any) { showError(e?.response?.data?.message || 'Error al guardar hábitos dietéticos'); }
+  };
 
   // ── Food CRUD ─────────────────────────────────────────────────────────────
   const openCreateFood = () => { setEditingFoodId(null); setFoodForm(EMPTY_FOOD); setFoodErrors({}); setShowFoodForm(true); };
@@ -228,21 +357,44 @@ const NutritionistPanel: React.FC = () => {
   // ── AI chat ───────────────────────────────────────────────────────────────
   const sendAiMessage = async () => {
     const text = aiInput.trim();
-    if (!text || aiLoading) return;
-    setAiMessages(prev => [...prev, { role: 'user', text }]);
+    if ((!text && !aiFile) || aiLoading) return;
+
+    const userText = aiFile
+      ? `📎 ${aiFile.name}${text ? `\n${text}` : ''}`
+      : text;
+
+    setAiMessages(prev => [...prev, { role: 'user', text: userText, fileName: aiFile?.name }]);
     setAiInput('');
+    const fileToSend = aiFile;
+    setAiFile(null);
     setAiLoading(true);
+
     try {
-      const { reply } = await aiService.chat(text);
-      setAiMessages(prev => [...prev, { role: 'ai', text: reply ?? 'Sin respuesta.' }]);
+      let reply: string;
+      const pid = selected?.id ?? null;
+
+      let patientContext: string | undefined;
+      if (selected) {
+        patientContext = buildPatientContext(selected);
+      } else {
+        // Contexto global: resumen clínico completo de todos los pacientes
+        const patientSummaries = patients.length > 0
+          ? patients.map((p: any) => buildPatientContext(p)).join('\n\n---\n\n')
+          : 'Sin pacientes registrados aún.';
+        patientContext = `NUTRICIONISTA: ${user?.fullName ?? ''}\nTotal de pacientes: ${patients.length}\n\n${patientSummaries}`;
+      }
+
+      if (fileToSend) {
+        const res = await aiService.chatWithFile(text, fileToSend, pid);
+        reply = res.reply ?? 'Sin respuesta.';
+      } else {
+        const res = await aiService.chat(text, pid, patientContext);
+        reply = res.reply ?? 'Sin respuesta.';
+      }
+
+      setAiMessages(prev => [...prev, { role: 'ai', text: reply }]);
     } catch (err: any) {
-      const status = err?.response?.status;
-      const serverMsg = err?.response?.data?.message || '';
-      const msg = status === 429
-        ? 'Cuota de OpenAI agotada. Agrega créditos en platform.openai.com/settings/billing.'
-        : status === 401
-        ? 'API key de OpenAI inválida. Verifica la variable OPENAI_API_KEY en el backend.'
-        : serverMsg || 'Error al conectar con la IA. Verifica que el servidor esté corriendo.';
+      const msg = err?.response?.data?.message || 'Error al conectar con la IA.';
       setAiMessages(prev => [...prev, { role: 'ai', text: msg }]);
     } finally {
       setAiLoading(false);
@@ -257,8 +409,15 @@ const NutritionistPanel: React.FC = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50" style={{ paddingBottom: aiOpen ? 320 : 48 }}>
+    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
       <SuccessAlert isOpen={successAlert.isOpen} title="Listo" message={successAlert.message} onClose={() => setSuccessAlert({ isOpen: false, message: '' })} />
+      {errorAlert.isOpen && (
+        <div className="fixed top-6 right-6 z-50 bg-red-100 border-2 border-red-400 rounded-2xl p-6 shadow-xl max-w-sm">
+          <p className="font-bold text-red-900">Error</p>
+          <p className="text-red-700 text-sm mt-1">{errorAlert.message}</p>
+          <button onClick={() => setErrorAlert({ isOpen: false, message: '' })} className="mt-3 text-xs text-red-600 underline">Cerrar</button>
+        </div>
+      )}
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className="bg-slate-900 px-5 py-3 flex justify-between items-center sticky top-0 z-30">
@@ -475,11 +634,13 @@ const NutritionistPanel: React.FC = () => {
 
                 {/* Tabs */}
                 <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                  <div className="flex border-b border-slate-100">
+                  <div className="flex border-b border-slate-100 overflow-x-auto">
                     {([
                       { key: 'historia',      label: 'Historia Clínica' },
                       { key: 'biometria',     label: 'Biometría' },
                       { key: 'antropometria', label: 'Antropometría' },
+                      { key: 'habitos',       label: 'Hábitos Dietéticos' },
+                      { key: 'menu',          label: 'Menú' },
                     ] as { key: Tab; label: string }[]).map(tab => (
                       <button
                         key={tab.key}
@@ -497,12 +658,12 @@ const NutritionistPanel: React.FC = () => {
 
                   <div className="p-5">
                     {activeTab === 'historia' && (
-                      <ClinicalHistoryForm onSubmit={handleSaveClinicalHistory} initialData={selected.clinicalHistory} />
+                      <ClinicalHistoryForm key={selected.id} onSubmit={handleSaveClinicalHistory} initialData={selected.clinicalHistory} />
                     )}
 
                     {activeTab === 'biometria' && (
                       <div className="space-y-6">
-                        <BiometricsForm onSubmit={handleAddBiometrics} />
+                        <BiometricsForm onSubmit={handleAddBiometrics} initialData={selected.biometrics?.[0]} />
                         {selected.biometrics && selected.biometrics.length > 0 && (
                           <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Historial</p>
@@ -533,9 +694,224 @@ const NutritionistPanel: React.FC = () => {
                       </div>
                     )}
 
+                    {activeTab === 'habitos' && (
+                      <DietaryHabitsForm
+                        initialData={dietaryHabits}
+                        onSubmit={handleSaveDietaryHabits}
+                      />
+                    )}
+
+                    {activeTab === 'menu' && (() => {
+                      const adjustedCalories = menuGoal === 'mantener'
+                        ? menuCalories
+                        : menuGoal === 'disminuir'
+                        ? Math.round(menuCalories * (1 - menuGoalPct / 100))
+                        : Math.round(menuCalories * (1 + menuGoalPct / 100));
+                      const proteinG = Math.round((adjustedCalories * menuProteinPct / 100) / 4);
+                      const carbsG   = Math.round((adjustedCalories * menuCarbsPct  / 100) / 4);
+                      const fatG     = Math.round((adjustedCalories * menuFatPct    / 100) / 9);
+                      const totalPct = menuProteinPct + menuCarbsPct + menuFatPct;
+                      // Harris-Benedict
+                      const anthroHB = selected?.anthropometry?.[0];
+                      const ageHB    = selected ? Math.floor((Date.now() - new Date(selected.dateOfBirth).getTime()) / (365.25 * 24 * 3600 * 1000)) : 0;
+                      const hb       = anthroHB && selected ? harrisBenedictCalc(anthroHB.weight, anthroHB.height, ageHB, selected.gender, activityFactor) : null;
+                      // SVG donut
+                      const r = 52; const cxy = 68;
+                      const circ = 2 * Math.PI * r;
+                      const Q    = circ / 4;
+                      const pD   = (menuProteinPct / 100) * circ;
+                      const cD   = (menuCarbsPct   / 100) * circ;
+                      const fD   = (menuFatPct     / 100) * circ;
+                      const activityOptions = [
+                        { value: 1.2,   label: '×1.2 — Sedentario' },
+                        { value: 1.375, label: '×1.375 — Ligeramente activo' },
+                        { value: 1.55,  label: '×1.55 — Moderadamente activo' },
+                        { value: 1.725, label: '×1.725 — Muy activo' },
+                        { value: 1.9,   label: '×1.9 — Extra activo' },
+                      ];
+                      return (
+                        <div className="space-y-4">
+
+                          {/* Harris-Benedict */}
+                          {hb && (
+                            <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-xl p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className="text-sm">📐</span>
+                                <h3 className="text-xs font-bold text-violet-800 uppercase tracking-wide">Harris-Benedict — {hb.formula}</h3>
+                              </div>
+                              <div className="flex gap-6 mb-3">
+                                <div>
+                                  <p className="text-[10px] text-violet-500 uppercase font-bold tracking-wide">TMB</p>
+                                  <p className="text-xl font-bold text-violet-900">{hb.bmr} <span className="text-xs font-normal text-violet-500">kcal/día</span></p>
+                                </div>
+                                <div className="border-l border-violet-200 pl-4">
+                                  <p className="text-[10px] text-indigo-500 uppercase font-bold tracking-wide">GET</p>
+                                  <p className="text-xl font-bold text-indigo-900">{hb.tdee} <span className="text-xs font-normal text-indigo-500">kcal/día</span></p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <label className="text-[10px] text-violet-600 font-bold uppercase tracking-wide whitespace-nowrap">Factor actividad:</label>
+                                <select
+                                  value={activityFactor}
+                                  onChange={e => {
+                                    const f = Number(e.target.value);
+                                    setActivityFactor(f);
+                                    setMenuCalories(Math.round(hb.bmr * f));
+                                  }}
+                                  className="flex-1 text-xs bg-white border border-violet-200 rounded-lg px-2 py-1 text-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                                >
+                                  {activityOptions.map(o => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Objetivo nutricional */}
+                          <div className="bg-white border border-slate-200 rounded-xl p-4">
+                            <p className={labelCls}>Objetivo</p>
+                            <div className="flex gap-1.5 mb-3">
+                              {(['disminuir', 'mantener', 'ganar'] as const).map(g => (
+                                <button key={g} type="button" onClick={() => setMenuGoal(g)}
+                                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                                    menuGoal === g
+                                      ? g === 'disminuir' ? 'bg-red-500 text-white'
+                                        : g === 'mantener' ? 'bg-emerald-600 text-white'
+                                        : 'bg-blue-500 text-white'
+                                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                  }`}>
+                                  {g === 'disminuir' ? '↓ Bajar peso' : g === 'mantener' ? '= Mantener' : '↑ Subir peso'}
+                                </button>
+                              ))}
+                            </div>
+                            {menuGoal !== 'mantener' && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-500">{menuGoal === 'disminuir' ? 'Déficit:' : 'Superávit:'}</span>
+                                <input type="number" value={menuGoalPct}
+                                  onChange={e => setMenuGoalPct(Math.min(50, Math.max(1, Number(e.target.value))))}
+                                  min={1} max={50}
+                                  className="w-14 text-sm text-center border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                                <span className="text-xs text-slate-500">%</span>
+                                <span className="ml-auto text-sm font-bold text-slate-800">
+                                  {adjustedCalories} <span className="text-xs font-normal text-slate-400">kcal/día</span>
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Sin antropometría — aviso */}
+                          {!hb && (
+                            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                              <span className="text-lg shrink-0">⚠️</span>
+                              <div>
+                                <p className="text-xs font-bold text-amber-800">Sin datos de antropometría</p>
+                                <p className="text-xs text-amber-700 mt-0.5">Registre el peso y la talla del paciente en la pestaña <strong>Antropometría</strong> para calcular automáticamente TMB y GET. Por ahora puede ingresar las calorías manualmente.</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Macro Calculator */}
+                          <div className="bg-white border border-slate-200 rounded-xl p-5">
+                            <h3 className="text-sm font-bold text-slate-700 mb-4">Distribución de Macronutrientes</h3>
+                            <div className="flex gap-5 items-start mb-4">
+                              {/* Inputs */}
+                              <div className="flex-1 space-y-3 min-w-0">
+                                <div>
+                                  <label className={labelCls}>Calorías diarias (kcal)</label>
+                                  <input type="number" className={inputCls} value={menuCalories || ''} placeholder="Ej: 2000" min={0} max={5000}
+                                    onChange={e => setMenuCalories(Number(e.target.value))} />
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Prot. %</label>
+                                    <input type="number" className="w-full bg-white border border-blue-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" value={menuProteinPct} min={0} max={100}
+                                      onChange={e => setMenuProteinPct(Number(e.target.value))} />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-yellow-600 uppercase tracking-widest mb-1">HCO %</label>
+                                    <input type="number" className="w-full bg-white border border-yellow-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" value={menuCarbsPct} min={0} max={100}
+                                      onChange={e => setMenuCarbsPct(Number(e.target.value))} />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-1">Gras. %</label>
+                                    <input type="number" className="w-full bg-white border border-orange-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" value={menuFatPct} min={0} max={100}
+                                      onChange={e => setMenuFatPct(Number(e.target.value))} />
+                                  </div>
+                                </div>
+                                <p className={`text-xs font-bold ${totalPct === 100 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                  Total: {totalPct}% {totalPct !== 100 ? '⚠ debe sumar 100' : '✓'}
+                                </p>
+                              </div>
+                              {/* SVG Donut */}
+                              <div className="flex flex-col items-center flex-shrink-0">
+                                <svg width="136" height="136" viewBox="0 0 136 136">
+                                  <circle cx={cxy} cy={cxy} r={r} fill="none" stroke="#f1f5f9" strokeWidth="22" />
+                                  {totalPct > 0 && (<>
+                                    <circle cx={cxy} cy={cxy} r={r} fill="none" stroke="#f97316" strokeWidth="21"
+                                      strokeDasharray={`${fD} ${circ - fD}`}
+                                      strokeDashoffset={Q - pD - cD} />
+                                    <circle cx={cxy} cy={cxy} r={r} fill="none" stroke="#eab308" strokeWidth="21"
+                                      strokeDasharray={`${cD} ${circ - cD}`}
+                                      strokeDashoffset={Q - pD} />
+                                    <circle cx={cxy} cy={cxy} r={r} fill="none" stroke="#3b82f6" strokeWidth="21"
+                                      strokeDasharray={`${pD} ${circ - pD}`}
+                                      strokeDashoffset={Q} />
+                                  </>)}
+                                  <text x={cxy} y={cxy - 8} textAnchor="middle" fill="#0f172a" fontSize="18" fontWeight="800">{adjustedCalories}</text>
+                                  <text x={cxy} y={cxy + 10} textAnchor="middle" fill="#94a3b8" fontSize="10">kcal/día</text>
+                                </svg>
+                                <div className="flex flex-col gap-1">
+                                  {[
+                                    { color: '#3b82f6', label: `Prot. ${menuProteinPct}%` },
+                                    { color: '#eab308', label: `HCO ${menuCarbsPct}%` },
+                                    { color: '#f97316', label: `Gras. ${menuFatPct}%` },
+                                  ].map(({ color, label }) => (
+                                    <div key={label} className="flex items-center gap-1.5">
+                                      <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
+                                      <span className="text-[10px] text-slate-500">{label}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            {/* Macro result cards */}
+                            <div className="grid grid-cols-3 gap-3 mb-5">
+                              {[
+                                { label: 'Proteínas', g: proteinG, color: 'bg-blue-50 border-blue-200 text-blue-700' },
+                                { label: 'Carbohidratos', g: carbsG, color: 'bg-yellow-50 border-yellow-200 text-yellow-700' },
+                                { label: 'Grasas', g: fatG, color: 'bg-orange-50 border-orange-200 text-orange-700' },
+                              ].map(({ label, g, color }) => (
+                                <div key={label} className={`border rounded-xl p-3 text-center ${color}`}>
+                                  <p className="text-xs font-semibold uppercase tracking-wide opacity-70">{label}</p>
+                                  <p className="text-2xl font-bold mt-1">{g}<span className="text-sm font-normal ml-0.5">g</span></p>
+                                </div>
+                              ))}
+                            </div>
+                            <button
+                              disabled={totalPct !== 100}
+                              onClick={() => {
+                                const goalLabel = menuGoal === 'disminuir' ? ` (déficit ${menuGoalPct}%, GET base: ${menuCalories} kcal)` : menuGoal === 'ganar' ? ` (superávit ${menuGoalPct}%, GET base: ${menuCalories} kcal)` : '';
+                                const prompt = `Genera un menú diario para el paciente ${selected?.firstName} ${selected?.lastName} con:\n- ${adjustedCalories} kcal totales${goalLabel}\n- Proteínas: ${menuProteinPct}% (${proteinG}g)\n- Carbohidratos: ${menuCarbsPct}% (${carbsG}g)\n- Grasas: ${menuFatPct}% (${fatG}g)\n\nIncluye desayuno, media mañana, almuerzo, merienda y cena con alimentos específicos y porciones.`;
+                                setAiInput(prompt);
+                                setActiveTab('historia');
+                              }}
+                              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors"
+                            >
+                              Enviar al Asistente IA
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {activeTab === 'antropometria' && (
                       <div className="space-y-6">
-                        <AnthropometryForm onSubmit={handleAddAnthropometry} gender={selected.gender as Gender} />
+                        <AnthropometryForm
+                          onSubmit={handleAddAnthropometry}
+                          gender={selected.gender as Gender}
+                          lastRecord={selected.anthropometry?.[0] ?? null}
+                        />
                         {selected.anthropometry && selected.anthropometry.length > 0 && (
                           <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Historial</p>
@@ -563,6 +939,107 @@ const NutritionistPanel: React.FC = () => {
               </div>
             )}
           </main>
+
+          {/* ── Right chat panel ─────────────────────────────────────────── */}
+          <div className="w-80 border-l border-slate-200 flex flex-col flex-shrink-0 bg-white">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-slate-200 flex items-center gap-2 flex-shrink-0"
+                 style={{ background: 'linear-gradient(90deg, #4c1d95, #3730a3)' }}>
+              <div className="w-5 h-5 rounded bg-violet-400/30 flex items-center justify-center flex-shrink-0">
+                <span style={{ fontSize: 11 }}>🤖</span>
+              </div>
+              <span className="text-white text-xs font-semibold">Asistente IA</span>
+              <span className="text-violet-300 text-[10px] bg-violet-800/50 px-2 py-0.5 rounded-full truncate">
+                {selected ? `Paciente: ${selected.firstName}` : 'Chat Global'}
+              </span>
+              <button
+                onClick={async () => {
+                  const pid = selected?.id ?? 'global';
+                  await aiService.clearChatHistory(pid);
+                  setAiMessages([{ role: 'ai', text: 'Hola. Soy el Asistente Nutricional IA. Puedo ayudarte a generar recomendaciones nutricionales, analizar alimentos y también puedes subir documentos PDF para que los analice.' }]);
+                }}
+                title="Limpiar historial"
+                className="ml-auto w-6 h-6 flex items-center justify-center rounded hover:bg-violet-700/50 transition-colors flex-shrink-0"
+              >
+                <svg className="w-3.5 h-3.5 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-slate-50/50">
+              {aiMessages.map((msg, i) => (
+                msg.role === 'ai' ? (
+                  <div key={i} className="flex gap-2 items-start">
+                    <div className="w-5 h-5 rounded flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white"
+                         style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>IA</div>
+                    <div className="bg-white border border-slate-100 rounded-xl rounded-tl-sm px-3 py-2 max-w-full">
+                      <div className="text-xs text-slate-700 leading-relaxed"
+                           dangerouslySetInnerHTML={{ __html: formatChatText(msg.text) }} />
+                    </div>
+                  </div>
+                ) : (
+                  <div key={i} className="flex gap-2 items-start justify-end">
+                    <div className="flex flex-col items-end gap-1">
+                      {msg.fileName && (
+                        <span className="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">📎 {msg.fileName}</span>
+                      )}
+                      <div className="text-white rounded-xl rounded-tr-sm px-3 py-2 max-w-[200px] text-xs whitespace-pre-wrap"
+                           style={{ background: '#4c1d95' }}>
+                        {msg.text}
+                      </div>
+                    </div>
+                    <div className="w-5 h-5 rounded bg-slate-200 flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-slate-500">Ntr</div>
+                  </div>
+                )
+              ))}
+              {aiLoading && (
+                <div className="flex gap-2 items-start">
+                  <div className="w-5 h-5 rounded flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white"
+                       style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>IA</div>
+                  <div className="bg-white border border-slate-100 rounded-xl rounded-tl-sm px-3 py-2">
+                    <span className="text-xs text-slate-400">Generando respuesta...</span>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-slate-100 px-3 py-2 bg-white flex-shrink-0 space-y-2">
+              {aiFile && (
+                <div className="flex items-center gap-2 text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded-lg px-2 py-1">
+                  <span className="truncate">📎 {aiFile.name}</span>
+                  <button onClick={() => setAiFile(null)} className="ml-auto text-violet-400 hover:text-violet-700 flex-shrink-0">✕</button>
+                </div>
+              )}
+              <div className="flex gap-1.5 items-center">
+                <input ref={fileInputRef} type="file" accept=".pdf,.txt" className="hidden"
+                  onChange={e => setAiFile(e.target.files?.[0] ?? null)} />
+                <button onClick={() => fileInputRef.current?.click()} disabled={aiLoading} title="Subir PDF/TXT"
+                  className="w-7 h-7 flex items-center justify-center rounded-full border border-slate-200 hover:bg-violet-50 hover:border-violet-300 transition-colors disabled:opacity-40 flex-shrink-0">
+                  <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                </button>
+                <input
+                  type="text" value={aiInput}
+                  onChange={e => setAiInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAiMessage(); } }}
+                  placeholder={aiFile ? 'Pregunta sobre el doc...' : 'Consulta nutricional...'}
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 min-w-0"
+                  disabled={aiLoading}
+                />
+                <button onClick={sendAiMessage} disabled={aiLoading || (!aiInput.trim() && !aiFile)}
+                  className="px-3 py-1.5 text-xs font-semibold text-white rounded-full hover:opacity-90 disabled:opacity-40 transition-opacity flex-shrink-0"
+                  style={{ background: '#4c1d95' }}>
+                  →
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
       )}
 
@@ -692,128 +1169,6 @@ const NutritionistPanel: React.FC = () => {
           </div>
         </div>
       )}
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* AI PANEL — fixed bottom                                             */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      <div
-        className={`fixed bottom-0 left-0 right-0 z-40 transition-all duration-300 ${
-          aiOpen ? 'h-80' : 'h-12'
-        }`}
-        style={{ boxShadow: '0 -4px 24px rgba(0,0,0,0.08)' }}
-      >
-
-        {/* Toggle bar */}
-        <button
-          onClick={() => setAiOpen(o => !o)}
-          className="w-full h-12 flex items-center justify-between px-5 transition-colors"
-          style={{ background: 'linear-gradient(90deg, #4c1d95, #3730a3)' }}
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="w-5 h-5 rounded bg-violet-400/30 flex items-center justify-center">
-              <span style={{ fontSize: 11 }}>🤖</span>
-            </div>
-
-            <span className="text-white text-xs font-semibold">
-              Asistente Nutricional IA
-            </span>
-
-            <span className="text-violet-300 text-[10px] bg-violet-800/50 px-2 py-0.5 rounded-full">
-              OpenAI Integrado
-            </span>
-          </div>
-
-          <svg
-            className={`w-4 h-4 text-violet-300 transition-transform ${
-              aiOpen ? 'rotate-180' : ''
-            }`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M5 15l7-7 7 7"
-            />
-          </svg>
-        </button>
-
-        {/* Chat area */}
-        {aiOpen && (
-          <div
-            className="bg-white flex flex-col"
-            style={{ height: 'calc(100% - 48px)' }}
-          >
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-slate-50/50">
-              {aiMessages.map((msg, i) => (
-                msg.role === 'ai' ? (
-                  <div key={i} className="flex gap-2.5 items-start">
-                    <div
-                      className="w-6 h-6 rounded-md flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
-                      style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
-                    >
-                      IA
-                    </div>
-                    <div className="bg-white border border-slate-100 rounded-xl rounded-tl-sm px-4 py-2.5 max-w-lg">
-                      <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{msg.text}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div key={i} className="flex gap-2.5 items-start justify-end">
-                    <div
-                      className="text-white rounded-xl rounded-tr-sm px-4 py-2.5 max-w-sm text-sm"
-                      style={{ background: '#4c1d95' }}
-                    >
-                      {msg.text}
-                    </div>
-                    <div className="w-6 h-6 rounded-md bg-slate-200 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                      Ntr
-                    </div>
-                  </div>
-                )
-              ))}
-              {aiLoading && (
-                <div className="flex gap-2.5 items-start">
-                  <div
-                    className="w-6 h-6 rounded-md flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
-                  >
-                    IA
-                  </div>
-                  <div className="bg-white border border-slate-100 rounded-xl rounded-tl-sm px-4 py-2.5">
-                    <span className="text-sm text-slate-400">Generando respuesta...</span>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input */}
-            <div className="border-t border-slate-100 px-5 py-3 bg-white flex gap-2.5 items-center">
-              <input
-                type="text"
-                value={aiInput}
-                onChange={e => setAiInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAiMessage(); } }}
-                placeholder="Escribe una consulta nutricional..."
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-full px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                disabled={aiLoading}
-              />
-              <button
-                onClick={sendAiMessage}
-                disabled={aiLoading || !aiInput.trim()}
-                className="px-4 py-2 text-xs font-semibold text-white rounded-full hover:opacity-90 disabled:opacity-40 transition-opacity"
-                style={{ background: '#4c1d95' }}
-              >
-                Enviar
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Dialogs */}
       <ConfirmDialog isOpen={deletePatient.open} title="Eliminar Paciente"

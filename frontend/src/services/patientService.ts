@@ -57,6 +57,17 @@ export const patientService = {
     return data;
   },
 
+  // Hábitos dietéticos
+  getDietaryHabits: async (id: string): Promise<any> => {
+    const { data } = await api.get(`/patients/${id}/dietary-habits`);
+    return data;
+  },
+
+  saveDietaryHabits: async (id: string, habits: any): Promise<any> => {
+    const { data } = await api.post(`/patients/${id}/dietary-habits`, habits);
+    return data;
+  },
+
   // Menú semanal
   saveWeeklyMenu: async (id: string, menu: Omit<WeeklyMenu, 'id' | 'patientId' | 'createdAt'>): Promise<WeeklyMenu> => {
     const { data } = await api.post<WeeklyMenu>(`/patients/${id}/weekly-menu`, menu);

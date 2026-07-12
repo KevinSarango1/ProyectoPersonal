@@ -1,21 +1,19 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
-import { generateRecommendation, analyzeFood, generateMealPlan, chat } from '../controllers/aiController';
+import {
+  generateRecommendation, analyzeFood, generateMealPlan,
+  chat, getChatHistory, clearChatHistory, chatWithFile, upload,
+} from '../controllers/aiController';
 
 const router = Router();
-
 router.use(authenticate);
 
-// POST /api/ai/recommendation - Generar recomendación nutricional
 router.post('/recommendation', generateRecommendation);
-
-// POST /api/ai/analyze-food - Analizar un alimento
 router.post('/analyze-food', analyzeFood);
-
-// POST /api/ai/meal-plan - Generar plan de comidas
 router.post('/meal-plan', generateMealPlan);
-
-// POST /api/ai/chat - Chat libre con el asistente nutricional
 router.post('/chat', chat);
+router.get('/chat-history/:patientId', getChatHistory);
+router.delete('/chat-history/:patientId', clearChatHistory);
+router.post('/chat-upload', upload.single('file'), chatWithFile);
 
 export default router;

@@ -1,0 +1,200 @@
+\clearpage
+% ============================================================
+\section{Objetivos}
+
+El presente capítulo define los objetivos que orientan el desarrollo
+de la investigación, estableciendo de manera clara las metas a alcanzar
+y los criterios que permiten verificar su cumplimiento.
+
+% ------------------------------------------------------------
+\subsection{Objetivo General}
+% ------------------------------------------------------------
+
+Evaluar el nivel de satisfacción percibido por el nutricionista,
+mediante una escala tipo Likert de cinco puntos, respecto a las
+recomendaciones de planes nutricionales personalizados generadas
+por un prototipo de aplicación de gestión nutricional, utilizando datos antropométricos, bioquímicos del paciente y un
+catálogo de alimentos ecuatorianos.
+
+% ------------------------------------------------------------
+\subsection{Objetivos Específicos}
+% ------------------------------------------------------------
+
+\textbf{O.E.1.} Diseñar un prototipo funcional de sistema de gestión
+nutricional que integre datos antropométricos y bioquímicos del
+paciente con un catálogo de alimentos ecuatorianos, empleando un
+modelo de lenguaje largo con base de conocimiento nutricional estructurada
+para generar recomendaciones de planes personalizados.
+
+\medskip
+
+\textbf{O.E.2.} Medir el nivel de satisfacción del nutricionista
+mediante un cuestionario validado con escala tipo Likert de cinco
+puntos, aplicado tras la interacción con el prototipo.
+
+% ------------------------------------------------------------
+\subsection{Alcance del proyecto}
+% ------------------------------------------------------------
+
+El proyecto abarca el diseño y evaluación de un prototipo de sistema
+de gestión nutricional orientado al contexto clínico ecuatoriano.
+El alcance se delimita en función de los dos objetivos específicos
+planteados y se detalla a continuación.
+
+% ------------------------------------------------------------
+\subsubsection{Alcance O.E.1: Diseño del prototipo}
+% ------------------------------------------------------------
+
+\textbf{Actividad 1.} Recopilación y estructuración del
+catálogo de alimentos ecuatorianos: selección de alimentos
+representativos, normalización de su composición nutricional
+(proteínas, carbohidratos, lípidos, fibra y micronutrientes) y
+clasificación por grupos alimentarios adaptados al contexto local.
+
+\medskip
+
+\textbf{Actividad 2.} Definición de la arquitectura del sistema
+mediante el modelo C4 (Contexto, Contenedores, Componentes y Código)
+y configuración de la base de conocimiento nutricional estructurada,
+compuesta por el catálogo de alimentos ecuatorianos y los perfiles
+clínicos básicos del paciente (peso, talla, edad, nivel de actividad
+física). Esta base se conecta con un modelo de lenguaje de código
+abierto (p.~ej., Qwen, Kimi~K, GLM o Nemotron) mediante un pipeline
+de generación aumentada por recuperación~(RAG), de modo que ante una
+consulta, el sistema recupera los fragmentos más relevantes y los
+entrega al modelo para generar un plan alimentario justificado.
+
+\medskip
+
+\textbf{Actividad 3.} Desarrollo de la interfaz del sistema:
+formularios de ingreso de datos antropométricos (edad, peso, talla,
+IMC) y bioquímicos (glucosa, perfil lipídico), visualización de
+planes nutricionales con distribución de macronutrientes y grupos
+alimentarios, cálculo de gasto energético mediante fórmulas
+estandarizadas, y gestión del historial clínico del paciente.
+
+\medskip
+
+\textbf{Actividad 4.} Documentación técnica del prototipo: descripción
+de la arquitectura implementada, decisiones de diseño adoptadas durante
+el desarrollo, manual de instalación del sistema y guía de uso dirigida
+al nutricionista como usuario principal.
+
+% ------------------------------------------------------------
+\subsubsection{Alcance O.E.2: Medición de satisfacción}
+% ------------------------------------------------------------
+
+\textbf{Actividad 1.} Diseño y validación del cuestionario con escala
+tipo Likert de cinco puntos (1~=~Muy insatisfecho; 5~=~Muy satisfecho),
+definiendo dimensiones de evaluación sobre adecuación clínica de las
+recomendaciones, claridad del lenguaje, facilidad de uso, confianza
+en la información generada y eficiencia temporal percibida en la
+elaboración del plan nutricional.
+
+\medskip
+
+\textbf{Actividad 2.} Definición y ejecución de casos de prueba con
+perfiles genéricos de pacientes representativos de la población
+ecuatoriana, caracterizados por datos como peso, talla, edad, sexo,
+nivel de actividad física y enfermedades o condiciones físicas
+(p.~ej., diabetes o sobrepeso); aplicando el prototipo
+a cada caso y registrando las recomendaciones generadas para su
+evaluación posterior por el Nutricionista.
+
+\medskip
+
+\textbf{Actividad 3.} Aplicación del cuestionario a/los
+nutricionistas, tabulación de respuestas, cálculo del índice global
+de satisfacción y análisis estadístico descriptivo para determinar
+el nivel de aceptación del sistema.
+
+% ------------------------------------------------------------
+\subsection{Limitaciones}
+% ------------------------------------------------------------
+
+Las siguientes limitaciones delimitan el alcance del proyecto y
+definen lo que no será desarrollado ni evaluado durante su ejecución.
+
+No se desarrollará la integración del prototipo con sistemas de
+información hospitalaria~(HIS) ni con expedientes clínicos
+electrónicos~(EHR/EMR) existentes en instituciones de salud
+ecuatorianas.
+
+No se desarrollará una aplicación móvil ni una versión desplegada
+en entorno de producción; el sistema se entrega exclusivamente como
+prototipo funcional en entorno de desarrollo local.
+
+No se evaluará la precisión diagnóstica clínica de las recomendaciones
+generadas ni su validación médica formal; la evaluación se limita a
+la satisfacción percibida por el nutricionista mediante un cuestionario
+definido.
+
+No se evaluará el desempeño del sistema frente a otros modelos de
+inteligencia artificial o sistemas de recomendación nutricional
+existentes.
+
+Finalmente, el uso de modelos de lenguaje de código abierto implica
+tiempos de respuesta superiores a los de modelos comerciales
+accesibles vía API, dado que la inferencia se ejecuta sobre el
+hardware local disponible sin optimizaciones de infraestructura. Esta diferencia en velocidad puede afectar la fluidez
+de la interacción durante la evaluación, y la calidad de las
+recomendaciones puede ser inferior a la de modelos propietarios
+de mayor escala.
+
+% ------------------------------------------------------------
+% TABLA RESUMEN — después de limitaciones (IEEE)
+% ------------------------------------------------------------
+
+\begin{table}[h]
+\centering
+\caption{RESUMEN DE ALCANCE DEL PROYECTO}
+\label{tab:alcance}
+\begin{tabular}{|p{1.8cm}|p{3.8cm}|p{3.5cm}|p{3.5cm}|}
+\hline
+\textbf{Objetivo} & \textbf{Incluido} & \textbf{Excluido}
+& \textbf{Producto} \\ \hline
+
+O.G.
+& Evaluación de la satisfacción del nutricionista frente a
+recomendaciones del prototipo mediante escala tipo Likert.
+& Validación clínica en entorno hospitalario real; puesta en
+producción del sistema.
+& Informe de evaluación con índice de satisfacción global
+(prototipo SW). \\ \hline
+
+O.E.1: Act.~1
+& Estructuración del catálogo de alimentos ecuatorianos.
+& Validación con bases de datos internacionales.
+& Catálogo nutricional estructurado. \\ \hline
+
+O.E.1: Act.~2
+& Definición de la arquitectura C4 y configuración de la base de
+conocimiento con pipeline RAG y modelos de código abierto.
+& Despliegue en producción; integración con sistemas hospitalarios.
+& Arquitectura C4 y sistema de generación de recomendaciones funcional. \\ \hline
+
+O.E.1: Act.~3
+& Interfaz clínica con distribución de macronutrientes, grupos
+alimentarios, gasto energético e historial del paciente.
+& Aplicación móvil; versión en producción.
+& Prototipo funcional SW. \\ \hline
+
+O.E.2: Act.~1
+& Diseño y validación del cuestionario Likert con dimensión de
+eficiencia temporal del nutricionista.
+& Evaluación con pacientes reales.
+& Instrumento de medición validado. \\ \hline
+
+O.E.2: Act.~2
+& Definición y ejecución de casos de prueba con perfiles genéricos
+(peso, talla, edad, sexo, actividad física, enfermedades).
+& Pruebas clínicas controladas.
+& Conjunto de casos de prueba documentados. \\ \hline
+
+O.E.2: Act.~3
+& Aplicación del cuestionario y análisis estadístico descriptivo.
+& Comparación con otros modelos de inteligencia artificial.
+& Informe de resultados de satisfacción. \\ \hline
+
+\end{tabular}
+\end{table}

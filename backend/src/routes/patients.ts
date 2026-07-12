@@ -5,6 +5,7 @@ import {
   updateClinicalHistory,
   addBiometrics, getBiometrics,
   addAnthropometry, getAnthropometry,
+  getDietaryHabits, saveDietaryHabits,
   saveWeeklyMenu,
 } from '../controllers/patientController';
 
@@ -26,6 +27,9 @@ router.get('/:id/biometrics/history', requireNutritionist, getBiometrics);
 
 router.post('/:id/anthropometry', requireNutritionist, addAnthropometry);
 router.get('/:id/anthropometry/history', requireNutritionist, getAnthropometry);
+
+router.get('/:id/dietary-habits', requireNutritionist, getDietaryHabits);
+router.post('/:id/dietary-habits', requireNutritionist, saveDietaryHabits);
 
 router.post('/:id/weekly-menu', requireNutritionist, saveWeeklyMenu);
 

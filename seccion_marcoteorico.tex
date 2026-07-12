@@ -1,0 +1,283 @@
+\clearpage
+\section{Marco Teórico}
+
+Para construir el marco teórico es necesario que la información que se
+reúna y analice, se relacione de manera coherente entre sí y con el objeto
+de estudio, evitando divagar con el planteamiento de temas no vinculados
+directamente al objeto de investigación. Se incluirá toda aquella
+información ya documentada que se tiene sobre el tema de estudio,
+realizando una sistematización del conocimiento científico en relación con
+la temática a estudiar, que evidencie el avance de la ciencia y los vacíos
+de conocimientos que orientan la investigación. Toda la información
+bibliográfica usada debe estar respaldada por sus respectivas citas, las
+cuales deben ser incluidas en la lista de referencias bibliográficas en
+formato IEEE.
+
+% ============================================================
+\subsection{Fundamentos teóricos}
+% ============================================================
+
+% ------------------------------------------------------------
+\subsubsection{Gestión Nutricional Clínica}
+% ------------------------------------------------------------
+
+La gestión nutricional en centros especializados ecuatorianos sigue siendo
+predominantemente manual, apoyada en hojas de cálculo o registros físicos.
+Este modelo genera vulnerabilidad en los datos, ralentiza la atención y
+dificulta el acceso rápido al historial del paciente~\cite{quichimbo2021}.
+La falta de digitalización incrementa los errores en la planificación
+dietética y debilita el vínculo entre el profesional y el paciente, lo que
+evidencia la necesidad de herramientas tecnológicas que complementen la
+consulta clínica sin desplazar el juicio del
+nutricionista~\cite{vargas2025}.
+
+% ------------------------------------------------------------
+\subsubsection{Nutrición Personalizada}
+% ------------------------------------------------------------
+
+La Nutrición Personalizada~(NP) propone utilizar información específica
+del paciente (patológica, fisiológica y hereditaria) para diseñar
+intervenciones dietéticas más efectivas que las guías
+generales~\cite{siddiqui2025}. Estudios recientes evidencian que la
+integración de catálogos alimentarios adaptados al contexto local resulta
+esencial para garantizar la pertinencia clínica de las
+recomendaciones~\cite{aldarras2025}. A diferencia de los enfoques
+genéricos, la NP considera variantes metabólicas individuales, lo que
+exige plataformas capaces de procesar datos heterogéneos del paciente de
+forma eficiente~\cite{singar2024}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.80\linewidth]{imagenes/Imagen3.jpg}
+  \caption{Imagen de ``Sistema de Nutrición Personalizada (NP)'' generada por Gemini.}
+  \label{fig:np}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsubsection{Sistemas de Soporte a la Decisión Clínica}
+% ------------------------------------------------------------
+
+Los Sistemas de Soporte a la Decisión Clínica~(SSDC) permiten integrar y
+procesar datos nutricionales de forma ágil, facilitando la toma de
+decisiones del profesional de salud y reduciendo errores en la
+planificación dietética~\cite{quichimbo2021}. Las plataformas de salud
+móvil~(mHealth) fortalecen la interacción entre paciente y especialista,
+promoviendo un seguimiento continuo y mayor adherencia al plan
+nutricional~\cite{ghose2021}. Sin embargo, estudios sistemáticos
+evidencian errores de hasta un~22\% en la predicción de macronutrientes en
+plataformas actuales, lo que limita su aplicación clínica sin supervisión
+profesional~\cite{mortazavi2023}, evidenciando vacíos que el presente
+proyecto busca abordar.
+
+% ------------------------------------------------------------
+\subsubsection{Modelos de Lenguaje de Gran Escala y RAG}
+% ------------------------------------------------------------
+
+Los modelos de lenguaje de gran escala~(LLM) son sistemas de inteligencia
+artificial basados en arquitecturas de transformadores que aprenden
+representaciones lingüísticas complejas, permitiéndoles generar respuestas
+coherentes ante consultas en lenguaje natural. No obstante, los LLM pueden
+producir alucinaciones al no disponer de un contexto verificado. La
+Generación Aumentada por Recuperación~(RAG) resuelve esta limitación
+combinando un módulo de recuperación de información con el LLM: ante una
+consulta, el sistema recupera los fragmentos más relevantes de una base de
+conocimiento estructurada y los entrega al modelo como contexto,
+reduciendo las alucinaciones al anclar las respuestas en datos verificados
+y específicos del dominio~\cite{gavai2025,arshad2025}. En sistemas de
+nutrición personalizada, esta arquitectura ha reportado niveles de
+adherencia de hasta un~80\% y la capacidad de ajustar dinámicamente los
+planes generados~\cite{gavai2025}.
+
+% ============================================================
+\subsection{Modelos, métodos y técnicas}
+% ============================================================
+
+% ------------------------------------------------------------
+\subsubsection{Pipeline RAG y Almacenamiento Vectorial}
+% ------------------------------------------------------------
+
+El pipeline RAG del prototipo sigue tres etapas secuenciales. En la
+indexación, los documentos del catálogo alimentario ecuatoriano
+y los perfiles clínicos básicos del paciente se convierten en vectores
+numéricos~(embeddings) mediante un modelo de embeddings de código abierto
+y se almacenan en pgvector, extensión de~PostgreSQL que permite
+búsquedas de similitud semántica sobre datos relacionales. En la etapa de
+recuperación, ante una consulta del nutricionista, el sistema
+calcula la similitud vectorial y retorna los fragmentos más relevantes.
+En la generación, el LLM produce la recomendación nutricional
+usando esos fragmentos como contexto. LangChain actúa como framework de
+orquestación del pipeline completo.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.95\linewidth]{imagenes/Imagen1.jpg}
+  \caption{Imagen de ``Pipeline RAG del prototipo NutriRAG'' generada por Gemini.}
+  \label{fig:pipeline_rag}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsubsection{Modelos LLM de Código Abierto}
+% ------------------------------------------------------------
+
+Para el pipeline se evalúan modelos de lenguaje de código abierto con
+soporte multilingüe ejecutables sobre infraestructura local. Entre los
+candidatos se consideran: \textbf{Qwen}~(Alibaba Cloud), con sólido
+soporte multilingüe y seguimiento de instrucciones;
+\textbf{Kimi~K}~(Moonshot~AI), destacado por su manejo de contextos
+largos; \textbf{GLM}~(Zhipu~AI), con capacidad de razonamiento en
+entornos técnicos; y \textbf{Nemotron}~(NVIDIA), optimizado para
+seguimiento preciso de instrucciones en dominios
+especializados~\cite{gavai2025,arshad2025}. El uso de modelos locales
+garantiza que los datos clínicos del paciente no sean transmitidos a
+servicios externos, respondiendo a las limitaciones de privacidad
+identificadas en la literatura~\cite{abeltino2025,ebadi2025}.
+
+% ------------------------------------------------------------
+\subsubsection{Escala de Satisfacción tipo Likert y Análisis Descriptivo}
+% ------------------------------------------------------------
+
+La escala Likert es un instrumento ampliamente
+utilizado para medir actitudes y percepciones en investigación en
+sistemas de información~\cite{ghose2021}. En este proyecto se emplea una
+escala de cinco puntos (1~=~Muy insatisfecho; 5~=~Muy satisfecho) que
+evalúa cinco dimensiones: adecuación clínica, claridad del lenguaje,
+facilidad de uso, confianza en la información generada y eficiencia
+temporal percibida. El índice global de satisfacción se calcula como el
+promedio ponderado de los ítems por dimensión, y los resultados se
+analizan mediante estadística descriptiva~(media, desviación estándar y
+distribución de frecuencias).
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{imagenes/Imagen4.jpg}
+  \caption{Imagen de ``Instrumento de satisfacción tipo Likert del sistema NutriRAG'' generada por Gemini.}
+  \label{fig:likert}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsubsection{Stack Tecnológico y Modelo C4}
+% ------------------------------------------------------------
+
+El prototipo se desarrolla con un stack de código abierto: backend en
+Node.js con TypeScript y Express.js, frontend en React con TailwindCSS,
+y persistencia en PostgreSQL con Prisma~ORM y la extensión pgvector. La
+arquitectura del sistema se documenta mediante el modelo~C4~(Contexto,
+Contenedores, Componentes y Código), que proporciona una descripción
+estructurada de los módulos, sus responsabilidades y sus interacciones,
+constituyendo la guía de implementación del prototipo.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\linewidth]{imagenes/Imagen2.jpg}
+  \caption{Imagen de ``Diagrama C4 de contexto del sistema NutriRAG'' generada por Gemini.}
+  \label{fig:c4}
+\end{figure}
+
+% ============================================================
+\subsection{Trabajos relacionados}
+% ============================================================
+
+Las investigaciones recientes en sistemas de gestión nutricional asistidos
+por inteligencia artificial evidencian una convergencia hacia arquitecturas
+RAG con modelos de lenguaje locales y herramientas digitales
+especializadas. La Tabla~\ref{tab:trabajos_relacionados} sintetiza los
+trabajos de mayor relación metodológica y temática con el presente
+proyecto; a continuación se presenta un análisis crítico de cada uno.
+
+\begin{table}[ht]
+\centering
+\caption{Trabajos relacionados}
+\label{tab:trabajos_relacionados}
+\begin{tabular}{|c|p{9cm}|c|}
+\hline
+\textbf{ID} & \textbf{Título} & \textbf{Ref.} \\
+\hline
+TR01 & AI-Driven Personalized Nutrition: RAG-Based Digital Health Solution & \cite{gavai2025} \\
+\hline
+TR02 & Personalized Nutrition in the Era of Digital Health & \cite{arshad2025} \\
+\hline
+TR03 & Integrated Digital Health Care Platform for Diabetes Management & \cite{lee2023} \\
+\hline
+TR04 & Management and Monitoring of Patients in their Diet's Nutrition & \cite{quichimbo2021} \\
+\hline
+TR05 & Digital Applications for Diet Monitoring and Precision Nutrition & \cite{abeltino2025} \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{TR01:} En el artículo~\cite{gavai2025}, los autores proponen un sistema de
+nutrición personalizada basado en~RAG con modelos de lenguaje locales
+orientado al manejo de la obesidad y la diabetes tipo~2. La solución
+integra datos clínicos del paciente con una base de conocimiento
+nutricional estructurada, reportando hasta un~80\% de adherencia y
+capacidad de ajuste dinámico del plan. Su limitación principal es la
+validación clínica aún incipiente, lo que justifica la inclusión de una
+evaluación de satisfacción del profesional en el presente proyecto.
+
+\medskip
+
+\textbf{TR02:} En el artículo~\cite{arshad2025}, los autores presentan una revisión
+de las tecnologías de salud digital para la nutrición personalizada en el
+manejo de la diabetes y la obesidad, destacando el papel de los~LLM y los
+sistemas~RAG en la generación de recomendaciones dietéticas adaptativas.
+Los autores subrayan que integrar datos antropométricos y bioquímicos con
+catálogos nutricionales estructurados mejora la pertinencia clínica de las
+recomendaciones, a la vez que advierten sobre la necesidad de mantener la
+supervisión del profesional como validador final del plan.
+
+\medskip
+
+\textbf{TR03:} Los autores del artículo~\cite{lee2023} evaluaron una plataforma
+digital integrada para la gestión de la diabetes con módulos de
+inteligencia artificial y gestión dietética durante 48~semanas. Los
+resultados demuestran mejoras en los marcadores clínicos, pero ponen en
+evidencia que los errores en la predicción de macronutrientes siguen siendo
+un desafío sin supervisión profesional~\cite{mortazavi2023}. Esta
+limitación refuerza la pertinencia de orientar el presente proyecto hacia
+la satisfacción del nutricionista como criterio de aceptación del sistema.
+
+\medskip
+
+\textbf{TR04:} En el artículo~\cite{quichimbo2021}, los autores desarrollaron una
+solución web para la gestión y monitoreo nutricional de pacientes en el
+contexto ecuatoriano. Su trabajo constituye el antecedente nacional más
+directo e identifica las mismas limitaciones que motivan el presente
+proyecto: ausencia de herramientas inteligentes para generar
+recomendaciones personalizadas y dependencia de registros manuales.
+El prototipo propuesto avanza sobre estas limitaciones al incorporar un
+pipeline~RAG con un catálogo de alimentos ecuatorianos.
+
+\medskip
+
+\textbf{TR05:} En el artículo~\cite{abeltino2025}, los autores realizaron una
+revisión sistemática de aplicaciones digitales para el monitoreo, la
+planificación y la nutrición de precisión. Identifican brechas críticas:
+falta de interoperabilidad, escasa adaptación regional y altos costos de
+implementación. Los autores concluyen que se requieren soluciones adaptadas
+al contexto local con interfaces diseñadas para profesionales de la salud,
+lo que fundamenta directamente el alcance del prototipo aquí propuesto.
+
+% ============================================================
+\subsection{Aporte del marco teórico al proyecto}
+% ============================================================
+
+El marco teórico establece los fundamentos que justifican cada decisión de
+diseño del prototipo. La revisión de la gestión nutricional clínica en el
+contexto ecuatoriano confirma las limitaciones del modelo manual
+predominante y sustenta la necesidad de una herramienta digital que asista
+al nutricionista~\cite{vargas2025,quichimbo2021}. El enfoque de Nutrición
+Personalizada orienta la integración de datos antropométricos, bioquímicos
+y del catálogo de alimentos ecuatorianos como entradas del sistema,
+priorizando la pertinencia clínica local~\cite{siddiqui2025,aldarras2025}.
+
+La arquitectura RAG, respaldada por evidencia empírica en sistemas de
+nutrición similares~\cite{gavai2025,arshad2025}, resuelve la limitación
+de las alucinaciones de los LLM al anclar las recomendaciones en datos
+verificados. El uso de modelos de código abierto~(Qwen, Kimi~K, GLM o
+Nemotron) ejecutados localmente responde a las limitaciones de costo,
+interoperabilidad y privacidad identificadas en la
+literatura~\cite{abeltino2025,ebadi2025}. Finalmente, la escala Likert
+como instrumento de medición permite cuantificar el nivel de aceptación
+del sistema por parte del nutricionista, alineando la evaluación con las
+mejores prácticas en sistemas de soporte a la decisión
+clínica~\cite{ghose2021,lee2023}.

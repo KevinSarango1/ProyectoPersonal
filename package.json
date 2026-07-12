@@ -1,6 +1,10 @@
 {
   "dependencies": {
+    "docx": "^9.7.0",
     "dotenv": "^17.4.2",
     "openai": "^6.37.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
   }
 }

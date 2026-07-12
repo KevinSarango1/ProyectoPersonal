@@ -1,0 +1,103 @@
+\clearpage
+\section{Presupuesto y financiamiento}
+
+En este apartado se detallan los costos estimados asociados a cada rubro del proyecto, incluyendo talento humano, servicios, hardware y software. Los valores presentados son referenciales y han sido calculados con fines de planificación académica.
+
+\subsection{Talento humano}
+
+Se registra el tiempo estimado de dedicación del estudiante y el director del trabajo de titulación, expresado en horas y valorado a precio de mercado referencial. El cálculo se presenta en la Tabla~\ref{tab:presupuesto-talento}.
+
+\begin{table}[H]
+\centering
+\caption{Presupuesto Talento Humano}
+\label{tab:presupuesto-talento}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\rowcolor[HTML]{B6DAF8}
+\textbf{Descripción} & \textbf{Cantidad} & \textbf{Unidad} & \textbf{Valor Unitario} & \textbf{Valor total} \\ \hline
+Estudiante           & 400               & hora            & \$6,00     & \$2.400,00            \\ \hline
+Director de TIC      & 16                & hora            & \$10,48                 & \$167,68              \\ \hline
+\multicolumn{4}{|r|}{\textbf{Total}}                          & \textbf{\$2.567,68}   \\ \hline
+\end{tabular}
+\end{table}
+\footnotetext{El valor hora (\$6,00 USD) se ha estimado tomando como referencia las tarifas de mercado para servicios profesionales de un Desarrollador de Software Junior con conocimientos en TypeScript, React.js, Node.js, PostgreSQL y Python en Ecuador, según la \href{https://talently.tech/herramientas/salario/calculadora/resultado?from=/herramientas/ecuador/salario&skill_ids=3&skill_ids=7&skill_ids=18&skill_ids=51&skill_ids=86&skill_ids=299&seniority_id=1&english_level_id=1&work_modality_id=1&role=tech_profile&email=kevinpsarango@gmail.com&country=ecuador&maxSalary=1440&minSalary=960}{Calculadora de Salarios de Talently}, que establece un rango salarial de \$960 a \$1.440 USD mensuales para este perfil (promedio referencial: \$1.200 USD/mes). Aplicando una jornada laboral estándar de 160 horas mensuales, el valor hora resultante es de \$7,50 USD/hora, ajustado a \$6,00 USD/hora considerando la naturaleza académica e investigativa del presente trabajo.}
+
+\subsection{Servicios}
+
+Se incluyen los servicios externos necesarios para la conectividad y la firma de documentos durante la ejecución del proyecto, conforme a la Tabla~\ref{tab:presupuesto-servicios}.
+
+\begin{table}[H]
+\centering
+\caption{Presupuesto Servicios}
+\label{tab:presupuesto-servicios}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\rowcolor[HTML]{B6DAF8}
+\textbf{Descripción} & \textbf{Cantidad} & \textbf{Unidad} & \textbf{Valor Unitario} & \textbf{Valor total} \\ \hline
+Internet             & 4                 & Mensualidades   & \$22,00                  & \$88,00               \\ \hline
+Firma electrónica    & 1                 & Licencia        & \$24,00                  & \$24,00               \\ \hline
+\multicolumn{4}{|r|}{\textbf{Total}}                          & \textbf{\$112,00}     \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Hardware}
+
+Se detalla el equipo físico requerido para el desarrollo del prototipo. El proyecto se ejecuta íntegramente en el equipo de cómputo del estudiante, sin necesidad de servidores físicos adicionales dado que la inferencia del modelo de lenguaje se realiza mediante la API de Groq (Tabla~\ref{tab:presupuesto-hardware}).
+
+\begin{table}[H]
+\centering
+\caption{Presupuesto Hardware}
+\label{tab:presupuesto-hardware}
+\begin{tabular}{|l|c|l|c|c|}
+\hline
+\rowcolor[HTML]{B6DAF8}
+\textbf{Descripción} & \textbf{Cantidad} & \textbf{Unidad} & \textbf{Valor Unitario} & \textbf{Valor total} \\ \hline
+Laptop               & 1                 & Computadora     & \$950,00                 & \$950,00              \\ \hline
+\multicolumn{4}{|r|}{\textbf{Total}}                          & \textbf{\$950,00}     \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Software}
+
+Las herramientas de software utilizadas en el proyecto son en su mayoría de código abierto y gratuitas. Se contempla el costo de la suscripción mensual a Claude (Anthropic) como asistente de desarrollo de inteligencia artificial (Tabla~\ref{tab:presupuesto-software}).
+
+\begin{table}[H]
+\centering
+\caption{Presupuesto Software}
+\label{tab:presupuesto-software}
+\begin{tabular}{|p{7cm}|c|c|c|c|}
+\hline
+\rowcolor[HTML]{B6DAF8}
+\textbf{Descripción} & \textbf{Cantidad} & \textbf{Unidad} & \textbf{Valor Unitario} & \textbf{Valor total} \\ \hline
+Claude: Anthropic (asistente IA de desarrollo)               & 4 & Meses    & \$20,00  & \$80,00  \\ \hline
+Visual Studio Code                                              & 1 & Licencia & \$0,00   & \$0,00   \\ \hline
+GitHub                                                          & 1 & Cuenta   & \$0,00   & \$0,00   \\ \hline
+Groq API: plan gratuito (LLM Llama~3.3)                      & 4 & Meses    & \$0,00   & \$0,00   \\ \hline
+Stack open-source (Node.js, React, PostgreSQL)                  & 1 & Suite    & \$0,00   & \$0,00   \\ \hline
+Google Forms (recolección y análisis de satisfacción)           & 1 & Cuenta   & \$0,00   & \$0,00   \\ \hline
+\multicolumn{4}{|r|}{\textbf{Total}}                          & \textbf{\$80,00}      \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Resumen del presupuesto}
+
+La Tabla~\ref{tab:resumen-presupuesto} consolida todos los rubros anteriores e incluye una reserva del 10\,\% para imprevistos.
+
+\begin{table}[H]
+\centering
+\caption{Resumen del presupuesto}
+\label{tab:resumen-presupuesto}
+\begin{tabular}{|l|c|}
+\hline
+\rowcolor[HTML]{B6DAF8}
+\textbf{Descripción}     & \textbf{Valor}       \\ \hline
+Talento Humano           & \$2.567,68           \\ \hline
+Servicios                & \$112,00             \\ \hline
+Hardware                 & \$950,00             \\ \hline
+Software                 & \$80,00              \\ \hline
+\textbf{Subtotal}        & \textbf{\$3.709,68}  \\ \hline
+Imprevisto 10\,\%        & \$370,97             \\ \hline
+\rowcolor[HTML]{5BC0DE}
+\textbf{Total}           & \textbf{\$4.080,65}  \\ \hline
+\end{tabular}
+\end{table}
