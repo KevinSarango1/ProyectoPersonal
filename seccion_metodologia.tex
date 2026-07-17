@@ -5,7 +5,7 @@
 \subsection{Técnicas, Métodos y Procedimientos}
 % ============================================================
 
-Para el desarrollo de la aplicación se adopta la metodología RAD (Rapid Application Development / Desarrollo Rápido de Aplicaciones), seleccionando y adaptando sus fases al contexto de un sistema de gestión nutricional con inteligencia artificial. RAD permite construir prototipos funcionales de forma iterativa e incremental con retroalimentación continua, reduciendo los tiempos de desarrollo mediante componentes
+Para el desarrollo de la aplicación se adopta la metodología RAD (Rapid Application Development / Desarrollo Rápido de Aplicaciones)~\cite{fauzi2023}, seleccionando y adaptando sus fases al contexto de un sistema de gestión nutricional con inteligencia artificial. RAD permite construir prototipos funcionales de forma iterativa e incremental con retroalimentación continua, reduciendo los tiempos de desarrollo mediante componentes
 reutilizables y una participación activa del usuario final, lo que resulta adecuado para este proyecto dado que los requisitos se consolidan a partir de la interacción directa con el actor principal (el nutricionista). Se aplican modelos UML (diagramas de casos de uso, modelo de dominio, diagramas de secuencia y diagrama de clases) junto con el modelo de arquitectura C4 en las etapas de Diseño del Usuario y Construcción Rápida, lo que permite mantener una documentación estructurada y coherente con la implementación del sistema. Además, para la evaluación del prototipo se emplea un cuestionario Likert aplicado a expertos en nutrición, que permite medir de forma cuantitativa la percepción de
 adecuación clínica, claridad en recomendaciones, facilidad de uso, confianza en las recomendaciones generadas y eficiencia temporal del sistema. Tras la aplicación del instrumento se analizan los resultados para calcular un índice global de satisfacción y evaluar la pertinencia del prototipo en el contexto clínico nutricional.
 
@@ -34,7 +34,7 @@ adecuación clínica, claridad en recomendaciones, facilidad de uso, confianza e
   
   \item \textbf{Modelo de dominio y comportamiento:} diagrama de clases con
   atributos y cardinalidades, y diagramas de secuencia que ilustran flujos  principales, incluyendo el pipeline RAG (mensaje del nutricionista
-  $\rightarrow$ backend $\rightarrow$ API Groq con Llama~3.3 $\rightarrow$
+  $\rightarrow$ backend $\rightarrow$ API Groq con Llama~3.3~\cite{grattafiori2024} $\rightarrow$
   respuesta al frontend).
   \item \textbf{Arquitectura C4:} documentación de la arquitectura en cuatro
   niveles (Contexto, Contenedores, Componentes, Código) describiendo la
@@ -116,7 +116,7 @@ bajo las condiciones de acceso abierto de dichas fuentes, respetando en toda
 publicación derivada la atribución a los autores originales.
 
 \textbf{Uso responsable de la inteligencia artificial:}
-El sistema emplea el modelo de lenguaje de código abierto dentro de un pipeline de generación aumentada por recuperación~(RAG),
+El sistema emplea el modelo de lenguaje de código abierto dentro de un pipeline de generación aumentada por recuperación~(RAG)~\cite{lewis2020,tokic2026},
 utilizado exclusivamente como herramienta de apoyo como sugerencias de los planes alimenticios para la revisión, aceptación del nutricionista. En la fase de prototipado, el modelo se accede mediante la
 APIS, que proveen inferencias sobre modelos open-source sin retención
 permanente de datos según su política de privacidad~\cite{gavai2025,arshad2025};

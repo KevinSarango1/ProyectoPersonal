@@ -4,11 +4,8 @@ export interface Patient {
   id: string;
   firstName: string;
   lastName: string;
-  email: string;
-  phone?: string;
   dateOfBirth: string;
   gender: Gender;
-  address?: string;
   occupation?: string;
   createdAt: string;
   clinicalHistory?: ClinicalHistory;
@@ -20,12 +17,8 @@ export interface Patient {
 export interface PatientForm {
   firstName: string;
   lastName: string;
-  email: string;
-  password: string;
-  phone?: string;
   dateOfBirth: string;
   gender: Gender;
-  address?: string;
   occupation?: string;
 }
 

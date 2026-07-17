@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
@@ -7,8 +6,8 @@ import { AuthRequest } from '../middleware/auth';
 export const getPatients = async (_req: AuthRequest, res: Response) => {
   const patients = await prisma.patient.findMany({
     select: {
-      id: true, firstName: true, lastName: true, email: true,
-      phone: true, dateOfBirth: true, gender: true, occupation: true, createdAt: true,
+      id: true, firstName: true, lastName: true,
+      dateOfBirth: true, gender: true, occupation: true, createdAt: true,
       clinicalHistory: {
         select: {
           nutritionalObjective: true, pastDiseases: true,
@@ -48,27 +47,20 @@ export const getPatientById = async (req: Request, res: Response) => {
     },
   });
   if (!patient) return res.status(404).json({ message: 'Paciente no encontrado' });
-
-  const { passwordHash, ...safe } = patient as any;
-  res.json(safe);
+  res.json(patient);
 };
 
 // POST /api/patients
 export const createPatient = async (req: Request, res: Response) => {
-  const { firstName, lastName, email, password, phone, dateOfBirth, gender, address, occupation } = req.body;
+  const { firstName, lastName, dateOfBirth, gender, occupation } = req.body;
 
-  if (!firstName || !lastName || !email || !password || !dateOfBirth || !gender) {
+  if (!firstName || !lastName || !dateOfBirth || !gender) {
     return res.status(400).json({ message: 'Faltan campos requeridos' });
   }
 
-  const exists = await prisma.patient.findUnique({ where: { email } });
-  if (exists) return res.status(409).json({ message: 'Este email ya está registrado' });
-
-  const passwordHash = await bcrypt.hash(password, 10);
   const patient = await prisma.patient.create({
     data: {
-      firstName, lastName, email, passwordHash, phone, dateOfBirth,
-      gender, address, occupation,
+      firstName, lastName, dateOfBirth, gender, occupation,
       clinicalHistory: {
         create: {
           date: new Date().toISOString().split('T')[0],
@@ -79,8 +71,8 @@ export const createPatient = async (req: Request, res: Response) => {
       },
     },
     select: {
-      id: true, firstName: true, lastName: true, email: true,
-      phone: true, dateOfBirth: true, gender: true, createdAt: true,
+      id: true, firstName: true, lastName: true,
+      dateOfBirth: true, gender: true, occupation: true, createdAt: true,
     },
   });
 
@@ -90,20 +82,15 @@ export const createPatient = async (req: Request, res: Response) => {
 // PUT /api/patients/:id
 export const updatePatient = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { firstName, lastName, email, password, phone, dateOfBirth, gender, address, occupation } = req.body;
-
-  if (email) {
-    const exists = await prisma.patient.findFirst({ where: { email, NOT: { id } } });
-    if (exists) return res.status(409).json({ message: 'Este email ya está en uso' });
-  }
-
-  const data: any = { firstName, lastName, email, phone, dateOfBirth, gender, address, occupation };
-  if (password) data.passwordHash = await bcrypt.hash(password, 10);
+  const { firstName, lastName, dateOfBirth, gender, occupation } = req.body;
 
   const patient = await prisma.patient.update({
     where: { id },
-    data,
-    select: { id: true, firstName: true, lastName: true, email: true, phone: true, dateOfBirth: true, gender: true },
+    data: { firstName, lastName, dateOfBirth, gender, occupation },
+    select: {
+      id: true, firstName: true, lastName: true,
+      dateOfBirth: true, gender: true, occupation: true,
+    },
   });
 
   res.json(patient);

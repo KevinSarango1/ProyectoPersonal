@@ -74,12 +74,12 @@ proyecto busca abordar.
 % ------------------------------------------------------------
 
 Los modelos de lenguaje de gran escala~(LLM) son sistemas de inteligencia
-artificial basados en arquitecturas de transformadores que aprenden
+artificial basados en arquitecturas de transformadores~\cite{sajun2024} que aprenden
 representaciones lingüísticas complejas, permitiéndoles generar respuestas
 coherentes ante consultas en lenguaje natural. No obstante, los LLM pueden
-producir alucinaciones al no disponer de un contexto verificado. La
+producir alucinaciones~\cite{gao2024rag} al no disponer de un contexto verificado. La
 Generación Aumentada por Recuperación~(RAG) resuelve esta limitación
-combinando un módulo de recuperación de información con el LLM: ante una
+combinando un módulo de recuperación de información con el LLM~\cite{lewis2020}: ante una
 consulta, el sistema recupera los fragmentos más relevantes de una base de
 conocimiento estructurada y los entrega al modelo como contexto,
 reduciendo las alucinaciones al anclar las respuestas en datos verificados
@@ -99,14 +99,14 @@ planes generados~\cite{gavai2025}.
 El pipeline RAG del prototipo sigue tres etapas secuenciales. En la
 indexación, los documentos del catálogo alimentario ecuatoriano
 y los perfiles clínicos básicos del paciente se convierten en vectores
-numéricos~(embeddings) mediante un modelo de embeddings de código abierto
+numéricos~(embeddings)~\cite{patil2023} mediante un modelo de embeddings de código abierto
 y se almacenan en pgvector, extensión de~PostgreSQL que permite
 búsquedas de similitud semántica sobre datos relacionales. En la etapa de
 recuperación, ante una consulta del nutricionista, el sistema
 calcula la similitud vectorial y retorna los fragmentos más relevantes.
 En la generación, el LLM produce la recomendación nutricional
 usando esos fragmentos como contexto. LangChain actúa como framework de
-orquestación del pipeline completo.
+orquestación del pipeline completo~\cite{burgan2024}.
 
 \begin{figure}[ht]
   \centering
@@ -122,12 +122,12 @@ orquestación del pipeline completo.
 Para el pipeline se evalúan modelos de lenguaje de código abierto con
 soporte multilingüe ejecutables sobre infraestructura local. Entre los
 candidatos se consideran: \textbf{Qwen}~(Alibaba Cloud), con sólido
-soporte multilingüe y seguimiento de instrucciones;
+soporte multilingüe y seguimiento de instrucciones~\cite{yang2024qwen};
 \textbf{Kimi~K}~(Moonshot~AI), destacado por su manejo de contextos
-largos; \textbf{GLM}~(Zhipu~AI), con capacidad de razonamiento en
-entornos técnicos; y \textbf{Nemotron}~(NVIDIA), optimizado para
+largos~\cite{kimiteam2025}; \textbf{GLM}~(Zhipu~AI), con capacidad de razonamiento en
+entornos técnicos~\cite{glmteam2024}; y \textbf{Nemotron}~(NVIDIA), optimizado para
 seguimiento preciso de instrucciones en dominios
-especializados~\cite{gavai2025,arshad2025}. El uso de modelos locales
+especializados~\cite{nvidia2025,gavai2025,arshad2025}. El uso de modelos locales
 garantiza que los datos clínicos del paciente no sean transmitidos a
 servicios externos, respondiendo a las limitaciones de privacidad
 identificadas en la literatura~\cite{abeltino2025,ebadi2025}.
@@ -162,7 +162,7 @@ El prototipo se desarrolla con un stack de código abierto: backend en
 Node.js con TypeScript y Express.js, frontend en React con TailwindCSS,
 y persistencia en PostgreSQL con Prisma~ORM y la extensión pgvector. La
 arquitectura del sistema se documenta mediante el modelo~C4~(Contexto,
-Contenedores, Componentes y Código), que proporciona una descripción
+Contenedores, Componentes y Código)~\cite{brown2024c4}, que proporciona una descripción
 estructurada de los módulos, sus responsabilidades y sus interacciones,
 constituyendo la guía de implementación del prototipo.
 

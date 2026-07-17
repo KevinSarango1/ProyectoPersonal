@@ -39,12 +39,8 @@ model Patient {
   id               String           @id @default(uuid())
   firstName        String
   lastName         String
-  email            String           @unique
-  passwordHash     String
-  phone            String?
   dateOfBirth      String
   gender           Gender
-  address          String?
   occupation       String?
   nutritionistId   String?
   nutritionist     User?            @relation(fields: [nutritionistId], references: [id], onDelete: SetNull)

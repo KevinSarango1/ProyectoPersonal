@@ -3,9 +3,9 @@ import multer from 'multer';
 import prisma from '../config/database';
 import { aiService } from '../services/aiService';
 
-// pdf-parse es CJS — doble cast para evitar error de tipo en IDE
+// pdf-parse v2 usa clase PDFParse en lugar de función directa
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse') as unknown as (buf: Buffer) => Promise<{ text: string }>;
+const { PDFParse } = require('pdf-parse') as { PDFParse: new (opts: { data: Buffer }) => { getText(): Promise<{ text: string }> } };
 
 // Alias para evitar errores de caché de tipos de Prisma en el IDE
 // (el cliente generado sí incluye chatMessage — reinicia TS server si persiste)
@@ -137,7 +137,8 @@ export const chatWithFile = async (req: Request, res: Response) => {
     if (file) {
       fileName = file.originalname;
       if (file.mimetype === 'application/pdf') {
-        const pdfData = await pdfParse(file.buffer);
+        const parser = new PDFParse({ data: file.buffer });
+        const pdfData = await parser.getText();
         extractedText = pdfData.text.slice(0, 6000);
       } else {
         extractedText = file.buffer.toString('utf-8').slice(0, 6000);

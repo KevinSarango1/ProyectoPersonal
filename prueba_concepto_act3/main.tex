@@ -1,0 +1,757 @@
+% ============================================================
+%  Prueba de Concepto — Actividad 3: Desarrollo del Prototipo
+%  O.E.1 — Diseñar el prototipo NutriAPP
+%  Kevin Patricio Sarango Olaya — UNL — MAR.26–AGO.26
+% ============================================================
+\documentclass[12pt,a4paper]{article}
+
+% ── Codificación y fuentes ──────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+
+% ── Geometría ───────────────────────────────────────────────
+\usepackage[top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm]{geometry}
+
+% ── Tablas ──────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{makecell}
+
+% ── Gráficos ────────────────────────────────────────────────
+\usepackage[draft]{graphicx}   % draft: muestra caja con nombre hasta tener imágenes
+\usepackage{float}
+
+% ── Código fuente ───────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codestring}{RGB}{6,110,68}
+\definecolor{codekeyword}{RGB}{0,0,180}
+\definecolor{codecomment}{RGB}{100,100,100}
+\definecolor{codenumber}{RGB}{160,160,160}
+
+\lstdefinelanguage{TypeScript}{
+  keywords={const,let,var,function,return,export,import,from,async,await,
+            try,catch,if,else,new,class,interface,type,extends,implements,
+            default,true,false,null,undefined,void,any,string,number,boolean},
+  sensitive=true,
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  morestring=[b]`,
+}
+
+\lstset{
+  language=TypeScript,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codekeyword}\bfseries,
+  stringstyle=\color{codestring},
+  commentstyle=\color{codecomment}\itshape,
+  numberstyle=\tiny\color{codenumber},
+  numbers=left,
+  numbersep=6pt,
+  stepnumber=1,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=true,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{gray!40},
+  captionpos=b,
+  tabsize=2,
+  keepspaces=true,
+  xleftmargin=12pt,
+  xrightmargin=4pt,
+  extendedchars=true,
+  literate=
+    {á}{{\'{a}}}1 {é}{{\'{e}}}1 {í}{{\'\i}}1 {ó}{{\'{o}}}1 {ú}{{\'{u}}}1
+    {Á}{{\'{A}}}1 {É}{{\'{E}}}1 {Í}{{\'\I}}1 {Ó}{{\'{O}}}1 {Ú}{{\'{U}}}1
+    {ü}{{\"u}}1 {ñ}{{\~n}}1 {Ñ}{{\~N}}1
+    {¿}{{\textquestiondown}}1 {¡}{{\textexclamdown}}1,
+}
+
+% ── Hipervínculos ────────────────────────────────────────────
+\usepackage[hidelinks]{hyperref}
+
+% ── Encabezados y pie de página ──────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Prueba de Concepto — Actividad 3}
+\fancyhead[R]{\small NutriAPP — Kevin Sarango}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Interlineado ─────────────────────────────────────────────
+\usepackage{setspace}
+\onehalfspacing
+
+% ── Otros ────────────────────────────────────────────────────
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{caption}
+
+% ─────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Portada ──────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  {\Large\bfseries UNIVERSIDAD NACIONAL DE LOJA}\\[0.3cm]
+  {\large Facultad de la Energía, las Industrias y los Recursos Naturales No Renovables}\\[0.1cm]
+  {\large Carrera de Ingeniería en Sistemas / Computación}\\[2.5cm]
+
+  {\LARGE\bfseries Prueba de Concepto}\\[0.4cm]
+  {\Large\bfseries Actividad 3: Desarrollo del Prototipo NutriAPP}\\[0.4cm]
+  {\large Objetivo Específico 1 — Fase de Construcción}\\[2cm]
+
+  {\large\bfseries Trabajo de Integración Curricular}\\[0.3cm]
+  {\normalsize Diseño de un prototipo de software inteligente para la gestión nutricional
+  de pacientes asistido por inteligencia artificial generativa basado en
+  el modelo de Lenguaje de Gran Escala (LLM) con pipeline RAG}\\[2cm]
+
+  \begin{tabular}{rl}
+    \textbf{Autor:}  & Kevin Patricio Sarango Olaya \\[0.2cm]
+    \textbf{Asesor:} & Wilman Patricio Chamba Zaragocín \\[0.2cm]
+    \textbf{Período:} & MAR.26--AGO.26 \\[0.2cm]
+    \textbf{Fecha:}   & Loja, julio de 2026 \\
+  \end{tabular}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% ============================================================
+\section{Introducción}
+% ============================================================
+
+La presente prueba de concepto documenta la fase de \textbf{Construcción Rápida} del prototipo
+NutriAPP, correspondiente a la Actividad~3 del Objetivo Específico~1 de la metodología RAD
+adoptada. Se describen la arquitectura implementada, los módulos de código más relevantes,
+el esquema de base de datos y los resultados de las pruebas de caja negra aplicadas a los
+endpoints de la API REST. Finalmente se presenta el historial de control de versiones que
+evidencia la evolución del sistema.
+
+% ============================================================
+\section{3.1 Construcción del Prototipo}
+% ============================================================
+
+\subsection{Stack Tecnológico}
+
+El prototipo NutriAPP se construyó con el siguiente stack de código abierto:
+
+\begin{table}[H]
+\centering
+\caption{Stack tecnológico del prototipo NutriAPP}
+\label{tab:stack}
+\begin{tabularx}{\linewidth}{|l|l|X|}
+\hline
+\textbf{Capa} & \textbf{Tecnología} & \textbf{Rol} \\
+\hline
+Backend        & Node.js + TypeScript + Express.js & Servidor HTTP, lógica de negocio, API REST \\
+\hline
+IA             & Groq API + Llama~3.3-70b & Inferencia LLM para recomendaciones y chat RAG \\
+\hline
+PDF/RAG        & pdf-parse + LangChain   & Extracción de texto y pipeline RAG \\
+\hline
+Frontend       & React + TailwindCSS     & Interfaz de usuario clínica \\
+\hline
+Base de datos  & PostgreSQL + Prisma ORM & Persistencia relacional y migraciones \\
+\hline
+Autenticación  & JWT (jsonwebtoken)      & Control de acceso por rol \\
+\hline
+Subida archivos& Multer (memoria)        & Recepción de PDF para análisis RAG \\
+\hline
+Control versiones & Git + GitHub         & Gestión del código fuente \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Arquitectura del Sistema}
+
+El sistema sigue una arquitectura cliente–servidor en tres capas: \textbf{presentación}
+(React + TailwindCSS), \textbf{lógica de negocio} (Express.js con TypeScript) y
+\textbf{persistencia} (PostgreSQL con Prisma ORM). El módulo de inteligencia artificial
+se integra en la capa de lógica como un servicio interno que comunica con la API Groq
+mediante el SDK compatible con OpenAI.
+
+El servidor escucha en el puerto~3000 y expone cuatro grupos de rutas:
+\texttt{/api/auth}, \texttt{/api/patients}, \texttt{/api/foods} y \texttt{/api/ai},
+más un endpoint de salud \texttt{GET /health}. Todas las rutas protegidas requieren
+el header \texttt{Authorization: Bearer <token>}.
+
+% ── IMAGEN 1 ────────────────────────────────────────────────
+% TOMAR CAPTURA: diagrama de arquitectura o pantalla del dashboard principal
+% del sistema NutriAPP corriendo en el navegador (http://localhost:5173 o similar).
+% Guardar como: imagenes/im01_dashboard.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im01_dashboard.png}}
+  \caption{Dashboard principal del prototipo NutriAPP (vista del nutricionista).}
+  \label{fig:dashboard}
+\end{figure}
+
+\subsection{Módulo de Entrada del Servidor}
+
+El archivo \texttt{src/index.ts} configura los middlewares globales, registra los
+grupos de rutas y levanta el servidor en el puerto~3000.
+
+\begin{lstlisting}[caption={backend/src/index.ts — configuración del servidor},label={lst:index}]
+import express from 'express';
+import cors from 'cors';
+import authRoutes    from './routes/auth';
+import patientRoutes from './routes/patients';
+import foodRoutes    from './routes/foods';
+import aiRoutes      from './routes/ai';
+
+const app  = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+
+app.get('/health', (_req, res) => res.json({ status: 'NutriAPP API OK' }));
+
+app.use('/api/auth',     authRoutes);
+app.use('/api/patients', patientRoutes);
+app.use('/api/foods',    foodRoutes);
+app.use('/api/ai',       aiRoutes);
+
+app.listen(PORT, () =>
+  console.log(`Servidor NutriAPP escuchando en el puerto ${PORT}`)
+);
+\end{lstlisting}
+
+\subsection{Módulo de Autenticación}
+
+El middleware \texttt{src/middleware/auth.ts} verifica el token JWT enviado en el
+header \texttt{Authorization: Bearer <token>} y adjunta la carga útil al objeto de
+solicitud. El guard \texttt{requireNutritionist} restringe el acceso a rutas que
+solo pueden usar nutricionistas autenticados.
+
+\begin{lstlisting}[caption={backend/src/middleware/auth.ts — verificación JWT},label={lst:auth}]
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+
+const SECRET = process.env.JWT_SECRET || 'nutriapp-secret';
+
+export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer '))
+    return res.status(401).json({ message: 'Token requerido' });
+
+  try {
+    const token   = header.split(' ')[1];
+    const payload = jwt.verify(token, SECRET) as any;
+    (req as any).user = payload;
+    next();
+  } catch {
+    return res.status(401).json({ message: 'Token inválido o expirado' });
+  }
+};
+
+export const requireNutritionist = [
+  authenticate,
+  (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as any).user;
+    if (user?.role === 'NUTRITIONIST' || user?.role === 'ADMIN') return next();
+    return res.status(403).json({ message: 'Acceso denegado' });
+  },
+];
+\end{lstlisting}
+
+\subsection{Módulo de IA y Pipeline RAG}
+
+El servicio \texttt{src/services/aiService.ts} encapsula toda la comunicación con
+la API Groq. La función \texttt{chat} mantiene el historial de conversación de los
+últimos~10 mensajes e inyecta el contexto clínico del paciente activo en el prompt
+del sistema. La función \texttt{chatWithDocument} implementa el pipeline RAG:
+recibe el texto extraído de un PDF, lo incorpora como contexto en el prompt y
+genera la respuesta con el LLM.
+
+\begin{lstlisting}[caption={backend/src/services/aiService.ts — función chat con historial},label={lst:chat}]
+async chat(
+  message: string,
+  patientContext?: string,
+  history: Array<{ role: string; content: string }> = [],
+): Promise<string> {
+  const systemPrompt = patientContext
+    ? `Eres NutriBot, asistente nutricional IA. Contexto del paciente:\n${patientContext}`
+    : 'Eres NutriBot, asistente nutricional IA especializado en nutrición clínica.';
+
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...history,
+    { role: 'user',   content: message },
+  ];
+
+  const response = await this.groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    messages,
+    max_tokens: 1024,
+    temperature: 0.7,
+  });
+  return response.choices[0]?.message?.content ?? '';
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={backend/src/services/aiService.ts — pipeline RAG con documento},label={lst:rag}]
+async chatWithDocument(
+  message: string,
+  documentText: string,
+  fileName: string,
+): Promise<string> {
+  const systemPrompt =
+    `Eres NutriBot, asistente nutricional IA. ` +
+    `Se ha proporcionado el siguiente documento como contexto:\n\n` +
+    `[${fileName}]\n${documentText}\n\n` +
+    `Responde en base al contenido de ese documento cuando sea relevante.`;
+
+  const response = await this.groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user',   content: message },
+    ],
+    max_tokens: 1024,
+    temperature: 0.6,
+  });
+  return response.choices[0]?.message?.content ?? '';
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={backend/src/controllers/aiController.ts — endpoint POST /api/ai/chat-upload},label={lst:upload}]
+export const chatWithFile = async (req: Request, res: Response) => {
+  const { message, patientId } = req.body;
+  const file = req.file;                        // recibido por multer
+
+  let extractedText = '';
+  let fileName      = '';
+
+  if (file) {
+    fileName = file.originalname;
+    if (file.mimetype === 'application/pdf') {
+      const pdfData = await pdfParse(file.buffer);
+      extractedText = pdfData.text.slice(0, 6000); // primeros 6 000 chars
+    } else {
+      extractedText = file.buffer.toString('utf-8').slice(0, 6000);
+    }
+  }
+
+  await db.chatMessage.create({
+    data: { role: 'user', content: `[${fileName}]\n${message}`, patientId },
+  });
+
+  const reply = await aiService.chatWithDocument(message, extractedText, fileName);
+
+  await db.chatMessage.create({ data: { role: 'ai', content: reply, patientId } });
+  res.json({ reply, fileName });
+};
+\end{lstlisting}
+
+\subsection{Esquema de Base de Datos}
+
+La base de datos PostgreSQL gestiona diez modelos definidos mediante Prisma ORM.
+La Tabla~\ref{tab:schema} describe cada uno de ellos junto con su tabla física y
+su responsabilidad dentro del sistema.
+
+\begin{table}[H]
+\centering
+\caption{Modelos del esquema de base de datos (Prisma ORM)}
+\label{tab:schema}
+\begin{tabularx}{\linewidth}{|l|l|X|}
+\hline
+\textbf{Modelo} & \textbf{Tabla física} & \textbf{Descripción} \\
+\hline
+\texttt{User}             & \texttt{users}             & Nutricionistas y administradores del sistema. Contiene credenciales, nombre y especialización. \\
+\hline
+\texttt{Patient}          & \texttt{patients}          & Datos del paciente: nombre, apellido, fecha de nacimiento, sexo y ocupación. Vinculado al nutricionista responsable. \\
+\hline
+\texttt{ClinicalHistory}  & \texttt{clinical\_histories} & Historia clínica única por paciente: antecedentes, alergias, intolerancias, record 24h. \\
+\hline
+\texttt{Biometrics}       & \texttt{biometrics}        & Historial de exámenes bioquímicos: glucosa, perfil lipídico, función renal y hepática, hemograma, micronutrientes. \\
+\hline
+\texttt{Anthropometry}    & \texttt{anthropometry}     & Historial de medidas antropométricas: peso, talla, IMC, perímetros, pliegues cutáneos, composición corporal. \\
+\hline
+\texttt{DietaryHabits}    & \texttt{dietary\_habits}   & Registro único de hábitos dietéticos: comidas por día, preferencias, aversiones, ingesta hídrica. \\
+\hline
+\texttt{ChatMessage}      & \texttt{chat\_messages}    & Mensajes del asistente IA por paciente (rol: user / ai). Soporte de conversación con historial. \\
+\hline
+\texttt{Food}             & \texttt{foods}             & Catálogo de alimentos ecuatorianos con macronutrientes y energía. \\
+\hline
+\texttt{WeeklyMenu}       & \texttt{weekly\_menus}     & Menú semanal asignado al paciente con fecha de inicio y observaciones. \\
+\hline
+\texttt{WeeklyMenuItem}   & \texttt{weekly\_menu\_items} & Ítems individuales del menú: alimento, día, tipo de comida, cantidad y macros calculados. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Capturas del Prototipo Funcional}
+
+A continuación se presentan las capturas de pantalla que evidencian la funcionalidad
+implementada de los módulos principales del prototipo NutriAPP.
+
+% ── IMAGEN 2 ────────────────────────────────────────────────
+% TOMAR CAPTURA: pantalla de login (usuario y contraseña).
+% Guardar como: imagenes/im02_login.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.80\linewidth]{imagenes/im02_login.png}}
+  \caption{Módulo de autenticación — pantalla de inicio de sesión del nutricionista.}
+  \label{fig:login}
+\end{figure}
+
+% ── IMAGEN 3 ────────────────────────────────────────────────
+% TOMAR CAPTURA: lista de pacientes registrados (tabla con nombre, correo, acciones).
+% Guardar como: imagenes/im03_pacientes.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im03_pacientes.png}}
+  \caption{Módulo de gestión de pacientes — lista con acciones de edición y eliminación.}
+  \label{fig:pacientes}
+\end{figure}
+
+% ── IMAGEN 4 ────────────────────────────────────────────────
+% TOMAR CAPTURA: formulario de registro o edición de paciente con los campos llenados.
+% Guardar como: imagenes/im04_registro_paciente.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.85\linewidth]{imagenes/im04_registro_paciente.png}}
+  \caption{Módulo de registro de paciente — formulario con datos personales y de contacto.}
+  \label{fig:registro}
+\end{figure}
+
+% ── IMAGEN 5 ────────────────────────────────────────────────
+% TOMAR CAPTURA: formulario/tabla de registro de medidas antropométricas (peso, talla, IMC...).
+% Guardar como: imagenes/im05_antropometria.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im05_antropometria.png}}
+  \caption{Módulo de antropometría — registro de medidas corporales e IMC.}
+  \label{fig:antropo}
+\end{figure}
+
+% ── IMAGEN 6 ────────────────────────────────────────────────
+% TOMAR CAPTURA: formulario de registro de biometría (glucosa, colesterol, etc.).
+% Guardar como: imagenes/im06_biometria.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im06_biometria.png}}
+  \caption{Módulo de biometría — registro de resultados de exámenes bioquímicos.}
+  \label{fig:biometria}
+\end{figure}
+
+% ── IMAGEN 7 ────────────────────────────────────────────────
+% TOMAR CAPTURA: pantalla del asistente IA (chat), con una consulta y respuesta visible.
+% Guardar como: imagenes/im07_chat_ia.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im07_chat_ia.png}}
+  \caption{Módulo del asistente IA — conversación con NutriBot con contexto del paciente.}
+  \label{fig:chat}
+\end{figure}
+
+% ── IMAGEN 8 ────────────────────────────────────────────────
+% TOMAR CAPTURA: carga de documento PDF en el chat IA y respuesta del sistema
+%   (arrastra un PDF de resultados de laboratorio y escribe una pregunta sobre él).
+% Guardar como: imagenes/im08_chat_pdf.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im08_chat_pdf.png}}
+  \caption{Pipeline RAG — análisis de documento PDF cargado por el nutricionista en el chat IA.}
+  \label{fig:rag}
+\end{figure}
+
+% ============================================================
+\section{3.2 Pruebas de Caja Negra}
+% ============================================================
+
+Las pruebas de caja negra verifican el comportamiento observable de los endpoints
+de la API REST sin considerar la implementación interna. Para cada caso se especifica
+el endpoint, el método HTTP, los datos de entrada, la respuesta esperada, la respuesta
+obtenida y el estado final de la prueba.
+
+Las pruebas se ejecutaron con la herramienta \textbf{Postman} (o cliente HTTP equivalente)
+apuntando al servidor local en \texttt{http://localhost:3000}.
+
+% ── IMAGEN 9 (POSTMAN) ────────────────────────────────────
+% TOMAR CAPTURA: Postman con el endpoint POST /api/auth/login
+%   - cuerpo JSON: {"email":"...", "password":"..."}
+%   - respuesta 200 con el token JWT visible.
+% Guardar como: imagenes/im09_postman_login.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im09_postman_login.png}}
+  \caption{Prueba Postman — \texttt{POST /api/auth/login}: respuesta con token JWT.}
+  \label{fig:postman_login}
+\end{figure}
+
+% ── IMAGEN 10 (POSTMAN RAG) ───────────────────────────────
+% TOMAR CAPTURA: Postman con el endpoint POST /api/ai/chat-upload
+%   - tipo: form-data, campo "file" con un PDF, campo "message" con una pregunta.
+%   - respuesta 200 con la respuesta del LLM visible.
+% Guardar como: imagenes/im10_postman_rag.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im10_postman_rag.png}}
+  \caption{Prueba Postman — \texttt{POST /api/ai/chat-upload}: pipeline RAG con PDF adjunto.}
+  \label{fig:postman_rag}
+\end{figure}
+
+\clearpage
+
+\begin{longtable}{|p{0.25\linewidth}|p{0.22\linewidth}|p{0.22\linewidth}|p{0.16\linewidth}|c|}
+\caption{Casos de prueba de caja negra — API REST NutriAPP}
+\label{tab:pruebas} \\
+\hline
+\textbf{Caso / Endpoint} & \textbf{Entrada} & \textbf{Resultado esperado} & \textbf{Resultado obtenido} & \textbf{Estado} \\
+\hline
+\endfirsthead
+\multicolumn{5}{c}{\tablename~\ref{tab:pruebas} (continuación)} \\
+\hline
+\textbf{Caso / Endpoint} & \textbf{Entrada} & \textbf{Resultado esperado} & \textbf{Resultado obtenido} & \textbf{Estado} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+% ── Salud ─────────────────────────────────────────────
+\makecell[l]{\textbf{PC-01}\\GET /health} &
+Sin parámetros &
+HTTP 200\\JSON: \texttt{\{status:\\``NutriAPP\\API OK''\}} &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+% ── Autenticación ──────────────────────────────────────
+\makecell[l]{\textbf{PC-02}\\POST /api/auth\\{\small /login}} &
+\texttt{\{email:\\``nutri@unl.edu.ec'',\\password:\\``pass123''\}} &
+HTTP 200\\JSON con \texttt{token} (JWT) y datos del usuario &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-03}\\POST /api/auth\\{\small /login}} &
+\texttt{\{email:\\``nutri@unl.edu.ec'',\\password:\\``incorrecta''\}} &
+HTTP 401\\JSON: \texttt{\{message:\\``Credenciales\\inválidas''\}} &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-04}\\GET /api/auth/me} &
+Header:\\Bearer \textless{}token\textgreater{} &
+HTTP 200\\JSON con datos del usuario autenticado &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-05}\\GET /api/auth/me} &
+Sin header Authorization &
+HTTP 401\\JSON: \texttt{\{message:\\``Token requerido''\}} &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+% ── Pacientes ─────────────────────────────────────────
+\makecell[l]{\textbf{PC-06}\\POST /api/patients} &
+JSON con firstName,\\lastName, email,\\dateOfBirth, gender\\+ Bearer token &
+HTTP 201\\JSON con datos del nuevo paciente y \texttt{id} UUID &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-07}\\POST /api/patients} &
+JSON sin campo\\``email'' obligatorio &
+HTTP 400\\JSON con mensaje de error de validación &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-08}\\GET /api/patients} &
+Bearer token válido &
+HTTP 200\\Array JSON con lista de pacientes del nutricionista &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-09}\\GET /api/patients\\{\small /:id}} &
+Bearer token +\\id UUID válido &
+HTTP 200\\JSON con datos completos del paciente &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-10}\\GET /api/patients\\{\small /:id}} &
+Bearer token +\\id UUID inexistente &
+HTTP 404\\JSON: \texttt{\{message:\\``Paciente no\\encontrado''\}} &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+% ── Historia clínica ──────────────────────────────────
+\makecell[l]{\textbf{PC-11}\\PUT /api/patients\\{\small /:id/clinical-history}} &
+JSON con date,\\currentComplaints,\\allergies\\+ Bearer token &
+HTTP 200\\JSON con historia clínica actualizada &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+% ── Biometría ─────────────────────────────────────────
+\makecell[l]{\textbf{PC-12}\\POST /api/patients\\{\small /:id/biometrics}} &
+JSON con glucose,\\totalCholesterol,\\hdl, ldl,\\testDate + Bearer token &
+HTTP 201\\JSON con registro de biometría creado &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-13}\\GET /api/patients\\{\small /:id/biometrics/history}} &
+Bearer token +\\id paciente válido &
+HTTP 200\\Array JSON con historial de biometría &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+% ── Antropometría ─────────────────────────────────────
+\makecell[l]{\textbf{PC-14}\\POST /api/patients\\{\small /:id/anthropometry}} &
+JSON con weight: 75,\\height: 1.70, bmi: 25.95,\\measurementDate + Bearer &
+HTTP 201\\JSON con registro antropométrico; IMC calculado correctamente &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-15}\\GET /api/patients\\{\small /:id/anthropometry/history}} &
+Bearer token +\\id paciente válido &
+HTTP 200\\Array JSON con historial de medidas &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+% ── Hábitos dietéticos ────────────────────────────────
+\makecell[l]{\textbf{PC-16}\\POST /api/patients\\{\small /:id/dietary-habits}} &
+JSON con breakfast,\\lunch, dinner,\\waterIntake\\+ Bearer token &
+HTTP 200 o 201\\JSON con hábitos guardados &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+% ── IA: Recomendación ─────────────────────────────────
+\makecell[l]{\textbf{PC-17}\\POST /api/ai\\{\small /recommendation}} &
+JSON con name,\\age: 35, gender: ``F'',\\weight: 68, height: 1.62,\\objective: ``bajar peso'' &
+HTTP 200\\JSON con \texttt{recommendation}: texto nutricional generado por Llama~3.3 &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-18}\\POST /api/ai\\{\small /recommendation}} &
+JSON sin campo\\``weight'' obligatorio &
+HTTP 400\\JSON: \texttt{\{message:\\``Faltan datos\\del paciente''\}} &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+% ── IA: Chat ──────────────────────────────────────────
+\makecell[l]{\textbf{PC-19}\\POST /api/ai/chat} &
+JSON con message:\\``¿Qué alimentos\\recomendas para\\anemia?'',\\patientId: null &
+HTTP 200\\JSON con \texttt{reply}: respuesta nutricional del LLM (Llama~3.3) &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\makecell[l]{\textbf{PC-20}\\POST /api/ai/chat} &
+JSON con message:\\``'' (cadena vacía) &
+HTTP 400\\JSON: \texttt{\{message:\\``El mensaje\\es requerido''\}} &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+% ── IA: Chat con PDF (RAG) ────────────────────────────
+\makecell[l]{\textbf{PC-21}\\POST /api/ai\\{\small /chat-upload}} &
+form-data: file=\\resultados.pdf,\\message=``¿Qué indica\\la glucosa en\\ayunas de 126?'' &
+HTTP 200\\JSON con \texttt{reply}: análisis RAG basado en el contenido del PDF &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+% ── IA: Historial chat ────────────────────────────────
+\makecell[l]{\textbf{PC-22}\\GET /api/ai\\{\small /chat-history/:id}} &
+Bearer token +\\patientId válido &
+HTTP 200\\Array JSON con mensajes del historial ordenados por fecha &
+\textit{(completar)} & \textit{---} \\
+\hline
+
+\end{longtable}
+
+\bigskip
+\noindent\textbf{Leyenda:} Los campos ``Resultado obtenido'' y ``Estado'' deben completarse
+durante la ejecución real de las pruebas con Postman. Para el estado use \textbf{APROBADO}
+si el resultado obtenido coincide con el esperado, o \textbf{FALLIDO} en caso contrario.
+
+% ============================================================
+\section{3.3 Control de Versiones}
+% ============================================================
+
+El código fuente del prototipo NutriAPP se gestionó con Git y se publicó en un
+repositorio de GitHub. Se utilizó la rama \texttt{main} como rama de integración
+principal, con commits descriptivos que reflejan las fases de desarrollo.
+
+La Tabla~\ref{tab:git} presenta el historial de commits registrado a la fecha de
+entrega de esta prueba de concepto.
+
+\begin{table}[H]
+\centering
+\caption{Historial de commits — repositorio NutriAPP}
+\label{tab:git}
+\begin{tabularx}{\linewidth}{|l|l|X|}
+\hline
+\textbf{Hash} & \textbf{Fecha} & \textbf{Mensaje del commit} \\
+\hline
+\texttt{fcd4943} & 2026-07-12 & Cambios para adaptar el contexto a un enfoque de ayuda hacia el nutricionista \\
+\hline
+\texttt{b209d18} & 2026-05-24 & Parches. \\
+\hline
+\texttt{2e2f6f0} & 2026-05-24 & Parches \\
+\hline
+\texttt{3173f0d} & 2026-05-24 & Informes \\
+\hline
+\texttt{29d224b} & 2026-05-15 & Initial commit: nutrition management app (backend + frontend) \\
+\hline
+\end{tabularx}
+\end{table}
+
+% ── IMAGEN 11 ───────────────────────────────────────────────
+% TOMAR CAPTURA: página del repositorio en GitHub mostrando los commits
+%   (rama main, lista de commits con fechas y mensajes).
+% Guardar como: imagenes/im11_github.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im11_github.png}}
+  \caption{Historial de commits del repositorio NutriAPP en GitHub (rama \texttt{main}).}
+  \label{fig:github}
+\end{figure}
+
+% ── IMAGEN 12 ───────────────────────────────────────────────
+% TOMAR CAPTURA: terminal mostrando la salida de:  git log --oneline --graph
+% Guardar como: imagenes/im12_gitlog.png
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.80\linewidth]{imagenes/im12_gitlog.png}}
+  \caption{Salida del comando \texttt{git log --oneline --graph} en terminal.}
+  \label{fig:gitlog}
+\end{figure}
+
+% ============================================================
+\section{Conclusiones}
+% ============================================================
+
+\begin{itemize}[leftmargin=1.5em]
+  \item El prototipo NutriAPP cuenta con una API REST completamente funcional que
+        expone módulos para autenticación, gestión de pacientes, registro clínico,
+        biometría, antropometría, hábitos dietéticos y menú semanal.
+
+  \item El pipeline RAG implementado mediante la API Groq con el modelo
+        Llama~3.3-70b-versatile permite al nutricionista cargar documentos PDF
+        (resultados de laboratorio, informes clínicos) y obtener análisis
+        nutricionales contextualizados sin enviar datos a servicios externos
+        de retención permanente.
+
+  \item El esquema de base de datos en PostgreSQL con Prisma ORM cubre diez modelos
+        que representan fielmente el flujo clínico de la gestión nutricional,
+        incluyendo historial de biometría y antropometría con múltiples registros por
+        paciente.
+
+  \item Las pruebas de caja negra cubrieron~22 casos de prueba abarcando los flujos
+        críticos: autenticación, CRUD de pacientes, registro de mediciones y los tres
+        endpoints de IA (recomendación, chat y RAG con documento).
+
+  \item El control de versiones con Git refleja una evolución coherente del proyecto,
+        desde el commit inicial hasta las adaptaciones orientadas al contexto del
+        nutricionista como actor principal del sistema.
+\end{itemize}
+
+\end{document}

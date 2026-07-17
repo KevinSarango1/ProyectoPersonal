@@ -52,8 +52,7 @@ function buildHBMessage(patient: Patient, factor: number): string {
 }
 
 const EMPTY_PATIENT: PatientForm = {
-  firstName: '', lastName: '', email: '', password: '',
-  phone: '', dateOfBirth: '', gender: 'M', address: '', occupation: '',
+  firstName: '', lastName: '', dateOfBirth: '', gender: 'M', occupation: '',
 };
 const EMPTY_FOOD = {
   name: '', description: '', grossWeight: '', netWeight: '',
@@ -242,20 +241,16 @@ const NutritionistPanel: React.FC = () => {
   const openCreatePatient = () => { setEditingPatientId(null); setPatientForm(EMPTY_PATIENT); setPatientErrors({}); setShowPatientForm(true); setSelected(null); };
   const openEditPatient   = (p: Patient) => {
     setEditingPatientId(p.id);
-    setPatientForm({ firstName: p.firstName, lastName: p.lastName, email: p.email, password: '', phone: p.phone || '', dateOfBirth: p.dateOfBirth, gender: p.gender, address: p.address || '', occupation: p.occupation || '' });
+    setPatientForm({ firstName: p.firstName, lastName: p.lastName, dateOfBirth: p.dateOfBirth, gender: p.gender, occupation: p.occupation || '' });
     setPatientErrors({});
     setShowPatientForm(true);
   };
 
   const validatePatient = () => {
     const e: Record<string, string> = {};
-    if (!patientForm.firstName.trim()) e.firstName = 'Requerido';
-    if (!patientForm.lastName.trim())  e.lastName  = 'Requerido';
-    if (!patientForm.email.trim())     e.email     = 'Requerido';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(patientForm.email)) e.email = 'Email inválido';
-    if (!editingPatientId && !patientForm.password.trim()) e.password = 'Requerido';
-    if (!patientForm.dateOfBirth) e.dateOfBirth = 'Requerido';
-    if (patientForm.phone && !/^09\d{8}$/.test(patientForm.phone)) e.phone = 'Formato: 09XXXXXXXX';
+    if (!patientForm.firstName.trim()) e.firstName   = 'Requerido';
+    if (!patientForm.lastName.trim())  e.lastName    = 'Requerido';
+    if (!patientForm.dateOfBirth)      e.dateOfBirth = 'Requerido';
     setPatientErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -275,7 +270,7 @@ const NutritionistPanel: React.FC = () => {
       await loadPatients();
       setShowPatientForm(false);
     } catch (err: any) {
-      setPatientErrors({ email: err?.response?.data?.message || 'Error al guardar' });
+      setPatientErrors({ firstName: err?.response?.data?.message || 'Error al guardar' });
     } finally {
       setPatientFormLoading(false);
     }
@@ -404,7 +399,7 @@ const NutritionistPanel: React.FC = () => {
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const latestAnthro    = selected?.anthropometry?.[0];
-  const filteredPatients = patients.filter(p => `${p.firstName} ${p.lastName} ${p.email}`.toLowerCase().includes(search.toLowerCase()));
+  const filteredPatients = patients.filter(p => `${p.firstName} ${p.lastName}`.toLowerCase().includes(search.toLowerCase()));
   const filteredFoods    = foods.filter(f => `${f.name} ${f.description || ''}`.toLowerCase().includes(foodSearch.toLowerCase()));
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -512,13 +507,10 @@ const NutritionistPanel: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    { field: 'firstName', label: 'Nombre *', type: 'text', ph: 'Juan' },
-                    { field: 'lastName',  label: 'Apellido *', type: 'text', ph: 'Pérez' },
-                    { field: 'email',     label: 'Email *', type: 'email', ph: 'juan@email.com' },
-                    { field: 'password',  label: editingPatientId ? 'Nueva contraseña (vacío = mantener)' : 'Contraseña *', type: 'password', ph: '••••••' },
+                    { field: 'firstName',   label: 'Nombre *',               type: 'text', ph: 'Juan' },
+                    { field: 'lastName',   label: 'Apellido *',             type: 'text', ph: 'Pérez' },
                     { field: 'dateOfBirth', label: 'Fecha de Nacimiento *', type: 'date', ph: '' },
-                    { field: 'phone',     label: 'Teléfono', type: 'tel', ph: '09XXXXXXXX' },
-                    { field: 'occupation', label: 'Ocupación', type: 'text', ph: 'Profesión' },
+                    { field: 'occupation', label: 'Ocupación',              type: 'text', ph: 'Profesión' },
                   ].map(({ field, label, type, ph }) => (
                     <div key={field}>
                       <label className={labelCls}>{label}</label>
@@ -534,10 +526,6 @@ const NutritionistPanel: React.FC = () => {
                       <option value="F">Femenino</option>
                       <option value="O">Otro</option>
                     </select>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className={labelCls}>Dirección</label>
-                    <input className={inputCls} value={patientForm.address} onChange={e => setPatientForm(p => ({ ...p, address: e.target.value }))} placeholder="Dirección completa" />
                   </div>
                 </div>
                 <div className="flex gap-3 mt-5">
@@ -589,7 +577,7 @@ const NutritionistPanel: React.FC = () => {
                     <div className="min-w-0">
                       <h2 className="text-xl font-bold text-slate-900 leading-tight">{selected.firstName} {selected.lastName}</h2>
                       <p className="text-slate-500 text-sm mt-0.5">
-                        {getAge(selected.dateOfBirth)} años · {formatGender(selected.gender as Gender)} · {selected.email}
+                        {getAge(selected.dateOfBirth)} años · {formatGender(selected.gender as Gender)}
                       </p>
                       {selected.occupation && <p className="text-slate-400 text-xs mt-0.5">{selected.occupation}</p>}
                       {latestAnthro && (
