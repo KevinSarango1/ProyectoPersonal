@@ -29,7 +29,7 @@ export const login = async (req: Request, res: Response) => {
 
   // Buscar en pacientes
   const patient = await prisma.patient.findUnique({ where: { email } });
-  if (patient && await bcrypt.compare(password, patient.passwordHash)) {
+  if (patient && patient.passwordHash && await bcrypt.compare(password, patient.passwordHash)) {
     const token = signToken(patient.id, 'PATIENT');
     return res.json({
       token,

@@ -39,6 +39,10 @@ model Patient {
   id               String           @id @default(uuid())
   firstName        String
   lastName         String
+  email            String?          @unique
+  passwordHash     String?
+  phone            String?
+  address          String?
   dateOfBirth      String
   gender           Gender
   occupation       String?
@@ -109,6 +113,7 @@ model Biometrics {
   creatinine       Float?
   bun              Float?
   urea             Float?
+  uricAcid         Float?
   sodium           Float?
   potassium        Float?
   chloride         Float?
@@ -120,6 +125,7 @@ model Biometrics {
   hemoglobin       Float?
   hematocrit       Float?
   wbc              Float?
+  leukocytes       Float?
   platelets        Float?
   // Micronutrientes
   vitaminB12       Float?
@@ -131,6 +137,14 @@ model Biometrics {
   calcium          Float?
   magnesium        Float?
   phosphorus       Float?
+  // Hormonas / Tiroides
+  tsh              Float?
+  t3               Float?
+  t4               Float?
+  // Presión arterial y pulso
+  systolicBP       Float?
+  diastolicBP      Float?
+  heartRate        Float?
   others           String?
   testDate         String
   createdAt        DateTime @default(now())

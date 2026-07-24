@@ -9,10 +9,18 @@ async function main() {
   });
 
   if (!adminExists) {
+    const seedPassword = process.env.ADMIN_SEED_PASSWORD;
+    if (!seedPassword) {
+      throw new Error(
+        '❌ ERROR DE SEGURIDAD: La variable de entorno ADMIN_SEED_PASSWORD no está definida. ' +
+        'Por favor, defina esta variable en su archivo .env con una contraseña segura para poder inicializar el administrador.'
+      );
+    }
+
     await prisma.user.create({
       data: {
         email: 'admin@nutriapp.com',
-        passwordHash: await bcrypt.hash(process.env.ADMIN_SEED_PASSWORD || 'Admin@NutriHealth2026!', 10),
+        passwordHash: await bcrypt.hash(seedPassword, 10),
         fullName: 'Administrador',
         role: 'ADMIN',
       },
