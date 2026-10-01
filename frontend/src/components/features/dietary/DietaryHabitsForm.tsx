@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { UtensilsCrossed, Activity, Leaf, Save } from 'lucide-react';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 
 interface DietaryHabits {
@@ -28,9 +29,9 @@ const EMPTY: DietaryHabits = {
   mealEnvironment: '', observations: '',
 };
 
-const inputCls    = 'w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition resize-none';
-const inputErrCls = 'w-full bg-white border border-red-400 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition resize-none';
-const labelCls    = 'block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5';
+const inputCls    = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white focus:border-emerald-300 transition resize-none';
+const inputErrCls = 'w-full bg-red-50 border border-red-400 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition resize-none';
+const labelCls    = 'block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5';
 const errMsg      = <p className="text-xs text-red-500 mt-1">Completa este campo</p>;
 
 interface Props {
@@ -120,7 +121,9 @@ const DietaryHabitsForm: React.FC<Props> = ({ initialData, onSubmit }) => {
       {/* Comidas del día */}
       <div>
         <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-2">
-          <span className="w-5 h-5 bg-emerald-100 rounded flex items-center justify-center text-emerald-600">🍽</span>
+          <span className="w-5 h-5 bg-emerald-100 rounded flex items-center justify-center text-emerald-600">
+            <UtensilsCrossed size={12} />
+          </span>
           Hábito Alimentario Diario
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -157,7 +160,10 @@ const DietaryHabitsForm: React.FC<Props> = ({ initialData, onSubmit }) => {
 
       {/* Datos cuantitativos */}
       <div>
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Datos Generales</p>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <span className="w-5 h-5 bg-slate-100 rounded flex items-center justify-center"><Activity size={12} /></span>
+          Datos Generales
+        </p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
             <label className={labelCls}>Agua / día (L)</label>
@@ -195,7 +201,10 @@ const DietaryHabitsForm: React.FC<Props> = ({ initialData, onSubmit }) => {
 
       {/* Preferencias */}
       <div>
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Preferencias y Restricciones</p>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <span className="w-5 h-5 bg-slate-100 rounded flex items-center justify-center"><Leaf size={12} /></span>
+          Preferencias y Restricciones
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelCls}>Alimentos preferidos</label>
@@ -223,8 +232,9 @@ const DietaryHabitsForm: React.FC<Props> = ({ initialData, onSubmit }) => {
       <button
         onClick={handleSave}
         disabled={loading}
-        className="w-full md:w-auto px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+        className="w-full md:w-auto flex items-center justify-center gap-2 px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
       >
+        <Save size={15} />
         {loading ? 'Guardando...' : 'Guardar Hábitos Dietéticos'}
       </button>
 

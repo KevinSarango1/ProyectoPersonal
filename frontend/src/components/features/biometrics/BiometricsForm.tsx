@@ -1,4 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Calendar, Candy, Heart, Activity, Dna, Droplets, Pill, Syringe,
+  ClipboardList, ChevronUp, ChevronDown, Save, Plus, X,
+  AlertTriangle, type LucideIcon,
+} from 'lucide-react';
 import { Biometrics } from '../../../types/patient';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 
@@ -22,12 +27,45 @@ const EMPTY: BiometricsInput = {
   vitaminB12: 0, vitaminD: 0, folacin: 0, iron: 0, ferritin: 0, zinc: 0, calcium: 0, magnesium: 0, phosphorus: 0,
 };
 
-const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-400 focus:border-transparent bg-white transition';
-const inputErrCls = 'w-full border border-red-400 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white transition';
-const labelCls = 'block text-xs font-medium text-gray-600 mb-1';
-const errMsg = <p className="text-xs text-red-500 mt-1">Completa este campo</p>;
+const inputCls    = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:bg-white focus:border-teal-300 transition';
+const inputErrCls = 'w-full bg-red-50 border border-red-400 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition';
+const labelCls    = 'block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1';
+const errMsg      = <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertTriangle size={10} />Completa este campo</p>;
 
 const TODAY = new Date().toISOString().split('T')[0];
+
+// ── Shared section header ──────────────────────────────────────────────────
+const SectionBtn = ({
+  label, icon: Icon, colorCls, hasError, expanded, onToggle,
+}: {
+  label: string; icon: LucideIcon; colorCls: string;
+  hasError?: boolean; expanded: boolean; onToggle: () => void;
+}) => (
+  <button type="button" onClick={onToggle}
+    className={`w-full flex items-center gap-2.5 py-3 px-4 text-left font-semibold text-sm transition-colors ${colorCls}`}>
+    <Icon size={15} className="shrink-0" />
+    <span className="flex-1">{label}</span>
+    {hasError && <span className="text-xs text-red-500 font-normal flex items-center gap-1"><AlertTriangle size={11} />incompleto</span>}
+    {expanded ? <ChevronUp size={15} className="shrink-0" /> : <ChevronDown size={15} className="shrink-0" />}
+  </button>
+);
+
+// Defined outside the parent to keep a stable component reference across renders.
+const NumField = ({
+  name, label, step = '0.1', value, hasError, onChange,
+}: {
+  name: string; label: string; step?: string;
+  value: number | string; hasError: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) => (
+  <div>
+    <label className={labelCls}>{label}</label>
+    <input type="number" name={name} value={value || ''} onChange={onChange}
+      step={step} min="0" placeholder="—"
+      className={hasError ? inputErrCls : inputCls} />
+    {hasError && errMsg}
+  </div>
+);
 
 export const BiometricsForm: React.FC<BiometricsFormProps> = ({ onSubmit, initialData }) => {
   const [formData, setFormData] = useState<BiometricsInput>(
@@ -67,7 +105,7 @@ export const BiometricsForm: React.FC<BiometricsFormProps> = ({ onSubmit, initia
 
   const n = (field: keyof BiometricsInput) => (formData[field] as number) || 0;
 
-  const addExtraField = () => setExtraFields(prev => [...prev, { label: '', value: '' }]);
+  const addExtraField    = () => setExtraFields(prev => [...prev, { label: '', value: '' }]);
   const removeExtraField = (i: number) => setExtraFields(prev => prev.filter((_, idx) => idx !== i));
   const updateExtraField = (i: number, key: keyof ExtraField, val: string) =>
     setExtraFields(prev => prev.map((f, idx) => idx === i ? { ...f, [key]: val } : f));
@@ -114,15 +152,14 @@ export const BiometricsForm: React.FC<BiometricsFormProps> = ({ onSubmit, initia
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
-      // Auto-expandir secciones con errores
       setExpandedSections(prev => ({
         ...prev,
-        carbohidratos: prev.carbohidratos || !!(errors.glucose || errors.hba1c || errors.insulin || errors.homaIndex),
-        lipidos:       prev.lipidos       || !!(errors.totalCholesterol || errors.ldl || errors.hdl || errors.triglycerides || errors.vldl),
-        hepatica:      prev.hepatica      || !!(errors.ast || errors.alt || errors.ggt || errors.bilirubin),
-        renal:         prev.renal         || !!(errors.creatinine || errors.bun || errors.urea || errors.sodium || errors.potassium || errors.chloride),
-        proteinas:     prev.proteinas     || !!(errors.totalProteins || errors.albumin || errors.prealbumin),
-        hemograma:     prev.hemograma     || !!(errors.hemoglobin || errors.hematocrit || errors.wbc || errors.platelets),
+        carbohidratos:   prev.carbohidratos   || !!(errors.glucose || errors.hba1c || errors.insulin || errors.homaIndex),
+        lipidos:         prev.lipidos         || !!(errors.totalCholesterol || errors.ldl || errors.hdl || errors.triglycerides || errors.vldl),
+        hepatica:        prev.hepatica        || !!(errors.ast || errors.alt || errors.ggt || errors.bilirubin),
+        renal:           prev.renal           || !!(errors.creatinine || errors.bun || errors.urea || errors.sodium || errors.potassium || errors.chloride),
+        proteinas:       prev.proteinas       || !!(errors.totalProteins || errors.albumin || errors.prealbumin),
+        hemograma:       prev.hemograma       || !!(errors.hemoglobin || errors.hematocrit || errors.wbc || errors.platelets),
         micronutrientes: prev.micronutrientes || !!(errors.vitaminB12 || errors.vitaminD || errors.folacin || errors.iron || errors.ferritin || errors.zinc || errors.calcium || errors.magnesium || errors.phosphorus),
       }));
       return;
@@ -147,28 +184,33 @@ export const BiometricsForm: React.FC<BiometricsFormProps> = ({ onSubmit, initia
     }
   };
 
-  const hasErr = (section: 'carbohidratos' | 'lipidos' | 'hepatica' | 'renal' | 'proteinas' | 'hemograma' | 'micronutrientes') => {
-    const map = {
-      carbohidratos:   ['glucose', 'hba1c', 'insulin', 'homaIndex'],
-      lipidos:         ['totalCholesterol', 'ldl', 'hdl', 'triglycerides', 'vldl'],
-      hepatica:        ['ast', 'alt', 'ggt', 'bilirubin'],
-      renal:           ['creatinine', 'bun', 'urea', 'sodium', 'potassium', 'chloride'],
-      proteinas:       ['totalProteins', 'albumin', 'prealbumin'],
-      hemograma:       ['hemoglobin', 'hematocrit', 'wbc', 'platelets'],
-      micronutrientes: ['vitaminB12', 'vitaminD', 'folacin', 'iron', 'ferritin', 'zinc', 'calcium', 'magnesium', 'phosphorus'],
-    };
-    return map[section].some(f => fieldErrors[f]);
+  const sectionErr = {
+    carbohidratos:   ['glucose','hba1c','insulin','homaIndex'],
+    lipidos:         ['totalCholesterol','ldl','hdl','triglycerides','vldl'],
+    hepatica:        ['ast','alt','ggt','bilirubin'],
+    renal:           ['creatinine','bun','urea','sodium','potassium','chloride'],
+    proteinas:       ['totalProteins','albumin','prealbumin'],
+    hemograma:       ['hemoglobin','hematocrit','wbc','platelets'],
+    micronutrientes: ['vitaminB12','vitaminD','folacin','iron','ferritin','zinc','calcium','magnesium','phosphorus'],
   };
-
+  const hasErr = (s: keyof typeof sectionErr) => sectionErr[s].some(f => fieldErrors[f]);
   const inp = (name: string) => fieldErrors[name] ? inputErrCls : inputCls;
 
+  const num = (name: keyof BiometricsInput, label: string, step = '0.1') => (
+    <NumField key={name} name={String(name)} label={label} step={step}
+      value={formData[name] as number}
+      hasError={!!fieldErrors[String(name)]}
+      onChange={handleChange} />
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3">
 
       {/* Fecha del examen */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <div className="py-3 px-4 bg-slate-50">
-          <span className="font-semibold text-slate-700 text-sm">📅 Fecha del Examen</span>
+        <div className="py-3 px-4 bg-slate-50 flex items-center gap-2">
+          <Calendar size={14} className="text-slate-500 shrink-0" />
+          <span className="font-semibold text-slate-700 text-sm">Fecha del Examen</span>
         </div>
         <div className="p-4">
           <input type="date" name="testDate" value={formData.testDate} onChange={handleChange}
@@ -179,167 +221,156 @@ export const BiometricsForm: React.FC<BiometricsFormProps> = ({ onSubmit, initia
 
       {/* I. Metabolismo de Carbohidratos */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <button type="button" onClick={() => toggleSection('carbohidratos')}
-          className="w-full flex justify-between items-center py-3 px-4 bg-yellow-50 hover:bg-yellow-100 text-left font-semibold text-yellow-800 transition-colors">
-          <span>🍬 I. Metabolismo de Carbohidratos {hasErr('carbohidratos') && <span className="ml-2 text-xs text-red-500 font-normal">● campos incompletos</span>}</span>
-          <span className="text-lg">{expandedSections.carbohidratos ? '▲' : '▼'}</span>
-        </button>
+        <SectionBtn label="I. Metabolismo de Carbohidratos" icon={Candy}
+          colorCls="bg-yellow-50 hover:bg-yellow-100 text-yellow-800"
+          hasError={hasErr('carbohidratos')} expanded={expandedSections.carbohidratos}
+          onToggle={() => toggleSection('carbohidratos')} />
         {expandedSections.carbohidratos && (
           <div className="p-4 grid grid-cols-2 gap-4">
-            <div><label className={labelCls}>Glucosa (mg/dL)</label><input type="number" name="glucose" value={formData.glucose || ''} onChange={handleChange} step="0.1" min="0" className={inp('glucose')} />{fieldErrors.glucose && errMsg}</div>
-            <div><label className={labelCls}>HbA1c (%)</label><input type="number" name="hba1c" value={formData.hba1c || ''} onChange={handleChange} step="0.1" min="0" className={inp('hba1c')} />{fieldErrors.hba1c && errMsg}</div>
-            <div><label className={labelCls}>Insulina (mIU/L)</label><input type="number" name="insulin" value={formData.insulin || ''} onChange={handleChange} step="0.1" min="0" className={inp('insulin')} />{fieldErrors.insulin && errMsg}</div>
-            <div><label className={labelCls}>Índice HOMA</label><input type="number" name="homaIndex" value={formData.homaIndex || ''} onChange={handleChange} step="0.01" min="0" className={inp('homaIndex')} />{fieldErrors.homaIndex && errMsg}</div>
+            {num('glucose',   'Glucosa (mg/dL)')}
+            {num('hba1c',     'HbA1c (%)')}
+            {num('insulin',   'Insulina (mIU/L)')}
+            {num('homaIndex', 'Índice HOMA', '0.01')}
           </div>
         )}
       </div>
 
       {/* II. Perfil Lipídico */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <button type="button" onClick={() => toggleSection('lipidos')}
-          className="w-full flex justify-between items-center py-3 px-4 bg-red-50 hover:bg-red-100 text-left font-semibold text-red-800 transition-colors">
-          <span>❤️ II. Perfil Lipídico {hasErr('lipidos') && <span className="ml-2 text-xs text-red-500 font-normal">● campos incompletos</span>}</span>
-          <span className="text-lg">{expandedSections.lipidos ? '▲' : '▼'}</span>
-        </button>
+        <SectionBtn label="II. Perfil Lipídico" icon={Heart}
+          colorCls="bg-red-50 hover:bg-red-100 text-red-800"
+          hasError={hasErr('lipidos')} expanded={expandedSections.lipidos}
+          onToggle={() => toggleSection('lipidos')} />
         {expandedSections.lipidos && (
           <div className="p-4 grid grid-cols-2 gap-4">
-            <div><label className={labelCls}>Colesterol Total (mg/dL)</label><input type="number" name="totalCholesterol" value={formData.totalCholesterol || ''} onChange={handleChange} step="0.1" min="0" className={inp('totalCholesterol')} />{fieldErrors.totalCholesterol && errMsg}</div>
-            <div><label className={labelCls}>LDL (mg/dL)</label><input type="number" name="ldl" value={formData.ldl || ''} onChange={handleChange} step="0.1" min="0" className={inp('ldl')} />{fieldErrors.ldl && errMsg}</div>
-            <div><label className={labelCls}>HDL (mg/dL)</label><input type="number" name="hdl" value={formData.hdl || ''} onChange={handleChange} step="0.1" min="0" className={inp('hdl')} />{fieldErrors.hdl && errMsg}</div>
-            <div><label className={labelCls}>Triglicéridos (mg/dL)</label><input type="number" name="triglycerides" value={formData.triglycerides || ''} onChange={handleChange} step="0.1" min="0" className={inp('triglycerides')} />{fieldErrors.triglycerides && errMsg}</div>
-            <div><label className={labelCls}>VLDL (mg/dL)</label><input type="number" name="vldl" value={formData.vldl || ''} onChange={handleChange} step="0.1" min="0" className={inp('vldl')} />{fieldErrors.vldl && errMsg}</div>
+            {num('totalCholesterol', 'Colesterol Total (mg/dL)')}
+            {num('ldl',              'LDL (mg/dL)')}
+            {num('hdl',              'HDL (mg/dL)')}
+            {num('triglycerides',    'Triglicéridos (mg/dL)')}
+            {num('vldl',             'VLDL (mg/dL)')}
           </div>
         )}
       </div>
 
       {/* III. Función Hepática */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <button type="button" onClick={() => toggleSection('hepatica')}
-          className="w-full flex justify-between items-center py-3 px-4 bg-orange-50 hover:bg-orange-100 text-left font-semibold text-orange-800 transition-colors">
-          <span>🏥 III. Función Hepática {hasErr('hepatica') && <span className="ml-2 text-xs text-red-500 font-normal">● campos incompletos</span>}</span>
-          <span className="text-lg">{expandedSections.hepatica ? '▲' : '▼'}</span>
-        </button>
+        <SectionBtn label="III. Función Hepática" icon={Activity}
+          colorCls="bg-orange-50 hover:bg-orange-100 text-orange-800"
+          hasError={hasErr('hepatica')} expanded={expandedSections.hepatica}
+          onToggle={() => toggleSection('hepatica')} />
         {expandedSections.hepatica && (
           <div className="p-4 grid grid-cols-2 gap-4">
-            <div><label className={labelCls}>AST (U/L)</label><input type="number" name="ast" value={formData.ast || ''} onChange={handleChange} step="0.1" min="0" className={inp('ast')} />{fieldErrors.ast && errMsg}</div>
-            <div><label className={labelCls}>ALT (U/L)</label><input type="number" name="alt" value={formData.alt || ''} onChange={handleChange} step="0.1" min="0" className={inp('alt')} />{fieldErrors.alt && errMsg}</div>
-            <div><label className={labelCls}>GGT (U/L)</label><input type="number" name="ggt" value={formData.ggt || ''} onChange={handleChange} step="0.1" min="0" className={inp('ggt')} />{fieldErrors.ggt && errMsg}</div>
-            <div><label className={labelCls}>Bilirrubina (mg/dL)</label><input type="number" name="bilirubin" value={formData.bilirubin || ''} onChange={handleChange} step="0.1" min="0" className={inp('bilirubin')} />{fieldErrors.bilirubin && errMsg}</div>
+            {num('ast',       'AST (U/L)')}
+            {num('alt',       'ALT (U/L)')}
+            {num('ggt',       'GGT (U/L)')}
+            {num('bilirubin', 'Bilirrubina (mg/dL)')}
           </div>
         )}
       </div>
 
       {/* IV. Función Renal */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <button type="button" onClick={() => toggleSection('renal')}
-          className="w-full flex justify-between items-center py-3 px-4 bg-purple-50 hover:bg-purple-100 text-left font-semibold text-purple-800 transition-colors">
-          <span>🧬 IV. Función Renal {hasErr('renal') && <span className="ml-2 text-xs text-red-500 font-normal">● campos incompletos</span>}</span>
-          <span className="text-lg">{expandedSections.renal ? '▲' : '▼'}</span>
-        </button>
+        <SectionBtn label="IV. Función Renal" icon={Dna}
+          colorCls="bg-purple-50 hover:bg-purple-100 text-purple-800"
+          hasError={hasErr('renal')} expanded={expandedSections.renal}
+          onToggle={() => toggleSection('renal')} />
         {expandedSections.renal && (
           <div className="p-4 grid grid-cols-2 gap-4">
-            <div><label className={labelCls}>Creatinina (mg/dL)</label><input type="number" name="creatinine" value={formData.creatinine || ''} onChange={handleChange} step="0.1" min="0" className={inp('creatinine')} />{fieldErrors.creatinine && errMsg}</div>
-            <div><label className={labelCls}>BUN (mg/dL)</label><input type="number" name="bun" value={formData.bun || ''} onChange={handleChange} step="0.1" min="0" className={inp('bun')} />{fieldErrors.bun && errMsg}</div>
-            <div><label className={labelCls}>Urea (mg/dL)</label><input type="number" name="urea" value={formData.urea || ''} onChange={handleChange} step="0.1" min="0" className={inp('urea')} />{fieldErrors.urea && errMsg}</div>
-            <div><label className={labelCls}>Sodio (mEq/L)</label><input type="number" name="sodium" value={formData.sodium || ''} onChange={handleChange} step="0.1" min="0" className={inp('sodium')} />{fieldErrors.sodium && errMsg}</div>
-            <div><label className={labelCls}>Potasio (mEq/L)</label><input type="number" name="potassium" value={formData.potassium || ''} onChange={handleChange} step="0.1" min="0" className={inp('potassium')} />{fieldErrors.potassium && errMsg}</div>
-            <div><label className={labelCls}>Cloro (mEq/L)</label><input type="number" name="chloride" value={formData.chloride || ''} onChange={handleChange} step="0.1" min="0" className={inp('chloride')} />{fieldErrors.chloride && errMsg}</div>
+            {num('creatinine', 'Creatinina (mg/dL)')}
+            {num('bun',        'BUN (mg/dL)')}
+            {num('urea',       'Urea (mg/dL)')}
+            {num('sodium',     'Sodio (mEq/L)')}
+            {num('potassium',  'Potasio (mEq/L)')}
+            {num('chloride',   'Cloro (mEq/L)')}
           </div>
         )}
       </div>
 
       {/* V. Proteínas Séricas */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <button type="button" onClick={() => toggleSection('proteinas')}
-          className="w-full flex justify-between items-center py-3 px-4 bg-green-50 hover:bg-green-100 text-left font-semibold text-green-800 transition-colors">
-          <span>🧬 V. Proteínas Séricas {hasErr('proteinas') && <span className="ml-2 text-xs text-red-500 font-normal">● campos incompletos</span>}</span>
-          <span className="text-lg">{expandedSections.proteinas ? '▲' : '▼'}</span>
-        </button>
+        <SectionBtn label="V. Proteínas Séricas" icon={Syringe}
+          colorCls="bg-green-50 hover:bg-green-100 text-green-800"
+          hasError={hasErr('proteinas')} expanded={expandedSections.proteinas}
+          onToggle={() => toggleSection('proteinas')} />
         {expandedSections.proteinas && (
           <div className="p-4 grid grid-cols-3 gap-4">
-            <div><label className={labelCls}>Proteína Total (g/dL)</label><input type="number" name="totalProteins" value={formData.totalProteins || ''} onChange={handleChange} step="0.1" min="0" className={inp('totalProteins')} />{fieldErrors.totalProteins && errMsg}</div>
-            <div><label className={labelCls}>Albúmina (g/dL)</label><input type="number" name="albumin" value={formData.albumin || ''} onChange={handleChange} step="0.1" min="0" className={inp('albumin')} />{fieldErrors.albumin && errMsg}</div>
-            <div><label className={labelCls}>Prealbúmina (mg/dL)</label><input type="number" name="prealbumin" value={formData.prealbumin || ''} onChange={handleChange} step="0.1" min="0" className={inp('prealbumin')} />{fieldErrors.prealbumin && errMsg}</div>
+            {num('totalProteins', 'Proteína Total (g/dL)')}
+            {num('albumin',       'Albúmina (g/dL)')}
+            {num('prealbumin',    'Prealbúmina (mg/dL)')}
           </div>
         )}
       </div>
 
       {/* VI. Hemograma */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <button type="button" onClick={() => toggleSection('hemograma')}
-          className="w-full flex justify-between items-center py-3 px-4 bg-pink-50 hover:bg-pink-100 text-left font-semibold text-pink-800 transition-colors">
-          <span>🔴 VI. Hemograma {hasErr('hemograma') && <span className="ml-2 text-xs text-red-500 font-normal">● campos incompletos</span>}</span>
-          <span className="text-lg">{expandedSections.hemograma ? '▲' : '▼'}</span>
-        </button>
+        <SectionBtn label="VI. Hemograma" icon={Droplets}
+          colorCls="bg-pink-50 hover:bg-pink-100 text-pink-800"
+          hasError={hasErr('hemograma')} expanded={expandedSections.hemograma}
+          onToggle={() => toggleSection('hemograma')} />
         {expandedSections.hemograma && (
           <div className="p-4 grid grid-cols-2 gap-4">
-            <div><label className={labelCls}>Hemoglobina (g/dL)</label><input type="number" name="hemoglobin" value={formData.hemoglobin || ''} onChange={handleChange} step="0.1" min="0" className={inp('hemoglobin')} />{fieldErrors.hemoglobin && errMsg}</div>
-            <div><label className={labelCls}>Hematocrito (%)</label><input type="number" name="hematocrit" value={formData.hematocrit || ''} onChange={handleChange} step="0.1" min="0" className={inp('hematocrit')} />{fieldErrors.hematocrit && errMsg}</div>
-            <div><label className={labelCls}>Glóbulos Blancos (x10³/μL)</label><input type="number" name="wbc" value={formData.wbc || ''} onChange={handleChange} step="0.1" min="0" className={inp('wbc')} />{fieldErrors.wbc && errMsg}</div>
-            <div><label className={labelCls}>Plaquetas (x10³/μL)</label><input type="number" name="platelets" value={formData.platelets || ''} onChange={handleChange} step="0.1" min="0" className={inp('platelets')} />{fieldErrors.platelets && errMsg}</div>
+            {num('hemoglobin',  'Hemoglobina (g/dL)')}
+            {num('hematocrit',  'Hematocrito (%)')}
+            {num('wbc',         'Glóbulos Blancos (×10³/μL)')}
+            {num('platelets',   'Plaquetas (×10³/μL)')}
           </div>
         )}
       </div>
 
       {/* VII. Micronutrientes */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <button type="button" onClick={() => toggleSection('micronutrientes')}
-          className="w-full flex justify-between items-center py-3 px-4 bg-indigo-50 hover:bg-indigo-100 text-left font-semibold text-indigo-800 transition-colors">
-          <span>💊 VII. Micronutrientes {hasErr('micronutrientes') && <span className="ml-2 text-xs text-red-500 font-normal">● campos incompletos</span>}</span>
-          <span className="text-lg">{expandedSections.micronutrientes ? '▲' : '▼'}</span>
-        </button>
+        <SectionBtn label="VII. Micronutrientes" icon={Pill}
+          colorCls="bg-indigo-50 hover:bg-indigo-100 text-indigo-800"
+          hasError={hasErr('micronutrientes')} expanded={expandedSections.micronutrientes}
+          onToggle={() => toggleSection('micronutrientes')} />
         {expandedSections.micronutrientes && (
           <div className="p-4 grid grid-cols-2 gap-4">
-            <div><label className={labelCls}>Vitamina B12 (pg/mL)</label><input type="number" name="vitaminB12" value={formData.vitaminB12 || ''} onChange={handleChange} step="0.1" min="0" className={inp('vitaminB12')} />{fieldErrors.vitaminB12 && errMsg}</div>
-            <div><label className={labelCls}>Vitamina D (ng/mL)</label><input type="number" name="vitaminD" value={formData.vitaminD || ''} onChange={handleChange} step="0.1" min="0" className={inp('vitaminD')} />{fieldErrors.vitaminD && errMsg}</div>
-            <div><label className={labelCls}>Ácido Fólico (ng/mL)</label><input type="number" name="folacin" value={formData.folacin || ''} onChange={handleChange} step="0.1" min="0" className={inp('folacin')} />{fieldErrors.folacin && errMsg}</div>
-            <div><label className={labelCls}>Hierro (μg/dL)</label><input type="number" name="iron" value={formData.iron || ''} onChange={handleChange} step="0.1" min="0" className={inp('iron')} />{fieldErrors.iron && errMsg}</div>
-            <div><label className={labelCls}>Ferritina (ng/mL)</label><input type="number" name="ferritin" value={formData.ferritin || ''} onChange={handleChange} step="0.1" min="0" className={inp('ferritin')} />{fieldErrors.ferritin && errMsg}</div>
-            <div><label className={labelCls}>Zinc (μg/dL)</label><input type="number" name="zinc" value={formData.zinc || ''} onChange={handleChange} step="0.1" min="0" className={inp('zinc')} />{fieldErrors.zinc && errMsg}</div>
-            <div><label className={labelCls}>Calcio (mg/dL)</label><input type="number" name="calcium" value={formData.calcium || ''} onChange={handleChange} step="0.1" min="0" className={inp('calcium')} />{fieldErrors.calcium && errMsg}</div>
-            <div><label className={labelCls}>Magnesio (mg/dL)</label><input type="number" name="magnesium" value={formData.magnesium || ''} onChange={handleChange} step="0.1" min="0" className={inp('magnesium')} />{fieldErrors.magnesium && errMsg}</div>
-            <div><label className={labelCls}>Fósforo (mg/dL)</label><input type="number" name="phosphorus" value={formData.phosphorus || ''} onChange={handleChange} step="0.1" min="0" className={inp('phosphorus')} />{fieldErrors.phosphorus && errMsg}</div>
+            {num('vitaminB12', 'Vitamina B12 (pg/mL)')}
+            {num('vitaminD',   'Vitamina D (ng/mL)')}
+            {num('folacin',    'Ácido Fólico (ng/mL)')}
+            {num('iron',       'Hierro (μg/dL)')}
+            {num('ferritin',   'Ferritina (ng/mL)')}
+            {num('zinc',       'Zinc (μg/dL)')}
+            {num('calcium',    'Calcio (mg/dL)')}
+            {num('magnesium',  'Magnesio (mg/dL)')}
+            {num('phosphorus', 'Fósforo (mg/dL)')}
           </div>
         )}
       </div>
 
       {/* VIII. Otros */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <button type="button" onClick={() => toggleSection('otros')}
-          className="w-full flex justify-between items-center py-3 px-4 bg-slate-50 hover:bg-slate-100 text-left font-semibold text-slate-700 transition-colors">
-          <span>📋 VIII. Otros</span>
-          <span className="text-lg">{expandedSections.otros ? '▲' : '▼'}</span>
-        </button>
+        <SectionBtn label="VIII. Otros / Adicionales" icon={ClipboardList}
+          colorCls="bg-slate-50 hover:bg-slate-100 text-slate-700"
+          expanded={expandedSections.otros} onToggle={() => toggleSection('otros')} />
         {expandedSections.otros && (
           <div className="p-4 space-y-3">
             {extraFields.map((field, i) => (
               <div key={i} className="flex gap-2 items-center">
                 <input type="text" placeholder="Campo" value={field.label}
                   onChange={e => updateExtraField(i, 'label', e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-400 focus:border-transparent bg-white transition" />
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-400 focus:bg-white transition" />
                 <input type="text" placeholder="Valor" value={field.value}
                   onChange={e => updateExtraField(i, 'value', e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-400 focus:border-transparent bg-white transition" />
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-400 focus:bg-white transition" />
                 <button type="button" onClick={() => removeExtraField(i)}
-                  className="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
-                  ×
+                  className="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
+                  <X size={14} />
                 </button>
               </div>
             ))}
             <button type="button" onClick={addExtraField}
-              className="w-full py-2 border border-dashed border-slate-300 text-slate-500 hover:border-teal-400 hover:text-teal-600 text-sm rounded-lg transition-colors">
-              + Agregar campo
+              className="w-full py-2 border border-dashed border-slate-300 text-slate-500 hover:border-teal-400 hover:text-teal-600 text-sm rounded-lg transition-colors flex items-center justify-center gap-1.5">
+              <Plus size={13} /> Agregar campo
             </button>
           </div>
         )}
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50"
-      >
-        {loading ? 'Guardando...' : '✅ Guardar Datos Bioquímicos'}
+      <button type="submit" disabled={loading}
+        className="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50">
+        <Save size={16} />
+        {loading ? 'Guardando...' : 'Guardar Datos Bioquímicos'}
       </button>
 
       <ConfirmDialog

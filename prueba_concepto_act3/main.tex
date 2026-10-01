@@ -22,7 +22,7 @@
 \usepackage{makecell}
 
 % ── Gráficos ────────────────────────────────────────────────
-\usepackage[draft]{graphicx}   % draft: muestra caja con nombre hasta tener imágenes
+\usepackage{graphicx}
 \usepackage{float}
 
 % ── Código fuente ───────────────────────────────────────────
@@ -79,6 +79,7 @@
 
 % ── Hipervínculos ────────────────────────────────────────────
 \usepackage[hidelinks]{hyperref}
+\usepackage{url}
 
 % ── Encabezados y pie de página ──────────────────────────────
 \usepackage{fancyhdr}
@@ -140,6 +141,7 @@ endpoints de la API REST. Finalmente se presenta el historial de control de vers
 evidencia la evolución del sistema.
 
 % ============================================================
+\clearpage
 \section{3.1 Construcción del Prototipo}
 % ============================================================
 
@@ -470,6 +472,7 @@ implementada de los módulos principales del prototipo NutriAPP.
 \end{figure}
 
 % ============================================================
+\clearpage
 \section{3.2 Pruebas de Caja Negra}
 % ============================================================
 
@@ -525,39 +528,39 @@ apuntando al servidor local en \texttt{http://localhost:3000}.
 % ── Salud ─────────────────────────────────────────────
 \makecell[l]{\textbf{PC-01}\\GET /health} &
 Sin parámetros &
-HTTP 200\\JSON: \texttt{\{status:\\``NutriAPP\\API OK''\}} &
+HTTP 200\newline JSON: \texttt{\{status: ``NutriAPP API OK''\}} &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 % ── Autenticación ──────────────────────────────────────
 \makecell[l]{\textbf{PC-02}\\POST /api/auth\\{\small /login}} &
-\texttt{\{email:\\``nutri@unl.edu.ec'',\\password:\\``pass123''\}} &
-HTTP 200\\JSON con \texttt{token} (JWT) y datos del usuario &
+\texttt{\{email: ``nutri@unl.edu.ec'',\newline password: ``pass123''\}} &
+HTTP 200\newline JSON con \texttt{token} (JWT) y datos del usuario &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 \makecell[l]{\textbf{PC-03}\\POST /api/auth\\{\small /login}} &
-\texttt{\{email:\\``nutri@unl.edu.ec'',\\password:\\``incorrecta''\}} &
-HTTP 401\\JSON: \texttt{\{message:\\``Credenciales\\inválidas''\}} &
+\texttt{\{email: ``nutri@unl.edu.ec'',\newline password: ``incorrecta''\}} &
+HTTP 401\newline JSON: \texttt{\{message: ``Credenciales inválidas''\}} &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 \makecell[l]{\textbf{PC-04}\\GET /api/auth/me} &
 Header:\\Bearer \textless{}token\textgreater{} &
-HTTP 200\\JSON con datos del usuario autenticado &
+HTTP 200\newlineJSON con datos del usuario autenticado &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 \makecell[l]{\textbf{PC-05}\\GET /api/auth/me} &
 Sin header Authorization &
-HTTP 401\\JSON: \texttt{\{message:\\``Token requerido''\}} &
+HTTP 401\newline JSON: \texttt{\{message: ``Token requerido''\}} &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 % ── Pacientes ─────────────────────────────────────────
 \makecell[l]{\textbf{PC-06}\\POST /api/patients} &
 JSON con firstName,\\lastName, email,\\dateOfBirth, gender\\+ Bearer token &
-HTTP 201\\JSON con datos del nuevo paciente y \texttt{id} UUID &
+HTTP 201\newlineJSON con datos del nuevo paciente y \texttt{id} UUID &
 \textit{(completar)} & \textit{---} \\
 \hline
 
@@ -569,99 +572,99 @@ HTTP 400\\JSON con mensaje de error de validación &
 
 \makecell[l]{\textbf{PC-08}\\GET /api/patients} &
 Bearer token válido &
-HTTP 200\\Array JSON con lista de pacientes del nutricionista &
+HTTP 200\newlineArray JSON con lista de pacientes del nutricionista &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 \makecell[l]{\textbf{PC-09}\\GET /api/patients\\{\small /:id}} &
 Bearer token +\\id UUID válido &
-HTTP 200\\JSON con datos completos del paciente &
+HTTP 200\newlineJSON con datos completos del paciente &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 \makecell[l]{\textbf{PC-10}\\GET /api/patients\\{\small /:id}} &
 Bearer token +\\id UUID inexistente &
-HTTP 404\\JSON: \texttt{\{message:\\``Paciente no\\encontrado''\}} &
+HTTP 404\newline JSON: \texttt{\{message: ``Paciente no encontrado''\}} &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 % ── Historia clínica ──────────────────────────────────
 \makecell[l]{\textbf{PC-11}\\PUT /api/patients\\{\small /:id/clinical-history}} &
 JSON con date,\\currentComplaints,\\allergies\\+ Bearer token &
-HTTP 200\\JSON con historia clínica actualizada &
+HTTP 200\newlineJSON con historia clínica actualizada &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 % ── Biometría ─────────────────────────────────────────
 \makecell[l]{\textbf{PC-12}\\POST /api/patients\\{\small /:id/biometrics}} &
 JSON con glucose,\\totalCholesterol,\\hdl, ldl,\\testDate + Bearer token &
-HTTP 201\\JSON con registro de biometría creado &
+HTTP 201\newlineJSON con registro de biometría creado &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 \makecell[l]{\textbf{PC-13}\\GET /api/patients\\{\small /:id/biometrics/history}} &
 Bearer token +\\id paciente válido &
-HTTP 200\\Array JSON con historial de biometría &
+HTTP 200\newlineArray JSON con historial de biometría &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 % ── Antropometría ─────────────────────────────────────
 \makecell[l]{\textbf{PC-14}\\POST /api/patients\\{\small /:id/anthropometry}} &
 JSON con weight: 75,\\height: 1.70, bmi: 25.95,\\measurementDate + Bearer &
-HTTP 201\\JSON con registro antropométrico; IMC calculado correctamente &
+HTTP 201\newlineJSON con registro antropométrico; IMC calculado correctamente &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 \makecell[l]{\textbf{PC-15}\\GET /api/patients\\{\small /:id/anthropometry/history}} &
 Bearer token +\\id paciente válido &
-HTTP 200\\Array JSON con historial de medidas &
+HTTP 200\newlineArray JSON con historial de medidas &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 % ── Hábitos dietéticos ────────────────────────────────
 \makecell[l]{\textbf{PC-16}\\POST /api/patients\\{\small /:id/dietary-habits}} &
 JSON con breakfast,\\lunch, dinner,\\waterIntake\\+ Bearer token &
-HTTP 200 o 201\\JSON con hábitos guardados &
+HTTP 200 o 201\newline JSON con hábitos guardados &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 % ── IA: Recomendación ─────────────────────────────────
 \makecell[l]{\textbf{PC-17}\\POST /api/ai\\{\small /recommendation}} &
 JSON con name,\\age: 35, gender: ``F'',\\weight: 68, height: 1.62,\\objective: ``bajar peso'' &
-HTTP 200\\JSON con \texttt{recommendation}: texto nutricional generado por Llama~3.3 &
+HTTP 200\newlineJSON con \texttt{recommendation}: texto nutricional generado por Llama~3.3 &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 \makecell[l]{\textbf{PC-18}\\POST /api/ai\\{\small /recommendation}} &
 JSON sin campo\\``weight'' obligatorio &
-HTTP 400\\JSON: \texttt{\{message:\\``Faltan datos\\del paciente''\}} &
+HTTP 400\newline JSON: \texttt{\{message: ``Faltan datos del paciente''\}} &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 % ── IA: Chat ──────────────────────────────────────────
 \makecell[l]{\textbf{PC-19}\\POST /api/ai/chat} &
 JSON con message:\\``¿Qué alimentos\\recomendas para\\anemia?'',\\patientId: null &
-HTTP 200\\JSON con \texttt{reply}: respuesta nutricional del LLM (Llama~3.3) &
+HTTP 200\newlineJSON con \texttt{reply}: respuesta nutricional del LLM (Llama~3.3) &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 \makecell[l]{\textbf{PC-20}\\POST /api/ai/chat} &
 JSON con message:\\``'' (cadena vacía) &
-HTTP 400\\JSON: \texttt{\{message:\\``El mensaje\\es requerido''\}} &
+HTTP 400\newline JSON: \texttt{\{message: ``El mensaje es requerido''\}} &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 % ── IA: Chat con PDF (RAG) ────────────────────────────
 \makecell[l]{\textbf{PC-21}\\POST /api/ai\\{\small /chat-upload}} &
 form-data: file=\\resultados.pdf,\\message=``¿Qué indica\\la glucosa en\\ayunas de 126?'' &
-HTTP 200\\JSON con \texttt{reply}: análisis RAG basado en el contenido del PDF &
+HTTP 200\newlineJSON con \texttt{reply}: análisis RAG basado en el contenido del PDF &
 \textit{(completar)} & \textit{---} \\
 \hline
 
 % ── IA: Historial chat ────────────────────────────────
 \makecell[l]{\textbf{PC-22}\\GET /api/ai\\{\small /chat-history/:id}} &
 Bearer token +\\patientId válido &
-HTTP 200\\Array JSON con mensajes del historial ordenados por fecha &
+HTTP 200\newlineArray JSON con mensajes del historial ordenados por fecha &
 \textit{(completar)} & \textit{---} \\
 \hline
 
@@ -673,6 +676,7 @@ durante la ejecución real de las pruebas con Postman. Para el estado use \textb
 si el resultado obtenido coincide con el esperado, o \textbf{FALLIDO} en caso contrario.
 
 % ============================================================
+\clearpage
 \section{3.3 Control de Versiones}
 % ============================================================
 
@@ -690,6 +694,8 @@ entrega de esta prueba de concepto.
 \begin{tabularx}{\linewidth}{|l|l|X|}
 \hline
 \textbf{Hash} & \textbf{Fecha} & \textbf{Mensaje del commit} \\
+\hline
+\texttt{c058efc} & 2026-07-17 & Actualización de paciente y pruebas de concepto \\
 \hline
 \texttt{fcd4943} & 2026-07-12 & Cambios para adaptar el contexto a un enfoque de ayuda hacia el nutricionista \\
 \hline
@@ -726,6 +732,7 @@ entrega de esta prueba de concepto.
 \end{figure}
 
 % ============================================================
+\clearpage
 \section{Conclusiones}
 % ============================================================
 
@@ -753,5 +760,24 @@ entrega de esta prueba de concepto.
         desde el commit inicial hasta las adaptaciones orientadas al contexto del
         nutricionista como actor principal del sistema.
 \end{itemize}
+
+\clearpage
+\section{Anexos}
+
+\subsection{Repositorio de Código Fuente}
+
+El código fuente completo del prototipo NutriAPP se encuentra disponible en el siguiente
+repositorio público de GitHub, bajo el perfil del autor:
+
+\bigskip
+\noindent\textbf{URL:}
+\begin{center}
+  \url{https://github.com/KevinSarango1/ProyectoPersonal}
+\end{center}
+
+\bigskip
+\noindent El repositorio contiene el código del backend (Node.js + Express.js + TypeScript),
+el frontend (React + TailwindCSS), el esquema de base de datos (Prisma ORM) y el historial
+completo de commits documentado en la Sección~3.3.
 
 \end{document}

@@ -124,6 +124,14 @@ export interface Food {
   fats: number;
   carbohydrates: number;
   fiber: number;
+  // SMAE 4a. ed.
+  grupoSmae?: string;
+  subgrupoSmae?: string;
+  porcionSugerida?: number;
+  unidadPorcion?: string;
+  indiceGlucemico?: number;
+  cargaGlucemica?: number;
+  source?: string;
 }
 
 export interface WeeklyMenu {

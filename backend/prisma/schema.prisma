@@ -204,19 +204,29 @@ model ChatMessage {
   @@map("chat_messages")
 }
 
-// ─── Alimentos (base global compartida) ──────────────────────────────────────
+// ─── Alimentos (base global compartida + catálogo SMAE) ──────────────────────
 model Food {
-  id            String           @id @default(uuid())
-  name          String
-  description   String?
-  grossWeight   Float
-  netWeight     Float
-  energyKcal    Float
-  energyKj      Float
-  protein       Float            @default(0)
-  fats          Float            @default(0)
-  carbohydrates Float            @default(0)
-  fiber         Float            @default(0)
+  id              String           @id @default(uuid())
+  name            String
+  description     String?
+  grossWeight     Float
+  netWeight       Float
+  energyKcal      Float
+  energyKj        Float
+  protein         Float            @default(0)
+  fats            Float            @default(0)
+  carbohydrates   Float            @default(0)
+  fiber           Float            @default(0)
+
+  // Campos SMAE 4ª ed. (Pérez Lizaur et al., 2014)
+  grupoSmae       String?          // Grupo principal (Verduras, Frutas, Cereales sin grasa…)
+  subgrupoSmae    String?          // Subgrupo (AOA muy bajo aporte de grasa, Leche descremada…)
+  porcionSugerida Float?           // Cantidad sugerida por equivalente
+  unidadPorcion   String?          // taza, pieza, g, cucharada…
+  indiceGlucemico Float?
+  cargaGlucemica  Float?
+  source          String?          // "SMAE" | null (manual)
+
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   menuItems     WeeklyMenuItem[]

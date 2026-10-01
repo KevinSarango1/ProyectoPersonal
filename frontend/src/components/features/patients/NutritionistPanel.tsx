@@ -1,4 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Bot, Send, Paperclip, X, Trash2, Pencil, Info,
+  ChevronUp, ChevronDown, ChevronsUpDown,
+  ClipboardList, Activity, Ruler, UtensilsCrossed, ChefHat,
+  Calculator, AlertTriangle, TrendingDown, TrendingUp, Minus,
+  LogOut, Plus, AlertCircle, GripVertical,
+} from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { patientService } from '../../../services/patientService';
 import { useFoods } from '../../../hooks/useFoods';
@@ -11,6 +18,8 @@ import { BiometricsForm } from '../biometrics/BiometricsForm';
 import { AnthropometryForm } from '../anthropometry/AnthropometryForm';
 import DietaryHabitsForm from '../dietary/DietaryHabitsForm';
 import { classifyBMI, classifyWHR, getAge, formatGender, type Gender } from '../../../utils/nutritionCalculations';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { aiService } from '../../../services/aiService';
 
 type AiMessage = { role: 'user' | 'ai'; text: string; fileName?: string };
@@ -18,13 +27,22 @@ type AiMessage = { role: 'user' | 'ai'; text: string; fileName?: string };
 type MainView = 'patients' | 'foods';
 type Tab = 'historia' | 'biometria' | 'antropometria' | 'habitos' | 'menu';
 
-function formatChatText(text: string): string {
+// Strip LaTeX notation and replace with Unicode equivalents so ReactMarkdown renders cleanly.
+function cleanAiText(text: string): string {
+  const replaceLatexSymbols = (s: string) =>
+    s.replace(/\\times/g, '×').replace(/\\cdot/g, '·').replace(/\\div/g, '÷')
+     .replace(/\\approx/g, '≈').replace(/\\geq/g, '≥').replace(/\\leq/g, '≤')
+     .replace(/\\neq/g, '≠').replace(/\\to/g, '→').replace(/\\pm/g, '±')
+     .replace(/\\mathbf\{([^}]+)\}/g, '**$1**')
+     .replace(/\\text\{([^}]+)\}/g, '$1')
+     .replace(/\\[a-zA-Z]+\{([^}]+)\}/g, '$1')
+     .replace(/\\_/g, '_').replace(/\\\^/g, '^').replace(/\\/g, '');
+
   return text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/\*\*\*(.*?)\*\*\*/gs, '<strong><em>$1</em></strong>')
-    .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/gs, '<em>$1</em>')
-    .replace(/\n/g, '<br/>');
+    // Block LaTeX $$...$$ → clean and wrap in code block look
+    .replace(/\$\$([^$]+)\$\$/gs, (_m, eq) => `\`${replaceLatexSymbols(eq.trim())}\``)
+    // Inline LaTeX $...$ → clean
+    .replace(/\$([^$\n]+)\$/g, (_m, eq) => replaceLatexSymbols(eq));
 }
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -34,6 +52,22 @@ const ACTIVITY_LABELS: Record<string, string> = {
   '1.725': 'Muy activo',
   '1.9': 'Extra activo',
 };
+
+// Convert decimal to readable fraction string: 0.333... → "1/3", 1.5 → "1 1/2"
+function toFraction(n: number): string {
+  const FRACS: [number, string][] = [
+    [1/8,'1/8'],[1/6,'1/6'],[1/5,'1/5'],[1/4,'1/4'],
+    [1/3,'1/3'],[3/8,'3/8'],[2/5,'2/5'],[1/2,'1/2'],
+    [3/5,'3/5'],[5/8,'5/8'],[2/3,'2/3'],[3/4,'3/4'],
+    [4/5,'4/5'],[5/6,'5/6'],[7/8,'7/8'],
+  ];
+  const whole = Math.floor(n);
+  const frac  = n - whole;
+  if (frac < 0.005) return String(whole || (Number.isInteger(n) ? n : n.toFixed(1)));
+  const match = FRACS.find(([v]) => Math.abs(frac - v) < 0.015);
+  const fracStr = match ? match[1] : (frac * 100).toFixed(0) + '%';
+  return whole > 0 ? `${whole} ${fracStr}` : fracStr;
+}
 
 function harrisBenedictCalc(weight: number, height: number, age: number, gender: string, factor: number) {
   const bmr = gender === 'F'
@@ -57,6 +91,8 @@ const EMPTY_PATIENT: PatientForm = {
 const EMPTY_FOOD = {
   name: '', description: '', grossWeight: '', netWeight: '',
   energyKcal: '', protein: '', fats: '', carbohydrates: '', fiber: '',
+  grupoSmae: '', subgrupoSmae: '', porcionSugerida: '', unidadPorcion: '',
+  indiceGlucemico: '', cargaGlucemica: '',
 };
 
 // ─── Small shared styles ──────────────────────────────────────────────────────
@@ -64,8 +100,8 @@ const inputCls = 'w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2
 const labelCls = 'block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5';
 const errCls   = 'text-xs text-red-600 mt-1';
 
-// ─── Construir contexto clínico del paciente para el LLM ─────────────────────
-function buildPatientContext(patient: any): string {
+// ─── Construir contexto clínico completo del paciente para el LLM ────────────
+function buildPatientContext(patient: any, dietaryHabits?: any): string {
   const lines: string[] = [];
   const age = patient.dateOfBirth
     ? Math.floor((Date.now() - new Date(patient.dateOfBirth).getTime()) / (365.25 * 24 * 3600 * 1000))
@@ -75,36 +111,65 @@ function buildPatientContext(patient: any): string {
   if (age) lines.push(`Edad: ${age} años | Sexo: ${patient.gender === 'M' ? 'Masculino' : patient.gender === 'F' ? 'Femenino' : 'Otro'}`);
   if (patient.occupation) lines.push(`Ocupación: ${patient.occupation}`);
 
+  // ── Antropometría ──────────────────────────────────────────────────────────
   const anthro = patient.anthropometry?.[0];
   if (anthro) {
     lines.push(`\nANTROPOMETRÍA (${anthro.measurementDate}):`);
     lines.push(`  Peso: ${anthro.weight} kg | Talla: ${anthro.height} cm | IMC: ${anthro.bmi} kg/m²`);
-    if (anthro.waistHipRatio) lines.push(`  ICC: ${anthro.waistHipRatio}`);
-    if (anthro.bodyFatPercentage) lines.push(`  % Grasa: ${anthro.bodyFatPercentage}%`);
-    if (anthro.muscleMass) lines.push(`  Masa muscular: ${anthro.muscleMass} kg`);
+    if (anthro.waistCircumference) lines.push(`  Cintura: ${anthro.waistCircumference} cm | Cadera: ${anthro.hipCircumference ?? '—'} cm`);
+    if (anthro.waistHipRatio)      lines.push(`  ICC: ${anthro.waistHipRatio}`);
+    if (anthro.bodyFatPercentage)  lines.push(`  % Grasa: ${anthro.bodyFatPercentage}% | Masa muscular: ${anthro.muscleMass ?? '—'} kg`);
+    if (anthro.waterPercentage)    lines.push(`  % Agua: ${anthro.waterPercentage}%`);
   }
 
+  // ── Bioquímica completa ────────────────────────────────────────────────────
   const bio = patient.biometrics?.[0];
   if (bio) {
-    lines.push(`\nBIOMETRÍA (${bio.testDate}):`);
-    if (bio.glucose) lines.push(`  Glucosa: ${bio.glucose} mg/dL`);
-    if (bio.hba1c) lines.push(`  HbA1c: ${bio.hba1c}%`);
-    if (bio.totalCholesterol) lines.push(`  Colesterol total: ${bio.totalCholesterol} mg/dL`);
-    if (bio.ldl) lines.push(`  LDL: ${bio.ldl} | HDL: ${bio.hdl}`);
-    if (bio.triglycerides) lines.push(`  Triglicéridos: ${bio.triglycerides} mg/dL`);
-    if (bio.hemoglobin) lines.push(`  Hemoglobina: ${bio.hemoglobin} g/dL`);
+    lines.push(`\nBIOQUÍMICA (${bio.testDate}):`);
+    if (bio.glucose)         lines.push(`  Glucosa: ${bio.glucose} mg/dL | HbA1c: ${bio.hba1c ?? '—'}% | Insulina: ${bio.insulin ?? '—'} mIU/L | HOMA: ${bio.homaIndex ?? '—'}`);
+    if (bio.totalCholesterol)lines.push(`  Colesterol: ${bio.totalCholesterol} mg/dL | LDL: ${bio.ldl ?? '—'} | HDL: ${bio.hdl ?? '—'} | TG: ${bio.triglycerides ?? '—'} | VLDL: ${bio.vldl ?? '—'}`);
+    if (bio.ast)             lines.push(`  Hepático: AST ${bio.ast} | ALT ${bio.alt ?? '—'} | GGT ${bio.ggt ?? '—'} | Bilirrubina ${bio.bilirubin ?? '—'} mg/dL`);
+    if (bio.creatinine)      lines.push(`  Renal: Creatinina ${bio.creatinine} | BUN ${bio.bun ?? '—'} | Urea ${bio.urea ?? '—'} | Na ${bio.sodium ?? '—'} | K ${bio.potassium ?? '—'}`);
+    if (bio.totalProteins)   lines.push(`  Proteínas: Total ${bio.totalProteins} g/dL | Albúmina ${bio.albumin ?? '—'} | Prealbúmina ${bio.prealbumin ?? '—'}`);
+    if (bio.hemoglobin)      lines.push(`  Hemograma: Hb ${bio.hemoglobin} g/dL | Hto ${bio.hematocrit ?? '—'}% | Leuc ${bio.wbc ?? '—'} | Plaq ${bio.platelets ?? '—'}`);
+    if (bio.vitaminD)        lines.push(`  Micronutrientes: Vit D ${bio.vitaminD} | B12 ${bio.vitaminB12 ?? '—'} | Hierro ${bio.iron ?? '—'} | Ferritina ${bio.ferritin ?? '—'} | Zinc ${bio.zinc ?? '—'}`);
+    if (bio.calcium)         lines.push(`  Minerales: Ca ${bio.calcium} | Mg ${bio.magnesium ?? '—'} | P ${bio.phosphorus ?? '—'} mg/dL`);
   }
 
+  // ── Historia clínica ───────────────────────────────────────────────────────
   const ch = patient.clinicalHistory;
   if (ch) {
     lines.push(`\nHISTORIA CLÍNICA:`);
-    if (ch.nutritionalObjective) lines.push(`  Objetivo nutricional: ${ch.nutritionalObjective}`);
-    if (ch.pastDiseases) lines.push(`  Antecedentes patológicos: ${ch.pastDiseases}`);
-    if (ch.allergies?.length) lines.push(`  Alergias: ${ch.allergies.join(', ')}`);
+    if (ch.nutritionalObjective) lines.push(`  Objetivo: ${ch.nutritionalObjective}`);
+    if (ch.pastDiseases)         lines.push(`  Antecedentes patológicos: ${ch.pastDiseases}`);
+    if (ch.medicalHistory)       lines.push(`  Historia médica: ${ch.medicalHistory}`);
+    if (ch.familyHistory)        lines.push(`  Antecedentes familiares: ${ch.familyHistory}`);
+    if (ch.currentComplaints)    lines.push(`  Motivo consulta: ${ch.currentComplaints}`);
+    if (ch.physicalActivity)     lines.push(`  Actividad física: ${ch.physicalActivity}`);
+    if (ch.allergies?.length)    lines.push(`  Alergias: ${ch.allergies.join(', ')}`);
     if (ch.foodIntolerances?.length) lines.push(`  Intolerancias: ${ch.foodIntolerances.join(', ')}`);
-    if (ch.currentMedications?.length) lines.push(`  Medicación actual: ${ch.currentMedications.join(', ')}`);
-    if (ch.physicalActivity) lines.push(`  Actividad física: ${ch.physicalActivity}`);
-    if (ch.dietaryRestrictions) lines.push(`  Restricciones dietéticas: ${ch.dietaryRestrictions}`);
+    if (ch.currentMedications?.length) lines.push(`  Medicación: ${ch.currentMedications.join(', ')}`);
+    if (ch.dietaryRestrictions)  lines.push(`  Restricciones dietéticas: ${ch.dietaryRestrictions}`);
+    if (ch.alcoholConsumption)   lines.push(`  Alcohol: ${ch.alcoholConsumption}`);
+    if (ch.tobaccoUse)           lines.push(`  Tabaco: ${ch.tobaccoUse}`);
+    if (ch.observations)         lines.push(`  Observaciones: ${ch.observations}`);
+  }
+
+  // ── Hábitos dietéticos ─────────────────────────────────────────────────────
+  const dh = dietaryHabits ?? patient.dietaryHabits;
+  if (dh) {
+    lines.push(`\nHÁBITOS DIETÉTICOS (${dh.recordDate ?? '—'}):`);
+    if (dh.breakfast)           lines.push(`  Desayuno: ${dh.breakfast}`);
+    if (dh.morningSnack)        lines.push(`  Colación AM: ${dh.morningSnack}`);
+    if (dh.lunch)               lines.push(`  Almuerzo: ${dh.lunch}`);
+    if (dh.afternoonSnack)      lines.push(`  Colación PM: ${dh.afternoonSnack}`);
+    if (dh.dinner)              lines.push(`  Cena: ${dh.dinner}`);
+    if (dh.mealsPerDay)         lines.push(`  Comidas/día: ${dh.mealsPerDay} | Agua: ${dh.waterIntake ?? '—'} L`);
+    if (dh.eatingOutFrequency)  lines.push(`  Come fuera: ${dh.eatingOutFrequency}`);
+    if (dh.foodPreferences)     lines.push(`  Preferencias: ${dh.foodPreferences}`);
+    if (dh.foodAversions)       lines.push(`  Rechaza/no tolera: ${dh.foodAversions}`);
+    if (dh.cookingMethods)      lines.push(`  Métodos cocción: ${dh.cookingMethods}`);
+    if (dh.observations)        lines.push(`  Observaciones: ${dh.observations}`);
   }
 
   return lines.join('\n');
@@ -167,6 +232,14 @@ const NutritionistPanel: React.FC = () => {
   const [foodErrors, setFoodErrors]           = useState<Record<string, string>>({});
   const [foodFormLoading, setFoodFormLoading] = useState(false);
   const [deleteFood, setDeleteFood]           = useState<{ open: boolean; food: Food | null }>({ open: false, food: null });
+  const [infoFood,   setInfoFood]             = useState<Food | null>(null);
+  // Table sort, filter, pagination
+  type SortField = 'name' | 'netWeight' | 'energyKcal' | 'protein' | 'fats' | 'carbohydrates' | 'fiber' | 'grupoSmae';
+  const [sortField, setSortField]   = useState<SortField>('name');
+  const [sortDir,   setSortDir]     = useState<'asc' | 'desc'>('asc');
+  const [filterGrupo, setFilterGrupo] = useState('');
+  const [foodPage, setFoodPage]     = useState(1);
+  const PAGE_SIZE = 100;
 
   // Hábitos dietéticos
   const [dietaryHabits, setDietaryHabits] = useState<any>(null);
@@ -190,6 +263,10 @@ const NutritionistPanel: React.FC = () => {
   const fileInputRef                = useRef<HTMLInputElement>(null);
   const messagesEndRef              = useRef<HTMLDivElement>(null);
 
+  // Resizable chat panel
+  const [chatWidth, setChatWidth]   = useState(320);
+  const chatDrag = useRef({ active: false, startX: 0, startW: 320 });
+
   // Shared
   const [successAlert, setSuccessAlert] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
   const [errorAlert,   setErrorAlert]   = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
@@ -205,6 +282,18 @@ const NutritionistPanel: React.FC = () => {
 
   useEffect(() => { loadPatients(); }, [loadPatients]);
   useEffect(() => { if (mainView === 'foods') fetchFoods(); }, [mainView, fetchFoods]);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!chatDrag.current.active) return;
+      const delta = chatDrag.current.startX - e.clientX;
+      setChatWidth(Math.min(700, Math.max(260, chatDrag.current.startW + delta)));
+    };
+    const onUp = () => { chatDrag.current.active = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+  }, []);
 
   const selectPatient = async (id: string) => {
     const patientData = await patientService.getById(id);
@@ -307,7 +396,17 @@ const NutritionistPanel: React.FC = () => {
   const openCreateFood = () => { setEditingFoodId(null); setFoodForm(EMPTY_FOOD); setFoodErrors({}); setShowFoodForm(true); };
   const openEditFood   = (f: Food) => {
     setEditingFoodId(f.id);
-    setFoodForm({ name: f.name, description: f.description || '', grossWeight: String(f.grossWeight), netWeight: String(f.netWeight), energyKcal: String(f.energyKcal), protein: String(f.protein), fats: String(f.fats), carbohydrates: String(f.carbohydrates), fiber: String(f.fiber) });
+    setFoodForm({
+      name: f.name, description: f.description || '',
+      grossWeight: String(f.grossWeight), netWeight: String(f.netWeight),
+      energyKcal: String(f.energyKcal), protein: String(f.protein),
+      fats: String(f.fats), carbohydrates: String(f.carbohydrates), fiber: String(f.fiber),
+      grupoSmae: f.grupoSmae || '', subgrupoSmae: f.subgrupoSmae || '',
+      porcionSugerida: f.porcionSugerida != null ? String(f.porcionSugerida) : '',
+      unidadPorcion: f.unidadPorcion || '',
+      indiceGlucemico: f.indiceGlucemico != null ? String(f.indiceGlucemico) : '',
+      cargaGlucemica: f.cargaGlucemica != null ? String(f.cargaGlucemica) : '',
+    });
     setFoodErrors({});
     setShowFoodForm(true);
   };
@@ -325,13 +424,19 @@ const NutritionistPanel: React.FC = () => {
     if (!validateFood()) return;
     setFoodFormLoading(true);
     const kcal = parseFloat(foodForm.energyKcal) || 0;
-    const payload = {
+    const payload: any = {
       name: foodForm.name.trim(), description: foodForm.description.trim() || undefined,
       grossWeight: parseFloat(foodForm.grossWeight) || parseFloat(foodForm.netWeight) || 0,
       netWeight: parseFloat(foodForm.netWeight) || 0, energyKcal: kcal,
       energyKj: Math.round(kcal * 4.184 * 10) / 10,
       protein: parseFloat(foodForm.protein) || 0, fats: parseFloat(foodForm.fats) || 0,
       carbohydrates: parseFloat(foodForm.carbohydrates) || 0, fiber: parseFloat(foodForm.fiber) || 0,
+      grupoSmae:      foodForm.grupoSmae.trim()      || null,
+      subgrupoSmae:   foodForm.subgrupoSmae.trim()   || null,
+      porcionSugerida: foodForm.porcionSugerida !== '' ? parseFloat(foodForm.porcionSugerida) : null,
+      unidadPorcion:  foodForm.unidadPorcion.trim()  || null,
+      indiceGlucemico: foodForm.indiceGlucemico !== '' ? parseFloat(foodForm.indiceGlucemico) : null,
+      cargaGlucemica:  foodForm.cargaGlucemica  !== '' ? parseFloat(foodForm.cargaGlucemica)  : null,
     };
     try {
       editingFoodId ? await updateFood(editingFoodId, payload) : await createFood(payload);
@@ -370,9 +475,9 @@ const NutritionistPanel: React.FC = () => {
 
       let patientContext: string | undefined;
       if (selected) {
-        patientContext = buildPatientContext(selected);
+        patientContext = buildPatientContext(selected, dietaryHabits);
       } else {
-        // Contexto global: resumen clínico completo de todos los pacientes
+        // Contexto global: resumen clínico de todos los pacientes
         const patientSummaries = patients.length > 0
           ? patients.map((p: any) => buildPatientContext(p)).join('\n\n---\n\n')
           : 'Sin pacientes registrados aún.';
@@ -398,19 +503,53 @@ const NutritionistPanel: React.FC = () => {
   };
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const latestAnthro    = selected?.anthropometry?.[0];
+  const latestAnthro     = selected?.anthropometry?.[0];
   const filteredPatients = patients.filter(p => `${p.firstName} ${p.lastName}`.toLowerCase().includes(search.toLowerCase()));
-  const filteredFoods    = foods.filter(f => `${f.name} ${f.description || ''}`.toLowerCase().includes(foodSearch.toLowerCase()));
+
+  // SMAE group list for the filter combo
+  const smaeGroups = Array.from(new Set(foods.map(f => f.grupoSmae).filter(Boolean))).sort() as string[];
+
+  // Foods: search + group filter + sort + paginate
+  const baseFiltered = foods.filter(f => {
+    const matchSearch = !foodSearch.trim() || f.name.toLowerCase().includes(foodSearch.toLowerCase());
+    const matchGrupo  = !filterGrupo || f.grupoSmae === filterGrupo;
+    return matchSearch && matchGrupo;
+  });
+  const sortedFoods = [...baseFiltered].sort((a, b) => {
+    const va = (a as any)[sortField] ?? '';
+    const vb = (b as any)[sortField] ?? '';
+    const cmp = typeof va === 'number' ? va - vb : String(va).localeCompare(String(vb), 'es');
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+  const totalPages    = Math.ceil(sortedFoods.length / PAGE_SIZE);
+  const pagedFoods    = sortedFoods.slice((foodPage - 1) * PAGE_SIZE, foodPage * PAGE_SIZE);
+
+  const handleSort = (field: SortField) => {
+    if (field === sortField) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); }
+    else { setSortField(field); setSortDir('asc'); }
+    setFoodPage(1);
+  };
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ChevronsUpDown className="inline-block opacity-30 ml-1" size={11} />;
+    return sortDir === 'asc'
+      ? <ChevronUp className="inline-block ml-1" size={11} />
+      : <ChevronDown className="inline-block ml-1" size={11} />;
+  };
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
       <SuccessAlert isOpen={successAlert.isOpen} title="Listo" message={successAlert.message} onClose={() => setSuccessAlert({ isOpen: false, message: '' })} />
       {errorAlert.isOpen && (
-        <div className="fixed top-6 right-6 z-50 bg-red-100 border-2 border-red-400 rounded-2xl p-6 shadow-xl max-w-sm">
-          <p className="font-bold text-red-900">Error</p>
-          <p className="text-red-700 text-sm mt-1">{errorAlert.message}</p>
-          <button onClick={() => setErrorAlert({ isOpen: false, message: '' })} className="mt-3 text-xs text-red-600 underline">Cerrar</button>
+        <div className="fixed top-6 right-6 z-50 bg-red-50 border border-red-300 rounded-2xl p-4 shadow-xl max-w-sm flex items-start gap-3">
+          <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-red-900 text-sm">Error</p>
+            <p className="text-red-700 text-xs mt-0.5">{errorAlert.message}</p>
+          </div>
+          <button onClick={() => setErrorAlert({ isOpen: false, message: '' })} className="text-red-400 hover:text-red-600 shrink-0">
+            <X size={14} />
+          </button>
         </div>
       )}
 
@@ -447,7 +586,8 @@ const NutritionistPanel: React.FC = () => {
           </nav>
         </div>
 
-        <button onClick={logout} className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded-lg transition-colors">
+        <button onClick={logout} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded-lg transition-colors">
+          <LogOut size={13} />
           Salir
         </button>
       </header>
@@ -463,9 +603,10 @@ const NutritionistPanel: React.FC = () => {
             <div className="p-3 border-b border-slate-200 space-y-2">
               <button
                 onClick={openCreatePatient}
-                className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors"
+                className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
               >
-                + Nuevo Paciente
+                <Plus size={13} />
+                Nuevo Paciente
               </button>
               <input
                 type="text" value={search}
@@ -609,12 +750,12 @@ const NutritionistPanel: React.FC = () => {
                     {/* Actions */}
                     <div className="flex gap-2 items-start self-start ml-auto">
                       <button onClick={() => openEditPatient(selected)}
-                        className="px-3.5 py-1.5 text-xs font-semibold border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors">
-                        Editar
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors">
+                        <Pencil size={12} /> Editar
                       </button>
                       <button onClick={() => setDeletePatient({ open: true, patient: selected })}
-                        className="px-3.5 py-1.5 text-xs font-semibold border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition-colors">
-                        Eliminar
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition-colors">
+                        <Trash2 size={12} /> Eliminar
                       </button>
                     </div>
                   </div>
@@ -624,22 +765,23 @@ const NutritionistPanel: React.FC = () => {
                 <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                   <div className="flex border-b border-slate-100 overflow-x-auto">
                     {([
-                      { key: 'historia',      label: 'Historia Clínica' },
-                      { key: 'biometria',     label: 'Biometría' },
-                      { key: 'antropometria', label: 'Antropometría' },
-                      { key: 'habitos',       label: 'Hábitos Dietéticos' },
-                      { key: 'menu',          label: 'Menú' },
-                    ] as { key: Tab; label: string }[]).map(tab => (
+                      { key: 'historia',      label: 'Historia Clínica',    icon: ClipboardList },
+                      { key: 'biometria',     label: 'Biometría',           icon: Activity      },
+                      { key: 'antropometria', label: 'Antropometría',       icon: Ruler         },
+                      { key: 'habitos',       label: 'Hábitos Dietéticos',  icon: UtensilsCrossed },
+                      { key: 'menu',          label: 'Menú',                icon: ChefHat       },
+                    ] as { key: Tab; label: string; icon: React.FC<{ size?: number; className?: string }> }[]).map(tab => (
                       <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
-                        className={`flex-1 py-3.5 text-xs font-bold uppercase tracking-wide transition-colors border-b-2 ${
+                        className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-bold uppercase tracking-wide transition-colors border-b-2 ${
                           activeTab === tab.key
                             ? 'border-emerald-600 text-emerald-700'
                             : 'border-transparent text-slate-400 hover:text-slate-600'
                         }`}
                       >
-                        {tab.label}
+                        <tab.icon size={15} />
+                        <span className="hidden sm:inline">{tab.label}</span>
                       </button>
                     ))}
                   </div>
@@ -724,7 +866,7 @@ const NutritionistPanel: React.FC = () => {
                           {hb && (
                             <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-xl p-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <span className="text-sm">📐</span>
+                                <Calculator size={15} className="text-violet-500 shrink-0" />
                                 <h3 className="text-xs font-bold text-violet-800 uppercase tracking-wide">Harris-Benedict — {hb.formula}</h3>
                               </div>
                               <div className="flex gap-6 mb-3">
@@ -769,7 +911,11 @@ const NutritionistPanel: React.FC = () => {
                                         : 'bg-blue-500 text-white'
                                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                                   }`}>
-                                  {g === 'disminuir' ? '↓ Bajar peso' : g === 'mantener' ? '= Mantener' : '↑ Subir peso'}
+                                  {g === 'disminuir'
+                                    ? <><TrendingDown size={12} className="inline mr-1" />Bajar peso</>
+                                    : g === 'mantener'
+                                    ? <><Minus size={12} className="inline mr-1" />Mantener</>
+                                    : <><TrendingUp size={12} className="inline mr-1" />Subir peso</>}
                                 </button>
                               ))}
                             </div>
@@ -791,7 +937,7 @@ const NutritionistPanel: React.FC = () => {
                           {/* Sin antropometría — aviso */}
                           {!hb && (
                             <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-                              <span className="text-lg shrink-0">⚠️</span>
+                              <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
                               <div>
                                 <p className="text-xs font-bold text-amber-800">Sin datos de antropometría</p>
                                 <p className="text-xs text-amber-700 mt-0.5">Registre el peso y la talla del paciente en la pestaña <strong>Antropometría</strong> para calcular automáticamente TMB y GET. Por ahora puede ingresar las calorías manualmente.</p>
@@ -928,17 +1074,32 @@ const NutritionistPanel: React.FC = () => {
             )}
           </main>
 
-          {/* ── Right chat panel ─────────────────────────────────────────── */}
-          <div className="w-80 border-l border-slate-200 flex flex-col flex-shrink-0 bg-white">
+          {/* ── Right chat panel (resizable) ────────────────────────────── */}
+          <div className="relative border-l border-slate-200 flex flex-col flex-shrink-0 bg-white"
+               style={{ width: chatWidth }}>
+
+            {/* Drag handle */}
+            <div
+              className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize z-20 group flex items-center justify-center hover:bg-violet-400/30 transition-colors"
+              onMouseDown={e => {
+                chatDrag.current = { active: true, startX: e.clientX, startW: chatWidth };
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+              }}
+            >
+              <GripVertical size={12} className="text-slate-300 group-hover:text-violet-400 transition-colors" />
+            </div>
+
             {/* Header */}
-            <div className="px-4 py-3 border-b border-slate-200 flex items-center gap-2 flex-shrink-0"
+            <div className="pl-3 pr-3 py-3 border-b border-slate-200 flex items-center gap-2 flex-shrink-0"
                  style={{ background: 'linear-gradient(90deg, #4c1d95, #3730a3)' }}>
-              <div className="w-5 h-5 rounded bg-violet-400/30 flex items-center justify-center flex-shrink-0">
-                <span style={{ fontSize: 11 }}>🤖</span>
+              <div className="w-6 h-6 rounded-lg bg-violet-400/30 flex items-center justify-center flex-shrink-0 ml-2">
+                <Bot size={13} className="text-violet-200" />
               </div>
               <span className="text-white text-xs font-semibold">Asistente IA</span>
-              <span className="text-violet-300 text-[10px] bg-violet-800/50 px-2 py-0.5 rounded-full truncate">
-                {selected ? `Paciente: ${selected.firstName}` : 'Chat Global'}
+              <span className="text-violet-300 text-[10px] bg-violet-800/50 px-2 py-0.5 rounded-full truncate min-w-0">
+                {selected ? `${selected.firstName}` : 'Global'}
               </span>
               <button
                 onClick={async () => {
@@ -949,9 +1110,7 @@ const NutritionistPanel: React.FC = () => {
                 title="Limpiar historial"
                 className="ml-auto w-6 h-6 flex items-center justify-center rounded hover:bg-violet-700/50 transition-colors flex-shrink-0"
               >
-                <svg className="w-3.5 h-3.5 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <Trash2 size={13} className="text-violet-300" />
               </button>
             </div>
 
@@ -960,34 +1119,65 @@ const NutritionistPanel: React.FC = () => {
               {aiMessages.map((msg, i) => (
                 msg.role === 'ai' ? (
                   <div key={i} className="flex gap-2 items-start">
-                    <div className="w-5 h-5 rounded flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white"
-                         style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>IA</div>
-                    <div className="bg-white border border-slate-100 rounded-xl rounded-tl-sm px-3 py-2 max-w-full">
-                      <div className="text-xs text-slate-700 leading-relaxed"
-                           dangerouslySetInnerHTML={{ __html: formatChatText(msg.text) }} />
+                    <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center"
+                         style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+                      <Bot size={12} className="text-white" />
+                    </div>
+                    <div className="bg-white border border-slate-100 rounded-xl rounded-tl-sm px-3 py-2 flex-1 min-w-0 overflow-x-auto">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          p:      ({children}) => <p className="text-xs text-slate-700 leading-relaxed mb-1.5 last:mb-0">{children}</p>,
+                          h1:     ({children}) => <p className="text-sm font-bold text-slate-800 mb-1 mt-2">{children}</p>,
+                          h2:     ({children}) => <p className="text-xs font-bold text-slate-800 mb-1 mt-2">{children}</p>,
+                          h3:     ({children}) => <p className="text-xs font-semibold text-slate-700 mb-0.5 mt-1.5">{children}</p>,
+                          ul:     ({children}) => <ul className="list-disc list-inside text-xs text-slate-700 space-y-0.5 mb-1.5 ml-1">{children}</ul>,
+                          ol:     ({children}) => <ol className="list-decimal list-inside text-xs text-slate-700 space-y-0.5 mb-1.5 ml-1">{children}</ol>,
+                          li:     ({children}) => <li className="leading-snug">{children}</li>,
+                          strong: ({children}) => <strong className="font-semibold text-slate-900">{children}</strong>,
+                          em:     ({children}) => <em className="italic">{children}</em>,
+                          code:   ({children}) => <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded text-[10px] font-mono">{children}</code>,
+                          pre:    ({children}) => <pre className="bg-slate-100 rounded-lg p-2 text-[10px] font-mono overflow-x-auto mb-1.5">{children}</pre>,
+                          table:  ({children}) => <div className="overflow-x-auto mb-2"><table className="text-[11px] border-collapse w-full">{children}</table></div>,
+                          thead:  ({children}) => <thead className="bg-slate-50">{children}</thead>,
+                          th:     ({children}) => <th className="border border-slate-200 px-2 py-1 text-left font-semibold text-slate-700">{children}</th>,
+                          td:     ({children}) => <td className="border border-slate-200 px-2 py-1 text-slate-600">{children}</td>,
+                          hr:     () => <hr className="border-slate-200 my-2" />,
+                          blockquote: ({children}) => <blockquote className="border-l-2 border-violet-300 pl-2 italic text-slate-500 text-xs my-1">{children}</blockquote>,
+                        }}
+                      >
+                        {cleanAiText(msg.text)}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 ) : (
                   <div key={i} className="flex gap-2 items-start justify-end">
-                    <div className="flex flex-col items-end gap-1">
+                    <div className="flex flex-col items-end gap-1 min-w-0 max-w-[80%]">
                       {msg.fileName && (
-                        <span className="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">📎 {msg.fileName}</span>
+                        <span className="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Paperclip size={9} /> {msg.fileName}
+                        </span>
                       )}
-                      <div className="text-white rounded-xl rounded-tr-sm px-3 py-2 max-w-[200px] text-xs whitespace-pre-wrap"
+                      <div className="text-white rounded-xl rounded-tr-sm px-3 py-2 text-xs whitespace-pre-wrap break-words"
                            style={{ background: '#4c1d95' }}>
                         {msg.text}
                       </div>
                     </div>
-                    <div className="w-5 h-5 rounded bg-slate-200 flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-slate-500">Ntr</div>
+                    <div className="w-6 h-6 rounded-lg bg-slate-200 flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-slate-500">Ntr</div>
                   </div>
                 )
               ))}
               {aiLoading && (
                 <div className="flex gap-2 items-start">
-                  <div className="w-5 h-5 rounded flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white"
-                       style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>IA</div>
-                  <div className="bg-white border border-slate-100 rounded-xl rounded-tl-sm px-3 py-2">
-                    <span className="text-xs text-slate-400">Generando respuesta...</span>
+                  <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center"
+                       style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+                    <Bot size={12} className="text-white" />
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-xl rounded-tl-sm px-3 py-2.5 flex items-center gap-1.5">
+                    {[0,1,2].map(d => (
+                      <span key={d} className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce"
+                        style={{ animationDelay: `${d * 150}ms` }} />
+                    ))}
                   </div>
                 </div>
               )}
@@ -998,8 +1188,11 @@ const NutritionistPanel: React.FC = () => {
             <div className="border-t border-slate-100 px-3 py-2 bg-white flex-shrink-0 space-y-2">
               {aiFile && (
                 <div className="flex items-center gap-2 text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded-lg px-2 py-1">
-                  <span className="truncate">📎 {aiFile.name}</span>
-                  <button onClick={() => setAiFile(null)} className="ml-auto text-violet-400 hover:text-violet-700 flex-shrink-0">✕</button>
+                  <Paperclip size={11} className="shrink-0 text-violet-500" />
+                  <span className="truncate flex-1">{aiFile.name}</span>
+                  <button onClick={() => setAiFile(null)} className="ml-auto text-violet-400 hover:text-violet-700 flex-shrink-0">
+                    <X size={12} />
+                  </button>
                 </div>
               )}
               <div className="flex gap-1.5 items-center">
@@ -1007,9 +1200,7 @@ const NutritionistPanel: React.FC = () => {
                   onChange={e => setAiFile(e.target.files?.[0] ?? null)} />
                 <button onClick={() => fileInputRef.current?.click()} disabled={aiLoading} title="Subir PDF/TXT"
                   className="w-7 h-7 flex items-center justify-center rounded-full border border-slate-200 hover:bg-violet-50 hover:border-violet-300 transition-colors disabled:opacity-40 flex-shrink-0">
-                  <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                  </svg>
+                  <Paperclip size={14} className="text-slate-500" />
                 </button>
                 <input
                   type="text" value={aiInput}
@@ -1020,9 +1211,9 @@ const NutritionistPanel: React.FC = () => {
                   disabled={aiLoading}
                 />
                 <button onClick={sendAiMessage} disabled={aiLoading || (!aiInput.trim() && !aiFile)}
-                  className="px-3 py-1.5 text-xs font-semibold text-white rounded-full hover:opacity-90 disabled:opacity-40 transition-opacity flex-shrink-0"
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-white hover:opacity-90 disabled:opacity-40 transition-opacity flex-shrink-0"
                   style={{ background: '#4c1d95' }}>
-                  →
+                  <Send size={13} />
                 </button>
               </div>
             </div>
@@ -1044,116 +1235,389 @@ const NutritionistPanel: React.FC = () => {
             <div className="flex gap-2 items-center">
               <input type="text" value={foodSearch} onChange={e => setFoodSearch(e.target.value)} placeholder="Buscar alimento..."
                 className="bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 w-52" />
-              <button onClick={openCreateFood} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors">
-                + Nuevo Alimento
+              <button onClick={openCreateFood} className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors">
+                <Plus size={14} /> Nuevo Alimento
               </button>
             </div>
           </div>
 
           {/* Food form */}
           {showFoodForm && (
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-sm font-bold text-slate-900">{editingFoodId ? 'Editar Alimento' : 'Nuevo Alimento'}</h3>
-                <button onClick={() => setShowFoodForm(false)} className="text-slate-300 hover:text-slate-600 text-xl transition-colors">×</button>
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+              <div className="flex justify-between items-center mb-5">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">{editingFoodId ? 'Editar Alimento' : 'Registrar Nuevo Alimento'}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Los campos marcados con * son obligatorios</p>
+                </div>
+                <button onClick={() => setShowFoodForm(false)} className="text-slate-300 hover:text-slate-600 text-2xl leading-none transition-colors">×</button>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+              {/* Sección 1 — Identidad */}
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Identificación</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
                 <div className="md:col-span-2">
                   <label className={labelCls}>Nombre *</label>
-                  <input className={inputCls} value={foodForm.name} onChange={e => setFoodForm(f => ({ ...f, name: e.target.value }))} placeholder="Ej: Arroz cocido" />
+                  <input className={inputCls} value={foodForm.name}
+                    onChange={e => setFoodForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Ej: Arroz blanco cocido" />
                   {foodErrors.name && <p className={errCls}>{foodErrors.name}</p>}
                 </div>
-                <div className="md:col-span-2">
+                <div>
                   <label className={labelCls}>Grupo SMAE</label>
-                  <input className={inputCls} value={foodForm.description} onChange={e => setFoodForm(f => ({ ...f, description: e.target.value }))} placeholder="Ej: Cereales, Aceites S/P, Lácteos..." />
+                  <select className={inputCls} value={foodForm.grupoSmae}
+                    onChange={e => setFoodForm(f => ({ ...f, grupoSmae: e.target.value }))}>
+                    <option value="">— Sin grupo —</option>
+                    {smaeGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
                 </div>
-                {[
-                  { field: 'grossWeight',   label: 'Peso bruto (g)',   ph: '0' },
-                  { field: 'netWeight',     label: 'Peso neto (g) *',  ph: '0' },
-                  { field: 'energyKcal',    label: 'Energía (Kcal) *', ph: '0' },
-                  { field: 'protein',       label: 'Proteína (g)',     ph: '0' },
-                  { field: 'fats',          label: 'Lípidos (g)',      ph: '0' },
-                  { field: 'carbohydrates', label: 'HCO (g)',          ph: '0' },
-                  { field: 'fiber',         label: 'Fibra (g)',        ph: '0' },
-                ].map(({ field, label, ph }) => (
-                  <div key={field}>
-                    <label className={labelCls}>{label}</label>
-                    <input type="number" className={inputCls} value={(foodForm as any)[field]}
-                      onChange={e => setFoodForm(f => ({ ...f, [field]: e.target.value }))} placeholder={ph} min="0" step="0.1" />
-                    {foodErrors[field] && <p className={errCls}>{foodErrors[field]}</p>}
-                  </div>
-                ))}
-                <div className="flex items-end pb-1">
-                  <p className="text-xs text-slate-400">kJ = Kcal × 4.184<br />(calculado al guardar)</p>
+                <div>
+                  <label className={labelCls}>Subgrupo</label>
+                  <input className={inputCls} value={foodForm.subgrupoSmae}
+                    onChange={e => setFoodForm(f => ({ ...f, subgrupoSmae: e.target.value }))}
+                    placeholder="Ej: Sin proteína añadida" />
                 </div>
               </div>
-              <div className="flex gap-3 mt-4">
+
+              {/* Sección 2 — Porción */}
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Porción sugerida</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                <div>
+                  <label className={labelCls}>Cantidad</label>
+                  <input type="number" className={inputCls} value={foodForm.porcionSugerida}
+                    onChange={e => setFoodForm(f => ({ ...f, porcionSugerida: e.target.value }))}
+                    placeholder="Ej: 0.5" min="0" step="0.01" />
+                </div>
+                <div>
+                  <label className={labelCls}>Unidad</label>
+                  <input className={inputCls} value={foodForm.unidadPorcion}
+                    onChange={e => setFoodForm(f => ({ ...f, unidadPorcion: e.target.value }))}
+                    placeholder="Ej: taza, pieza, g" />
+                </div>
+                <div>
+                  <label className={labelCls}>Peso bruto (g)</label>
+                  <input type="number" className={inputCls} value={foodForm.grossWeight}
+                    onChange={e => setFoodForm(f => ({ ...f, grossWeight: e.target.value }))}
+                    placeholder="0" min="0" step="0.1" />
+                </div>
+                <div>
+                  <label className={labelCls}>Peso neto (g) *</label>
+                  <input type="number" className={inputCls} value={foodForm.netWeight}
+                    onChange={e => setFoodForm(f => ({ ...f, netWeight: e.target.value }))}
+                    placeholder="0" min="0" step="0.1" />
+                  {foodErrors.netWeight && <p className={errCls}>{foodErrors.netWeight}</p>}
+                </div>
+              </div>
+
+              {/* Sección 3 — Macronutrimentos */}
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Composición nutrimental</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                <div>
+                  <label className={labelCls}>Energía (Kcal) *</label>
+                  <input type="number" className={inputCls} value={foodForm.energyKcal}
+                    onChange={e => setFoodForm(f => ({ ...f, energyKcal: e.target.value }))}
+                    placeholder="0" min="0" step="0.1" />
+                  {foodErrors.energyKcal && <p className={errCls}>{foodErrors.energyKcal}</p>}
+                </div>
+                <div>
+                  <label className={labelCls}>Proteína (g)</label>
+                  <input type="number" className={inputCls} value={foodForm.protein}
+                    onChange={e => setFoodForm(f => ({ ...f, protein: e.target.value }))}
+                    placeholder="0" min="0" step="0.1" />
+                </div>
+                <div>
+                  <label className={labelCls}>Lípidos (g)</label>
+                  <input type="number" className={inputCls} value={foodForm.fats}
+                    onChange={e => setFoodForm(f => ({ ...f, fats: e.target.value }))}
+                    placeholder="0" min="0" step="0.1" />
+                </div>
+                <div>
+                  <label className={labelCls}>HCO (g)</label>
+                  <input type="number" className={inputCls} value={foodForm.carbohydrates}
+                    onChange={e => setFoodForm(f => ({ ...f, carbohydrates: e.target.value }))}
+                    placeholder="0" min="0" step="0.1" />
+                </div>
+                <div>
+                  <label className={labelCls}>Fibra (g)</label>
+                  <input type="number" className={inputCls} value={foodForm.fiber}
+                    onChange={e => setFoodForm(f => ({ ...f, fiber: e.target.value }))}
+                    placeholder="0" min="0" step="0.1" />
+                </div>
+                <div>
+                  <label className={labelCls}>Índ. glucémico</label>
+                  <input type="number" className={inputCls} value={foodForm.indiceGlucemico}
+                    onChange={e => setFoodForm(f => ({ ...f, indiceGlucemico: e.target.value }))}
+                    placeholder="0–100" min="0" max="100" step="1" />
+                </div>
+                <div>
+                  <label className={labelCls}>Carga glucémica</label>
+                  <input type="number" className={inputCls} value={foodForm.cargaGlucemica}
+                    onChange={e => setFoodForm(f => ({ ...f, cargaGlucemica: e.target.value }))}
+                    placeholder="0" min="0" step="0.1" />
+                </div>
+                <div className="flex items-end pb-1">
+                  <p className="text-xs text-slate-400">kJ se calcula automáticamente<br />(Kcal × 4.184)</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-1 border-t border-slate-100">
                 <button onClick={handleSaveFood} disabled={foodFormLoading}
                   className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
-                  {foodFormLoading ? 'Guardando...' : editingFoodId ? 'Actualizar' : 'Registrar Alimento'}
+                  {foodFormLoading ? 'Guardando...' : editingFoodId ? 'Actualizar Alimento' : 'Registrar Alimento'}
                 </button>
-                <button onClick={() => setShowFoodForm(false)} className="px-5 py-2.5 border border-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
+                <button onClick={() => setShowFoodForm(false)} className="px-5 py-2.5 border border-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-50 transition-colors">
+                  Cancelar
+                </button>
               </div>
             </div>
           )}
 
           {/* SMAE table */}
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
+            {/* Scrollable table wrapper */}
+            <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
+              <table className="w-full text-sm border-collapse">
+                <thead className="sticky top-0 z-10">
                   <tr className="bg-emerald-700 text-white text-xs">
-                    {[
-                      { label: 'ALIMENTO',        cls: 'text-left min-w-[200px] px-4 py-3' },
-                      { label: 'Peso neto (g)',    cls: 'text-right min-w-[90px] px-3 py-3' },
-                      { label: 'Kcal',            cls: 'text-right min-w-[70px] px-3 py-3' },
-                      { label: 'kJ',              cls: 'text-right min-w-[70px] px-3 py-3' },
-                      { label: 'Prot (g)',         cls: 'text-right min-w-[75px] px-3 py-3' },
-                      { label: 'Líp (g)',          cls: 'text-right min-w-[70px] px-3 py-3' },
-                      { label: 'HCO (g)',          cls: 'text-right min-w-[75px] px-3 py-3' },
-                      { label: 'Fibra (g)',        cls: 'text-right min-w-[75px] px-3 py-3' },
-                    ].map(h => <th key={h.label} className={h.cls}>{h.label}</th>)}
-                    <th className="text-left min-w-[120px] px-3 py-3 bg-yellow-600">GRUPO</th>
+                    {/* ALIMENTO — sortable */}
+                    <th className="text-left min-w-[200px] px-4 py-3 cursor-pointer select-none hover:bg-emerald-800 transition-colors"
+                      onClick={() => handleSort('name')}>
+                      ALIMENTO <SortIcon field="name" />
+                    </th>
+                    {/* CANTIDAD (porcionSugerida + unidadPorcion) */}
+                    <th className="text-left min-w-[120px] px-3 py-3 bg-emerald-600">
+                      Cantidad
+                    </th>
+                    {/* Numeric sortable columns */}
+                    {([
+                      { label: 'Peso neto (g)', field: 'netWeight'      as SortField },
+                      { label: 'Kcal',          field: 'energyKcal'     as SortField },
+                      { label: 'Prot (g)',       field: 'protein'        as SortField },
+                      { label: 'Líp (g)',        field: 'fats'           as SortField },
+                      { label: 'HCO (g)',        field: 'carbohydrates'  as SortField },
+                      { label: 'Fibra (g)',      field: 'fiber'          as SortField },
+                    ] as { label: string; field: SortField }[]).map(h => (
+                      <th key={h.field}
+                        className="text-right min-w-[80px] px-3 py-3 cursor-pointer select-none hover:bg-emerald-800 transition-colors"
+                        onClick={() => handleSort(h.field)}>
+                        {h.label} <SortIcon field={h.field} />
+                      </th>
+                    ))}
+                    {/* GRUPO — sortable + filter combo */}
+                    <th className="text-left min-w-[150px] px-3 py-3 bg-yellow-600 cursor-pointer select-none"
+                      onClick={() => handleSort('grupoSmae')}>
+                      <div className="flex flex-col gap-1">
+                        <span className="flex items-center">GRUPO <SortIcon field="grupoSmae" /></span>
+                        <select
+                          value={filterGrupo}
+                          onChange={e => { e.stopPropagation(); setFilterGrupo(e.target.value); setFoodPage(1); }}
+                          onClick={e => e.stopPropagation()}
+                          className="w-full text-xs bg-yellow-50 text-yellow-900 border border-yellow-300 rounded px-1 py-0.5 font-normal cursor-pointer focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                        >
+                          <option value="">Todos los grupos</option>
+                          {smaeGroups.map(g => (
+                            <option key={g} value={g}>{g}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </th>
                     <th className="text-center min-w-[90px] px-3 py-3">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loadingFoods ? (
                     <tr><td colSpan={10} className="py-10 text-center text-slate-400 text-sm">Cargando alimentos...</td></tr>
-                  ) : filteredFoods.length === 0 ? (
+                  ) : sortedFoods.length === 0 ? (
                     <tr><td colSpan={10} className="py-14 text-center">
                       <p className="text-slate-400 text-sm font-medium">No hay alimentos registrados</p>
                       <p className="text-slate-300 text-xs mt-1">Haz clic en "+ Nuevo Alimento" para comenzar</p>
                     </td></tr>
-                  ) : filteredFoods.map((f, i) => (
+                  ) : pagedFoods.map((f, i) => (
                     <tr key={f.id} className={`border-b border-slate-100 hover:bg-emerald-50 transition-colors ${i % 2 === 0 ? '' : 'bg-slate-50/50'}`}>
-                      <td className="py-2.5 px-4 font-medium text-slate-800 text-sm">{f.name}</td>
+                      <td className="py-2.5 px-4 font-medium text-slate-800 text-sm max-w-[240px] truncate" title={f.name}>{f.name}</td>
+                      <td className="py-2.5 px-3 text-slate-600 text-sm whitespace-nowrap">
+                        {f.porcionSugerida != null
+                          ? (() => {
+                              const unit = f.unidadPorcion?.trim().replace(/^[-–—]+$/, '') || '';
+                              return <span className="text-emerald-700 font-semibold">{toFraction(f.porcionSugerida)}{unit ? ` ${unit}` : ''}</span>;
+                            })()
+                          : <span className="text-slate-300">—</span>}
+                      </td>
                       <td className="py-2.5 px-3 text-right text-slate-600 tabular-nums text-sm">{f.netWeight}</td>
                       <td className="py-2.5 px-3 text-right font-semibold text-slate-800 tabular-nums text-sm">{f.energyKcal}</td>
-                      <td className="py-2.5 px-3 text-right text-slate-500 tabular-nums text-sm">{f.energyKj}</td>
                       <td className="py-2.5 px-3 text-right text-slate-600 tabular-nums text-sm">{f.protein}</td>
                       <td className="py-2.5 px-3 text-right text-slate-600 tabular-nums text-sm">{f.fats}</td>
                       <td className="py-2.5 px-3 text-right text-slate-600 tabular-nums text-sm">{f.carbohydrates}</td>
                       <td className="py-2.5 px-3 text-right text-slate-600 tabular-nums text-sm">{f.fiber}</td>
                       <td className="py-2.5 px-3 bg-yellow-50">
-                        {f.description
-                          ? <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded font-medium">{f.description}</span>
+                        {f.grupoSmae
+                          ? <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded font-medium whitespace-nowrap">{f.grupoSmae}</span>
                           : <span className="text-slate-300 text-xs">—</span>}
                       </td>
-                      <td className="py-2.5 px-3 text-center">
-                        <button onClick={() => openEditFood(f)} className="text-emerald-600 hover:text-emerald-800 text-xs font-semibold mr-2 transition-colors">Editar</button>
-                        <button onClick={() => setDeleteFood({ open: true, food: f })} className="text-red-400 hover:text-red-600 text-xs font-semibold transition-colors">Eliminar</button>
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => openEditFood(f)} title="Editar"
+                            className="w-6 h-6 flex items-center justify-center rounded hover:bg-emerald-100 text-emerald-600 hover:text-emerald-800 transition-colors">
+                            <Pencil size={13} />
+                          </button>
+                          <button onClick={() => setDeleteFood({ open: true, food: f })} title="Eliminar"
+                            className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 text-red-400 hover:text-red-600 transition-colors">
+                            <Trash2 size={13} />
+                          </button>
+                          <button onClick={() => setInfoFood(f)} title="Ver detalles"
+                            className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 hover:bg-blue-100 text-slate-400 hover:text-blue-600 transition-colors">
+                            <Info size={13} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {filteredFoods.length > 0 && (
-              <div className="px-4 py-2 bg-slate-50 border-t border-slate-100">
-                <p className="text-xs text-slate-400">{filteredFoods.length} alimento{filteredFoods.length !== 1 ? 's' : ''}</p>
+
+            {/* Footer: count + pagination */}
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-4 flex-wrap">
+              <p className="text-xs text-slate-400">
+                {sortedFoods.length} alimento{sortedFoods.length !== 1 ? 's' : ''}
+                {filterGrupo ? ` · grupo: ${filterGrupo}` : ''}
+                {sortedFoods.length > 0 ? ` · pág. ${foodPage}/${totalPages}` : ''}
+              </p>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button disabled={foodPage === 1} onClick={() => setFoodPage(1)}
+                    className="px-2 py-1 text-xs rounded border border-slate-200 disabled:opacity-30 hover:bg-slate-100 transition-colors">«</button>
+                  <button disabled={foodPage === 1} onClick={() => setFoodPage(p => p - 1)}
+                    className="px-2 py-1 text-xs rounded border border-slate-200 disabled:opacity-30 hover:bg-slate-100 transition-colors">‹</button>
+                  <span className="px-2 py-1 text-xs text-slate-600 tabular-nums">{foodPage} / {totalPages}</span>
+                  <button disabled={foodPage === totalPages} onClick={() => setFoodPage(p => p + 1)}
+                    className="px-2 py-1 text-xs rounded border border-slate-200 disabled:opacity-30 hover:bg-slate-100 transition-colors">›</button>
+                  <button disabled={foodPage === totalPages} onClick={() => setFoodPage(totalPages)}
+                    className="px-2 py-1 text-xs rounded border border-slate-200 disabled:opacity-30 hover:bg-slate-100 transition-colors">»</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Info modal — detalles completos del alimento */}
+      {infoFood && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => setInfoFood(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex justify-between items-start px-6 py-4 border-b border-slate-100">
+              <div className="flex-1 min-w-0 pr-3">
+                <h2 className="text-sm font-bold text-slate-900 leading-tight">{infoFood.name}</h2>
+                {infoFood.grupoSmae && (
+                  <span className="inline-block mt-1 bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded font-medium">{infoFood.grupoSmae}</span>
+                )}
+                {infoFood.subgrupoSmae && (
+                  <span className="inline-block mt-1 ml-1 bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded">{infoFood.subgrupoSmae}</span>
+                )}
               </div>
-            )}
+              <button onClick={() => setInfoFood(null)} className="text-slate-300 hover:text-slate-600 text-2xl leading-none flex-shrink-0">×</button>
+            </div>
+
+            <div className="px-6 py-4 space-y-5">
+              {/* Porción */}
+              {infoFood.porcionSugerida != null && (
+                <section>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Porción sugerida</p>
+                  <p className="text-2xl font-bold text-emerald-600">
+                    {toFraction(infoFood.porcionSugerida)}
+                    {(() => { const u = infoFood.unidadPorcion?.trim().replace(/^[-–—]+$/, '') || ''; return u ? <span className="text-base font-medium text-slate-500 ml-1">{u}</span> : null; })()}
+                  </p>
+                </section>
+              )}
+
+              {/* Pesos */}
+              <section>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Pesos</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Peso bruto', value: infoFood.grossWeight, unit: 'g' },
+                    { label: 'Peso neto',  value: infoFood.netWeight,   unit: 'g' },
+                  ].map(row => (
+                    <div key={row.label} className="bg-slate-50 rounded-lg p-3 text-center">
+                      <p className="text-xs text-slate-400">{row.label}</p>
+                      <p className="text-lg font-bold text-slate-800">{row.value} <span className="text-xs font-normal">{row.unit}</span></p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Energía */}
+              <section>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Energía</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-emerald-50 rounded-lg p-3 text-center">
+                    <p className="text-xs text-emerald-600">Kilocalorías</p>
+                    <p className="text-lg font-bold text-emerald-700">{infoFood.energyKcal} <span className="text-xs font-normal">kcal</span></p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3 text-center">
+                    <p className="text-xs text-slate-400">Kilojulios</p>
+                    <p className="text-lg font-bold text-slate-700">{infoFood.energyKj} <span className="text-xs font-normal">kJ</span></p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Macronutrimentos */}
+              <section>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Macronutrimentos</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Proteína',       value: infoFood.protein,        color: 'blue'   },
+                    { label: 'Lípidos',        value: infoFood.fats,           color: 'amber'  },
+                    { label: 'Carbohidratos',  value: infoFood.carbohydrates,  color: 'orange' },
+                    { label: 'Fibra',          value: infoFood.fiber,          color: 'green'  },
+                  ].map(row => (
+                    <div key={row.label} className="bg-slate-50 rounded-lg p-3 flex justify-between items-center">
+                      <p className="text-xs text-slate-500">{row.label}</p>
+                      <p className="text-sm font-bold text-slate-800">{row.value} <span className="text-xs font-normal text-slate-400">g</span></p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Índice / Carga glucémica */}
+              {(infoFood.indiceGlucemico != null || infoFood.cargaGlucemica != null) && (
+                <section>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Glucemia</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {infoFood.indiceGlucemico != null && (
+                      <div className="bg-rose-50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-rose-400">Índice glucémico</p>
+                        <p className="text-lg font-bold text-rose-600">{infoFood.indiceGlucemico}</p>
+                      </div>
+                    )}
+                    {infoFood.cargaGlucemica != null && (
+                      <div className="bg-rose-50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-rose-400">Carga glucémica</p>
+                        <p className="text-lg font-bold text-rose-600">{infoFood.cargaGlucemica}</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {/* Fuente */}
+              {infoFood.source && (
+                <p className="text-xs text-slate-300 text-right">Fuente: {infoFood.source}</p>
+              )}
+            </div>
+
+            <div className="px-6 pb-4 flex gap-2">
+              <button onClick={() => { setInfoFood(null); openEditFood(infoFood); }}
+                className="flex-1 py-2 text-sm font-semibold text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors">
+                Editar este alimento
+              </button>
+              <button onClick={() => setInfoFood(null)}
+                className="px-5 py-2 text-sm text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

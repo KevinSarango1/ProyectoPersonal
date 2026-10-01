@@ -9,6 +9,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: true,
+    allowedHosts: ['angry-buckets-agree.loca.lt', '.loca.lt'],
     proxy: {
       '/api': { target: 'http://localhost:3000', changeOrigin: true },
     },

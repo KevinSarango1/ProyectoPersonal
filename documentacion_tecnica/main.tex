@@ -1,0 +1,1190 @@
+% ============================================================
+%  Documentación Técnica del Prototipo NutriAPP
+%  Actividad 1.4 — Documentación de Resultados
+%  Objetivo Específico 1 — Fase de Construcción
+%  Kevin Patricio Sarango Olaya — UNL — MAR.26–AGO.26
+% ============================================================
+\documentclass[12pt,a4paper]{article}
+
+% ── Codificación y fuentes ──────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+
+% ── Geometría ───────────────────────────────────────────────
+\usepackage[top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm]{geometry}
+
+% ── Tablas ──────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{makecell}
+
+% ── Gráficos ────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{float}
+
+% ── Código fuente ───────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{shellbg}{RGB}{30,30,30}
+\definecolor{shelltext}{RGB}{220,220,220}
+\definecolor{codestring}{RGB}{6,110,68}
+\definecolor{codekeyword}{RGB}{0,0,180}
+\definecolor{codecomment}{RGB}{100,100,100}
+\definecolor{codenumber}{RGB}{160,160,160}
+
+\lstdefinelanguage{TypeScript}{
+  keywords={const,let,var,function,return,export,import,from,async,await,
+            try,catch,if,else,new,class,interface,type,extends,implements,
+            default,true,false,null,undefined,void,any,string,number,boolean},
+  sensitive=true,
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  morestring=[b]`,
+}
+
+\lstdefinestyle{shell}{
+  language=bash,
+  backgroundcolor=\color{shellbg},
+  basicstyle=\ttfamily\footnotesize\color{shelltext},
+  keywordstyle=\color{cyan},
+  commentstyle=\color{gray!70},
+  stringstyle=\color{yellow!80},
+  numbers=none,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{gray},
+  breaklines=true,
+  keepspaces=true,
+  xleftmargin=12pt,
+  xrightmargin=4pt,
+  showstringspaces=false,
+}
+
+\lstset{
+  language=TypeScript,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codekeyword}\bfseries,
+  stringstyle=\color{codestring},
+  commentstyle=\color{codecomment}\itshape,
+  numberstyle=\tiny\color{codenumber},
+  numbers=left,
+  numbersep=6pt,
+  stepnumber=1,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=true,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{gray!40},
+  captionpos=b,
+  tabsize=2,
+  keepspaces=true,
+  xleftmargin=12pt,
+  xrightmargin=4pt,
+  extendedchars=true,
+  literate=
+    {á}{{\'{a}}}1 {é}{{\'{e}}}1 {í}{{\'\i}}1 {ó}{{\'{o}}}1 {ú}{{\'{u}}}1
+    {Á}{{\'{A}}}1 {É}{{\'{E}}}1 {Í}{{\'\I}}1 {Ó}{{\'{O}}}1 {Ú}{{\'{U}}}1
+    {ü}{{\"u}}1 {ñ}{{\~n}}1 {Ñ}{{\~N}}1
+    {¿}{{\textquestiondown}}1 {¡}{{\textexclamdown}}1,
+}
+
+% ── Hipervínculos ────────────────────────────────────────────
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+
+% ── Encabezados y pie de página ──────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Documentación Técnica — NutriAPP}
+\fancyhead[R]{\small Kevin Sarango — UNL}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Interlineado ─────────────────────────────────────────────
+\usepackage{setspace}
+\onehalfspacing
+
+% ── Otros ────────────────────────────────────────────────────
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{caption}
+
+% ─────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Portada ──────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  {\Large\bfseries UNIVERSIDAD NACIONAL DE LOJA}\\[0.3cm]
+  {\large Facultad de la Energía, las Industrias y los Recursos Naturales No Renovables}\\[0.1cm]
+  {\large Carrera de Ingeniería en Sistemas / Computación}\\[2.5cm]
+
+  {\LARGE\bfseries Documentación Técnica del Prototipo NutriAPP}\\[0.4cm]
+  {\Large\bfseries Actividad 1.4 — Documentación de Resultados}\\[0.4cm]
+  {\large Objetivo Específico 1 — Fase de Construcción}\\[2cm]
+
+  {\large\bfseries Trabajo de Integración Curricular}\\[0.3cm]
+  {\normalsize Diseño de un prototipo de software inteligente para la gestión nutricional
+  de pacientes asistido por inteligencia artificial generativa basado en
+  el Modelo de Lenguaje de Gran Escala (LLM) con pipeline RAG}\\[2cm]
+
+  \begin{tabular}{rl}
+    \textbf{Autor:}   & Kevin Patricio Sarango Olaya \\[0.2cm]
+    \textbf{Asesor:}  & Wilman Patricio Chamba Zaragocín \\[0.2cm]
+    \textbf{Período:} & MAR.26--AGO.26 \\[0.2cm]
+    \textbf{Fecha:}   & Loja, julio de 2026 \\
+  \end{tabular}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% ============================================================
+\section{Introducción}
+% ============================================================
+
+El presente documento constituye la documentación técnica completa del prototipo
+\textbf{NutriAPP}, desarrollado como parte del Objetivo Específico~1 del Trabajo
+de Integración Curricular titulado \emph{«Diseño de un prototipo de software
+inteligente para la gestión nutricional de pacientes asistido por inteligencia
+artificial generativa basado en el Modelo de Lenguaje de Gran Escala (LLM) con
+pipeline RAG»}.
+
+NutriAPP es una aplicación web clínica diseñada para nutricionistas que integra
+un asistente de inteligencia artificial basado en el modelo Llama~3.3-70b de Meta,
+accesible mediante la API Groq, con un pipeline de generación aumentada por recuperación
+(RAG) que permite analizar documentos clínicos en formato PDF y generar respuestas
+contextualizadas.
+
+Esta documentación está estructurada en cuatro secciones principales:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Descripción de la arquitectura implementada}: visión general del
+        sistema, capas tecnológicas, endpoints de la API REST y modelo de base de datos.
+  \item \textbf{Decisiones de diseño}: justificación técnica de las elecciones
+        adoptadas en cada componente del sistema durante el desarrollo.
+  \item \textbf{Manual de instalación}: guía paso a paso para desplegar NutriAPP
+        en un entorno de desarrollo local en Windows, macOS o Linux.
+  \item \textbf{Guía de uso}: instrucciones detalladas para que el nutricionista
+        opere todos los módulos funcionales del sistema.
+\end{itemize}
+
+% ============================================================
+\clearpage
+\section{Descripción de la Arquitectura Implementada}
+% ============================================================
+
+\subsection{Visión General del Sistema}
+
+NutriAPP sigue una \textbf{arquitectura cliente--servidor de tres capas}:
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Capa de presentación} — React~18 con TypeScript y TailwindCSS,
+        ejecutada en el navegador del usuario como Single Page Application (SPA).
+        Consume la API REST del backend mediante peticiones HTTP/JSON usando Axios.
+  \item \textbf{Capa de lógica de negocio} — Node.js~20 con Express.js~4 y TypeScript.
+        Expone una API REST en el puerto~3000. Integra el módulo de inteligencia
+        artificial como servicio interno (\texttt{AIService}) y se comunica con la
+        API Groq mediante HTTPS/REST.
+  \item \textbf{Capa de persistencia} — PostgreSQL~15 gestionado mediante Prisma~5
+        ORM. Almacena todos los datos del sistema: pacientes, historiales clínicos,
+        biometría, antropometría, mensajes de chat y catálogo de alimentos ecuatorianos.
+\end{enumerate}
+
+El único servicio externo es la \textbf{API Groq} (\texttt{api.groq.com:443}), que
+provee capacidad de inferencia LLM con el modelo Llama~3.3-70b-versatile. Los datos
+clínicos de los pacientes permanecen en el entorno local; únicamente el texto del
+prompt (incluyendo texto extraído de PDFs) se transmite a Groq para la inferencia.
+
+\subsection{Stack Tecnológico}
+
+\begin{table}[H]
+\centering
+\caption{Stack tecnológico completo del sistema NutriAPP}
+\label{tab:stack}
+\begin{tabularx}{\linewidth}{|l|l|X|}
+\hline
+\textbf{Capa} & \textbf{Tecnología / Versión} & \textbf{Propósito en el sistema} \\
+\hline
+Runtime servidor  & Node.js 20 LTS             & Entorno de ejecución del backend \\
+\hline
+Lenguaje (back)   & TypeScript 5               & Tipado estático, código mantenible y seguro \\
+\hline
+Framework HTTP    & Express.js 4               & Enrutamiento REST y middlewares \\
+\hline
+ORM               & Prisma 5                   & Abstracción de base de datos con tipos generados \\
+\hline
+Base de datos     & PostgreSQL 15              & Persistencia relacional \\
+\hline
+Autenticación     & jsonwebtoken (JWT)         & Tokens de sesión sin estado \\
+\hline
+Cifrado           & bcryptjs                   & Hash de contraseñas del nutricionista \\
+\hline
+Subida archivos   & Multer (memoria)           & Recepción de PDF en RAM para análisis RAG \\
+\hline
+Extracción PDF    & pdf-parse 2.4.5            & Extracción de texto de documentos PDF \\
+\hline
+IA / LLM          & API Groq + Llama 3.3-70b  & Inferencia de lenguaje natural en español \\
+\hline
+Frontend SPA      & React 18 + Vite 5          & Interfaz de usuario reactiva \\
+\hline
+Estilos           & TailwindCSS 3              & Diseño responsivo con clases utilitarias \\
+\hline
+Cliente HTTP      & Axios                      & Peticiones REST desde el frontend \\
+\hline
+Control versiones & Git + GitHub               & Versionado y trazabilidad del código fuente \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Arquitectura según el Modelo C4}
+
+La arquitectura del sistema se documenta según el modelo C4 (Simon Brown), que
+organiza la descripción en cuatro niveles de abstracción progresiva.
+
+\subsubsection{Nivel 1 — Contexto del Sistema}
+
+NutriAPP es el sistema central. El único actor es el \textbf{Nutricionista}, que
+accede mediante un navegador web. La única dependencia externa es la \textbf{API Groq},
+que provee inferencia LLM. No existe ningún otro servicio en la nube; PostgreSQL y
+el backend Express se ejecutan localmente en la máquina del desarrollador.
+
+\subsubsection{Nivel 2 — Contenedores}
+
+El sistema se descompone en tres contenedores desplegables de forma independiente:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Frontend SPA} (puerto~5173): interfaz web para gestión clínica,
+        formularios y panel de chat IA. Compilado con Vite y servido como archivos
+        estáticos en producción.
+  \item \textbf{Backend API REST} (puerto~3000): lógica de negocio, autenticación JWT,
+        orquestación del pipeline RAG. Ejecutado con \texttt{ts-node-dev} en desarrollo.
+  \item \textbf{Base de datos PostgreSQL} (puerto~5432): almacenamiento relacional
+        gestionado por Prisma ORM.
+\end{itemize}
+
+\subsubsection{Nivel 3 — Componentes del Backend}
+
+El backend se organiza en \textbf{cuatro routers}, cada uno con su controlador:
+
+\begin{table}[H]
+\centering
+\caption{Componentes del backend Express — Nivel 3 C4}
+\label{tab:componentes}
+\begin{tabularx}{\linewidth}{|l|l|X|}
+\hline
+\textbf{Router} & \textbf{Controlador} & \textbf{Responsabilidad} \\
+\hline
+\texttt{AuthRouter}    & \texttt{AuthController}    & Registro e inicio de sesión de nutricionistas \\
+\hline
+\texttt{PatientRouter} & \texttt{PatientController} & CRUD de pacientes, historia clínica, biometría, antropometría, hábitos dietéticos y menú semanal \\
+\hline
+\texttt{FoodRouter}    & \texttt{FoodController}    & Catálogo de alimentos ecuatorianos (CRUD) \\
+\hline
+\texttt{AIRouter}      & \texttt{AIController}      & Chat IA, recomendaciones, pipeline RAG con PDF e historial de mensajes \\
+\hline
+\end{tabularx}
+\end{table}
+
+El componente \texttt{AIService} encapsula toda la comunicación con la API Groq,
+manteniendo al controlador \texttt{AIController} libre de los detalles del SDK externo.
+El \textbf{Auth Middleware} (\texttt{authenticate}, \texttt{requireNutritionist})
+verifica el token JWT en cada petición protegida.
+
+\subsubsection{Nivel 4 — Código: AIService}
+
+\texttt{AIService} (\texttt{backend/src/services/aiService.ts}) implementa cinco
+métodos públicos:
+
+\begin{enumerate}[leftmargin=2em]
+  \item \texttt{generateNutritionRecommendation()} — genera planes nutricionales
+        personalizados a partir de datos del paciente.
+  \item \texttt{analyzeFood()} — analiza el perfil nutricional de un alimento por
+        nombre y cantidad.
+  \item \texttt{generateMealPlan()} — crea planes de comidas según calorías objetivo
+        y restricciones dietéticas.
+  \item \texttt{chat()} — chat con historial conversacional (últimos 10 mensajes)
+        e inyección de contexto clínico del paciente activo.
+  \item \texttt{chatWithDocument()} — pipeline RAG: inyecta texto extraído de un PDF
+        en el prompt del sistema y genera una respuesta contextualizada.
+\end{enumerate}
+
+\subsection{Rutas de la API REST}
+
+\begin{longtable}{|l|l|p{0.38\linewidth}|}
+\caption{Endpoints de la API REST NutriAPP}
+\label{tab:endpoints} \\
+\hline
+\textbf{Método} & \textbf{Ruta} & \textbf{Descripción} \\
+\hline
+\endfirsthead
+\multicolumn{3}{c}{\tablename~\ref{tab:endpoints} (continuación)} \\
+\hline
+\textbf{Método} & \textbf{Ruta} & \textbf{Descripción} \\
+\hline
+\endhead
+\hline
+\endfoot
+GET    & \texttt{/health}                            & Estado del servidor (sin autenticación) \\
+\hline
+POST   & \texttt{/api/auth/login}                    & Inicio de sesión; devuelve token JWT \\
+\hline
+POST   & \texttt{/api/auth/register}                 & Registro de nuevo nutricionista \\
+\hline
+GET    & \texttt{/api/auth/me}                       & Perfil del usuario autenticado \\
+\hline
+GET    & \texttt{/api/patients}                      & Listar todos los pacientes \\
+\hline
+POST   & \texttt{/api/patients}                      & Crear paciente \\
+\hline
+GET    & \texttt{/api/patients/:id}                  & Obtener paciente con todos sus registros \\
+\hline
+PUT    & \texttt{/api/patients/:id}                  & Actualizar datos básicos del paciente \\
+\hline
+DELETE & \texttt{/api/patients/:id}                  & Eliminar paciente (en cascada) \\
+\hline
+PUT    & \texttt{/api/patients/:id/clinical-history} & Crear o actualizar historia clínica \\
+\hline
+POST   & \texttt{/api/patients/:id/biometrics}       & Registrar examen bioquímico \\
+\hline
+GET    & \texttt{/api/patients/:id/biometrics}       & Historial de exámenes bioquímicos \\
+\hline
+POST   & \texttt{/api/patients/:id/anthropometry}    & Registrar medición antropométrica \\
+\hline
+GET    & \texttt{/api/patients/:id/anthropometry}    & Historial de mediciones antropométricas \\
+\hline
+GET    & \texttt{/api/patients/:id/dietary-habits}   & Obtener hábitos dietéticos \\
+\hline
+POST   & \texttt{/api/patients/:id/dietary-habits}   & Crear o actualizar hábitos dietéticos \\
+\hline
+POST   & \texttt{/api/patients/:id/weekly-menu}      & Crear menú semanal con ítems \\
+\hline
+GET    & \texttt{/api/foods}                         & Listar catálogo de alimentos \\
+\hline
+POST   & \texttt{/api/foods}                         & Agregar alimento al catálogo \\
+\hline
+POST   & \texttt{/api/ai/recommendation}             & Generar recomendación nutricional \\
+\hline
+POST   & \texttt{/api/ai/chat}                       & Chat con asistente IA \\
+\hline
+POST   & \texttt{/api/ai/chat-upload}                & Chat RAG con documento PDF (multipart) \\
+\hline
+GET    & \texttt{/api/ai/chat-history/:patientId}    & Historial de chat por paciente \\
+\hline
+DELETE & \texttt{/api/ai/chat-history/:patientId}    & Limpiar historial de chat \\
+\hline
+\end{longtable}
+
+\noindent\textbf{Nota:} todas las rutas bajo \texttt{/api/patients/} y \texttt{/api/ai/}
+requieren el header \texttt{Authorization: Bearer \textless{}token\textgreater{}}.
+
+\subsection{Modelo de Base de Datos}
+
+La base de datos PostgreSQL~15 gestiona diez modelos definidos en
+\texttt{backend/prisma/schema.prisma}.
+
+\begin{table}[H]
+\centering
+\caption{Entidades del esquema Prisma ORM}
+\label{tab:modelos}
+\begin{tabularx}{\linewidth}{|l|l|X|}
+\hline
+\textbf{Modelo} & \textbf{Tabla física} & \textbf{Campos y relaciones clave} \\
+\hline
+\texttt{User} & \texttt{users} & \texttt{email} (único), \texttt{passwordHash} (bcrypt), \texttt{fullName}, \texttt{role} (NUTRITIONIST/ADMIN); 1:N con \texttt{Patient} \\
+\hline
+\texttt{Patient} & \texttt{patients} & \texttt{firstName}, \texttt{lastName}, \texttt{dateOfBirth}, \texttt{gender}, \texttt{occupation}; N:1 con \texttt{User} \\
+\hline
+\texttt{ClinicalHistory} & \texttt{clinical\_histories} & 1:1 con \texttt{Patient}; antecedentes, \texttt{allergies[]} (array), \texttt{foodIntolerances[]}, \texttt{recall24h} (JSON) \\
+\hline
+\texttt{Biometrics} & \texttt{biometrics} & N:1 con \texttt{Patient}; glucosa, HbA1c, perfil lipídico, función renal/hepática, hemograma, micronutrientes \\
+\hline
+\texttt{Anthropometry} & \texttt{anthropometry} & N:1 con \texttt{Patient}; peso, talla, IMC (calculado), perímetros, pliegues, composición corporal \\
+\hline
+\texttt{DietaryHabits} & \texttt{dietary\_habits} & 1:1 con \texttt{Patient}; frecuencia comidas, preferencias, ingesta hídrica \\
+\hline
+\texttt{ChatMessage} & \texttt{chat\_messages} & N:1 con \texttt{Patient} (nullable = chat global); \texttt{role} (user/ai), \texttt{content}, \texttt{fileName} \\
+\hline
+\texttt{Food} & \texttt{foods} & Nombre, categoría, energía, proteínas, grasas, carbohidratos, fibra (por 100~g) \\
+\hline
+\texttt{WeeklyMenu} & \texttt{weekly\_menus} & N:1 con \texttt{Patient}; fecha inicio, observaciones; 1:N con \texttt{WeeklyMenuItem} \\
+\hline
+\texttt{WeeklyMenuItem} & \texttt{weekly\_menu\_items} & N:1 con \texttt{WeeklyMenu} y \texttt{Food}; día, tipo comida, cantidad, macros calculados \\
+\hline
+\end{tabularx}
+\end{table}
+
+% ============================================================
+\clearpage
+\section{Decisiones de Diseño}
+% ============================================================
+
+En esta sección se justifican las principales elecciones técnicas adoptadas durante
+el diseño y desarrollo del prototipo NutriAPP.
+
+\subsection{Stack Backend: Node.js + TypeScript + Express.js}
+
+Se eligió \textbf{Node.js~20 LTS} como plataforma de servidor por los siguientes
+motivos:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{SDK Groq compatible con OpenAI}: la librería \texttt{groq-sdk} expone
+        una interfaz idéntica al cliente \texttt{openai} de JavaScript, lo que simplifica
+        significativamente la integración del LLM sin aprendizaje adicional.
+  \item \textbf{Ecosistema NPM}: disponibilidad inmediata de \texttt{pdf-parse},
+        \texttt{multer}, \texttt{jsonwebtoken}, \texttt{bcryptjs} y \texttt{prisma},
+        todas maduras y bien mantenidas.
+  \item \textbf{TypeScript}: el tipado estático reduce errores al manipular estructuras
+        de datos clínicas complejas (arrays de alergias, JSON de recall24h, enums de
+        género y rol) y permite el autocompletado del cliente Prisma generado.
+  \item \textbf{Express.js}: framework minimalista que otorga control total sobre el
+        pipeline de middlewares sin imponer convenciones innecesarias.
+\end{itemize}
+
+\subsection{Frontend como SPA con React + TailwindCSS}
+
+El frontend se implementó como \textbf{Single Page Application} por las siguientes
+razones:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item La interfaz clínica requiere navegación fluida entre módulos (historia clínica,
+        biometría, antropometría, chat IA) sin recargar la página, lo que mejora la
+        experiencia del nutricionista en consulta.
+  \item TailwindCSS permite diseñar formularios médicos complejos con clases
+        utilitarias de forma rápida, sin escribir CSS personalizado.
+  \item La separación frontend/backend en puertos distintos facilita el desarrollo
+        paralelo y posibilita una migración a contenedores Docker en producción.
+\end{itemize}
+
+\subsection{Autenticación Basada en JWT sin Estado}
+
+Se implementó \textbf{JSON Web Token (JWT)} en lugar de sesiones del servidor
+(cookies de sesión, Redis) por los siguientes motivos:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Sin estado}: el servidor no mantiene un registro de sesiones activas,
+        lo que simplifica el escalado.
+  \item \textbf{Portabilidad}: el token viaja en el header
+        \texttt{Authorization: Bearer}, compatible con cualquier cliente HTTP
+        (navegador, Postman, \texttt{curl.exe}).
+  \item \textbf{Rol embebido}: el payload incluye el campo \texttt{role}
+        (\texttt{NUTRITIONIST}/\texttt{ADMIN}), permitiendo al middleware
+        \texttt{requireNutritionist} verificar permisos sin consultar la base de datos
+        en cada petición.
+\end{itemize}
+
+Las contraseñas se almacenan como hash \textbf{bcrypt} con factor de costo~10,
+resistente a ataques de fuerza bruta.
+
+\subsection{ORM Prisma sobre PostgreSQL}
+
+Se eligió \textbf{Prisma~5 ORM} en lugar de consultas SQL directas porque:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item El cliente generado produce \textbf{tipos TypeScript exactos} para cada modelo,
+        eliminando errores de escritura en nombres de campos en tiempo de desarrollo.
+  \item Las \textbf{migraciones declarativas} mediante \texttt{prisma db push} simplifican
+        la evolución del esquema durante el prototipado rápido.
+  \item Maneja automáticamente \textbf{relaciones complejas}, como
+        \texttt{include: \{clinicalHistory, biometrics, anthropometry\}}, con una
+        sola consulta optimizada.
+\end{itemize}
+
+Se eligió \textbf{PostgreSQL~15} por su soporte nativo de \textbf{arrays} (usado en
+\texttt{allergies[]}, \texttt{foodIntolerances[]}, \texttt{currentMedications[]})
+y tipos \textbf{JSON} (usado en \texttt{recall24h}).
+
+\subsection{Integración del LLM mediante API Groq}
+
+Se utilizó la \textbf{API Groq} con el modelo Llama~3.3-70b-versatile de Meta por:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Costo cero en desarrollo}: tier gratuito con límites generosos para
+        el prototipado.
+  \item \textbf{Baja latencia}: la infraestructura LPU (Language Processing Unit) de
+        Groq produce respuestas en 1--3 segundos, cumpliendo el requisito RNF01
+        (\textless{}10~s).
+  \item \textbf{Compatibilidad OpenAI}: el SDK es 100\% compatible con la interfaz
+        de \texttt{openai-node}, permitiendo migrar a otro proveedor cambiando
+        únicamente la URL base y la API key.
+  \item \textbf{Capacidad multilingüe}: Llama~3.3-70b tiene excelente desempeño en
+        español y conocimiento nutricional clínico adecuado para el dominio.
+\end{itemize}
+
+\subsection{Pipeline RAG con pdf-parse v2}
+
+El pipeline RAG se implementó \textbf{sin base de datos vectorial} (Pinecone, Chroma)
+por las siguientes razones:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Para documentos de hasta 6~000 caracteres (tamaño típico de un informe de
+        laboratorio), la \textbf{inyección directa en el prompt del sistema} produce
+        resultados de alta calidad sin la complejidad de embeddings y búsqueda
+        semántica.
+  \item No requiere ningún servicio adicional, manteniendo el sistema completamente
+        local y cumpliendo el requisito de portabilidad RNF05.
+\end{itemize}
+
+La extracción de texto usa \textbf{pdf-parse~v2.4.5}, que introduce un cambio
+disruptivo respecto a~v1: exporta una \textbf{clase} \texttt{PDFParse} en lugar de
+una función directa. El uso correcto es:
+
+\begin{lstlisting}[caption={Uso de la clase PDFParse (pdf-parse v2)},label={lst:pdfparse}]
+// pdf-parse v2: se importa la CLASE, no se llama como funcion
+const { PDFParse } = require('pdf-parse') as {
+  PDFParse: new (opts: { data: Buffer }) => {
+    getText(): Promise<{ text: string }>
+  }
+};
+
+// Extraccion correcta:
+const parser = new PDFParse({ data: file.buffer });
+const pdfData = await parser.getText();
+extractedText = pdfData.text.slice(0, 6000);
+\end{lstlisting}
+
+\subsection{Gestión de Archivos PDF en Memoria}
+
+Los archivos PDF se procesan \textbf{íntegramente en memoria RAM} mediante
+\texttt{multer.memoryStorage()} sin escribirlos al sistema de archivos. Esta decisión:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Evita la acumulación de archivos temporales en el servidor.
+  \item Reduce la latencia al eliminar operaciones de I/O de disco.
+  \item Es adecuada para archivos de hasta 10~MB (límite configurado en Multer).
+  \item El texto extraído se descarta al finalizar el ciclo de vida de la petición HTTP.
+\end{itemize}
+
+\subsection{Modelo de Paciente sin Credenciales}
+
+Se decidió \textbf{no incluir credenciales} (email, contraseña, teléfono, dirección)
+en el modelo \texttt{Patient}. En NutriAPP, el único actor que inicia sesión es el
+\textbf{nutricionista} (modelo \texttt{User}). El paciente es únicamente un registro
+clínico gestionado por el profesional, no un usuario del sistema. Esta decisión:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Simplifica el modelo de datos eliminando campos innecesarios.
+  \item Evita la necesidad de un flujo de registro y recuperación de contraseña para pacientes.
+  \item Reduce la superficie de ataque al no almacenar datos de autenticación de pacientes.
+\end{itemize}
+
+\subsection{Historial de Conversación Limitado a 10 Mensajes}
+
+El chat IA carga los \textbf{últimos 10 mensajes} del historial de la sesión para
+construir el contexto conversacional. Este límite equilibra:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Coherencia conversacional}: el LLM recuerda el contexto de la
+        consulta actual sin perder el hilo de la conversación.
+  \item \textbf{Límite de tokens}: el modelo Llama~3.3-70b con ventana de 8~192
+        tokens procesa cómodamente 10 intercambios más el contexto clínico del paciente.
+  \item \textbf{Consumo de API}: reduce el número de tokens enviados a Groq en cada
+        petición, optimizando el uso del tier gratuito.
+\end{itemize}
+
+% ============================================================
+\clearpage
+\section{Manual de Instalación}
+% ============================================================
+
+Esta sección describe el procedimiento completo para desplegar NutriAPP en un entorno
+de desarrollo local (Windows~11, macOS o Linux).
+
+\subsection{Prerrequisitos del Sistema}
+
+Antes de comenzar, asegúrese de tener instalados los siguientes componentes:
+
+\begin{table}[H]
+\centering
+\caption{Prerrequisitos de instalación de NutriAPP}
+\label{tab:prereqs}
+\begin{tabularx}{\linewidth}{|l|l|X|}
+\hline
+\textbf{Componente} & \textbf{Versión mínima} & \textbf{Verificación / Descarga} \\
+\hline
+Node.js  & 20.x LTS & \texttt{node --version} — Descarga: \url{https://nodejs.org/} \\
+\hline
+npm      & 9.x      & \texttt{npm --version} (incluido con Node.js) \\
+\hline
+PostgreSQL & 15.x   & \texttt{psql --version} — Descarga: \url{https://www.postgresql.org/download/} \\
+\hline
+Git      & 2.x      & \texttt{git --version} — Descarga: \url{https://git-scm.com/} \\
+\hline
+API Key Groq & ---  & Registro gratuito: \url{https://console.groq.com/} \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Obtención del Código Fuente}
+
+Clone el repositorio desde GitHub en su máquina local:
+
+\begin{lstlisting}[style=shell,caption={Clonar el repositorio NutriAPP desde GitHub}]
+git clone https://github.com/KevinSarango1/ProyectoPersonal.git
+cd ProyectoPersonal
+\end{lstlisting}
+
+La estructura del repositorio es la siguiente:
+
+\begin{lstlisting}[style=shell,caption={Estructura del repositorio ProyectoPersonal}]
+ProyectoPersonal/
+  backend/
+    src/
+      controllers/   # Controladores por modulo
+      middleware/    # Autenticacion JWT (auth.ts)
+      routes/        # Definicion de rutas (auth, patients, foods, ai)
+      services/      # AIService.ts (comunicacion Groq)
+      config/        # database.ts (cliente Prisma singleton)
+    prisma/
+      schema.prisma  # Esquema de base de datos (10 modelos)
+    package.json
+    tsconfig.json
+  frontend/
+    src/
+      components/    # Componentes React organizados por feature
+      context/       # AuthContext (estado de sesion)
+      services/      # api.ts (cliente Axios)
+      types/         # Interfaces TypeScript (patient.ts, etc.)
+    package.json
+    vite.config.ts
+\end{lstlisting}
+
+\subsection{Configuración de Variables de Entorno del Backend}
+
+En el directorio \texttt{backend/}, cree el archivo \texttt{.env} con el siguiente
+contenido. Reemplace los valores según su entorno local:
+
+\begin{lstlisting}[style=shell,caption={backend/.env --- variables de entorno requeridas}]
+# Cadena de conexion a PostgreSQL
+# Formato: postgresql://usuario:password@host:puerto/nombre_bd
+DATABASE_URL="postgresql://postgres:su_password@localhost:5432/nutriapp_db"
+
+# Clave secreta para firmar tokens JWT
+# Use una cadena aleatoria larga en produccion
+JWT_SECRET="nutriapp-secret-key-cambie-en-produccion"
+
+# API Key de Groq (obtenida en console.groq.com/keys)
+GROQ_API_KEY="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Puerto del servidor backend (por defecto: 3000)
+PORT=3000
+\end{lstlisting}
+
+\textbf{Importante:} el archivo \texttt{.env} nunca debe subirse al repositorio.
+Verifique que esté listado en \texttt{backend/.gitignore}.
+
+\subsection{Creación de la Base de Datos PostgreSQL}
+
+Abra el cliente \texttt{psql} o pgAdmin y ejecute:
+
+\begin{lstlisting}[style=shell,caption={Crear la base de datos nutriapp\_db en PostgreSQL}]
+-- En psql (conectado como superusuario):
+CREATE DATABASE nutriapp_db;
+
+-- Verificar la creacion:
+\l
+\end{lstlisting}
+
+\subsection{Instalación y Arranque del Backend}
+
+Ejecute los siguientes comandos desde el directorio \texttt{backend/}:
+
+\begin{lstlisting}[style=shell,caption={Instalacion completa del backend}]
+# Paso 1: Entrar al directorio backend
+cd backend
+
+# Paso 2: Instalar dependencias npm
+npm install
+
+# Paso 3: Generar el cliente Prisma (tipos TypeScript)
+# IMPORTANTE: detener el backend si ya estaba corriendo antes
+npx prisma generate
+
+# Paso 4: Aplicar el esquema a la base de datos
+# Crea las 10 tablas definidas en schema.prisma
+npx prisma db push
+
+# Paso 5: Iniciar el servidor en modo desarrollo
+npm run dev
+\end{lstlisting}
+
+Si el servidor inicia correctamente, la consola muestra:
+
+\begin{lstlisting}[style=shell]
+Servidor NutriAPP escuchando en el puerto 3000
+\end{lstlisting}
+
+Verifique el estado del servidor con una peticion al endpoint de salud:
+
+\begin{lstlisting}[style=shell,caption={Verificar el endpoint GET /health}]
+# En Windows (PowerShell):
+curl.exe http://localhost:3000/health
+
+# En Linux / macOS:
+curl http://localhost:3000/health
+
+# Respuesta esperada:
+# {"status":"NutriAPP API OK"}
+\end{lstlisting}
+
+\subsection{Registro del Primer Nutricionista}
+
+Registre el primer usuario antes de usar el frontend:
+
+\begin{lstlisting}[style=shell,caption={Registrar nutricionista via POST /api/auth/register}]
+# En Windows (PowerShell):
+curl.exe -X POST http://localhost:3000/api/auth/register `
+  -H "Content-Type: application/json" `
+  -d "{\"email\":\"nutricionista@unl.edu.ec\",\"password\":\"contraseña123\",\"fullName\":\"Nombre Apellido\",\"role\":\"NUTRITIONIST\"}"
+
+# En Linux / macOS:
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"nutricionista@unl.edu.ec","password":"contraseña123","fullName":"Nombre Apellido","role":"NUTRITIONIST"}'
+\end{lstlisting}
+
+\subsection{Instalación y Arranque del Frontend}
+
+En una \textbf{nueva terminal}, desde el directorio raíz del repositorio:
+
+\begin{lstlisting}[style=shell,caption={Instalacion y arranque del frontend React}]
+# Paso 1: Entrar al directorio frontend
+cd frontend
+
+# Paso 2: Instalar dependencias npm
+npm install
+
+# Paso 3: Iniciar el servidor de desarrollo Vite
+npm run dev
+\end{lstlisting}
+
+El frontend estará disponible en \url{http://localhost:5173}.
+
+\textbf{Resumen de puertos del sistema en desarrollo:}
+
+\begin{table}[H]
+\centering
+\caption{Servicios y puertos del sistema NutriAPP en entorno local}
+\label{tab:puertos}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Servicio} & \textbf{Puerto} & \textbf{Acceso} \\
+\hline
+Frontend React (Vite)  & 5173 & \url{http://localhost:5173} \\
+\hline
+Backend Express        & 3000 & \url{http://localhost:3000} \\
+\hline
+PostgreSQL             & 5432 & \texttt{localhost:5432} (Prisma) \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Solución de Problemas Comunes}
+
+\begin{table}[H]
+\centering
+\caption{Problemas frecuentes y soluciones durante la instalación}
+\label{tab:troubleshoot}
+\begin{tabularx}{\linewidth}{|X|X|}
+\hline
+\textbf{Error} & \textbf{Solución} \\
+\hline
+\texttt{EPERM} al ejecutar \texttt{prisma generate} (Windows) & Detener el backend (\texttt{Ctrl+C}) antes de ejecutar el comando. Los archivos DLL del cliente Prisma quedan bloqueados si el proceso está activo. \\
+\hline
+\texttt{Error: connect ECONNREFUSED 127.0.0.1:5432} & El servicio PostgreSQL no está corriendo. Iniciarlo desde Servicios de Windows o con \texttt{pg\_ctl start}. \\
+\hline
+\texttt{Invalid prisma.schema} o error en \texttt{db push} & Verificar que \texttt{DATABASE\_URL} en \texttt{.env} tenga el formato correcto y que la base de datos \texttt{nutriapp\_db} exista. \\
+\hline
+\texttt{Groq API Error: 401 Unauthorized} & La \texttt{GROQ\_API\_KEY} en \texttt{.env} no es válida. Generar una nueva en \url{https://console.groq.com/keys}. \\
+\hline
+CORS error en el frontend & Verificar que el backend corre en el puerto~3000 y que el frontend usa \texttt{http://localhost:3000} como URL base en \texttt{api.ts}. \\
+\hline
+\texttt{pdfParse is not a function} & Error de API de pdf-parse v2. El código debe usar \texttt{new PDFParse(\{data: buffer\}).getText()} en lugar de \texttt{pdfParse(buffer)}. \\
+\hline
+\end{tabularx}
+\end{table}
+
+% ============================================================
+\clearpage
+\section{Guía de Uso del Sistema NutriAPP}
+% ============================================================
+
+Esta sección describe de forma detallada cómo el nutricionista utiliza cada módulo
+del sistema NutriAPP.
+
+\subsection{Acceso al Sistema}
+
+\begin{enumerate}[leftmargin=2em]
+  \item Con ambos servidores (backend y frontend) ejecutándose, abra un navegador
+        moderno (Chrome, Firefox o Edge) y dirígase a \url{http://localhost:5173}.
+  \item Aparecerá la pantalla de \textbf{inicio de sesión} de NutriAPP.
+  \item Ingrese el correo electrónico y la contraseña registrados.
+  \item Haga clic en \textbf{«Ingresar al sistema»}.
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.80\linewidth]{imagenes/im02_login.png}}
+  \caption{Pantalla de inicio de sesión del nutricionista en NutriAPP.}
+  \label{fig:login}
+\end{figure}
+
+Al autenticarse exitosamente, el sistema almacena el token JWT en
+\texttt{localStorage} y redirige al \textbf{panel principal} con la lista de pacientes.
+La sesión persiste al recargar la página hasta que el token expire o se cierre sesión.
+
+\subsection{Panel Principal y Navegación}
+
+El panel principal consta de:
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Barra de navegación superior}: nombre del nutricionista y botón de
+        cierre de sesión.
+  \item \textbf{Botón «+ Nuevo Paciente»}: accede al formulario de registro.
+  \item \textbf{Campo «Buscar paciente...»}: filtra la lista en tiempo real por
+        nombre o apellido.
+  \item \textbf{Lista de pacientes}: muestra nombre, edad y género de cada paciente.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im01_dashboard.png}}
+  \caption{Dashboard principal de NutriAPP — panel de gestión del nutricionista.}
+  \label{fig:dashboard}
+\end{figure}
+
+\subsection{Gestión de Pacientes}
+
+\subsubsection{Crear un Nuevo Paciente}
+
+\begin{enumerate}[leftmargin=2em]
+  \item Haga clic en \textbf{«+ Nuevo Paciente»}.
+  \item Complete los campos del formulario:
+    \begin{itemize}
+      \item \textbf{Nombre} y \textbf{Apellido}: requeridos.
+      \item \textbf{Fecha de Nacimiento}: formato \texttt{dd/mm/aaaa}, requerida.
+      \item \textbf{Género}: Masculino / Femenino / Otro, requerido.
+      \item \textbf{Ocupación}: opcional.
+    \end{itemize}
+  \item Haga clic en \textbf{«Registrar Paciente»}.
+\end{enumerate}
+
+El sistema crea automáticamente una historia clínica vacía vinculada al nuevo paciente.
+
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.85\linewidth]{imagenes/im04_registro_paciente.png}}
+  \caption{Formulario de registro de nuevo paciente — campos requeridos.}
+  \label{fig:registro}
+\end{figure}
+
+\subsubsection{Seleccionar, Editar y Eliminar un Paciente}
+
+Haga clic en el nombre del paciente en la lista para abrirlo. Aparece la vista de
+detalle con la cabecera del paciente (IMC, ICC, \% grasa corporal de la última
+medición) y las pestañas de módulos clínicos.
+
+Los botones \textbf{«Editar»} y \textbf{«Eliminar»} se encuentran en la cabecera
+del paciente. La eliminación es permanente e incluye todos los registros asociados
+(en cascada).
+
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im03_pacientes.png}}
+  \caption{Lista de pacientes con opciones de búsqueda, edición y eliminación.}
+  \label{fig:pacientes}
+\end{figure}
+
+\subsection{Historia Clínica}
+
+Seleccione un paciente y haga clic en la pestaña \textbf{«HISTORIA CLÍNICA»}.
+
+El formulario incluye las siguientes secciones:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Fecha de consulta} (requerida para guardar).
+  \item Antecedentes médicos, quirúrgicos y familiares.
+  \item Motivo de consulta actual y enfermedades previas.
+  \item Hábitos: actividad física, consumo de alcohol y tabaco.
+  \item \textbf{Medicamentos actuales, alergias e intolerancias alimentarias}:
+        ingresados como listas (uno por línea o separados por coma).
+  \item Objetivo nutricional, restricciones dietéticas y observaciones del nutricionista.
+  \item \textbf{Recordatorio alimentario 24h}: registro de calorías, proteínas,
+        carbohidratos y grasas del día anterior.
+\end{itemize}
+
+Haga clic en \textbf{«Guardar Historia Clínica»} para persistir. Si la historia ya
+existe se actualiza; si no, se crea en ese momento (upsert).
+
+\subsection{Registro de Datos Biométricos}
+
+Seleccione un paciente y haga clic en la pestaña \textbf{«BIOMETRÍA»}.
+
+\subsubsection{Nuevo Examen Bioquímico}
+
+\begin{enumerate}[leftmargin=2em]
+  \item Ingrese la \textbf{Fecha del Examen} (requerida).
+  \item Complete los campos relevantes según el examen disponible, organizados por grupo:
+    \begin{itemize}
+      \item Metabolismo de carbohidratos: glucosa, HbA1c, insulina, índice HOMA.
+      \item Perfil lipídico: colesterol total, LDL, HDL, triglicéridos, VLDL.
+      \item Función hepática: AST, ALT, GGT, bilirrubina.
+      \item Función renal: creatinina, urea, ácido úrico.
+      \item Hemograma: hemoglobina, hematocrito, leucocitos, plaquetas.
+      \item Función tiroidea: TSH, T3, T4.
+      \item Micronutrientes: vitamina~D, vitamina~B12, ferritina, hierro.
+      \item Signos vitales: presión sistólica/diastólica, frecuencia cardíaca.
+    \end{itemize}
+  \item Haga clic en \textbf{«Guardar Biometría»}.
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im06_biometria.png}}
+  \caption{Formulario de registro de datos biométricos — módulo de biometría.}
+  \label{fig:biometria}
+\end{figure}
+
+El historial de exámenes aparece debajo del formulario, ordenado por fecha
+descendente. Cada paciente puede tener múltiples registros biométricos.
+
+\subsection{Medidas Antropométricas}
+
+Seleccione un paciente y haga clic en la pestaña \textbf{«ANTROPOMETRÍA»}.
+
+\subsubsection{Nueva Medición}
+
+\begin{enumerate}[leftmargin=2em]
+  \item Ingrese la \textbf{Fecha de Medición} (requerida).
+  \item Ingrese \textbf{Peso} (kg) y \textbf{Talla} (cm): ambos requeridos y $> 0$.
+  \item El sistema calcula automáticamente el \textbf{IMC}:
+        \[ \text{IMC} = \frac{\text{peso (kg)}}{(\text{talla (m)})^2} \]
+  \item Opcionalmente ingrese circunferencias (cintura, cadera, brazo, muslo,
+        pantorrilla) y pliegues cutáneos (tríceps, bíceps, subescapular, suprailíaco).
+  \item Si ingresa cintura y cadera, el sistema calcula la
+        \textbf{Relación Cintura-Cadera (ICC)}: $\text{ICC} = \text{cintura} / \text{cadera}$.
+  \item También puede registrar composición corporal: \% grasa, masa muscular,
+        masa ósea y \% agua.
+  \item Haga clic en \textbf{«Guardar Medición»}.
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im05_antropometria.png}}
+  \caption{Formulario de medidas antropométricas con IMC e ICC calculados automáticamente.}
+  \label{fig:antropo}
+\end{figure}
+
+La cabecera del paciente muestra el IMC e ICC más recientes con su clasificación
+nutricional (Normal, Sobrepeso, Obesidad I/II/III; Riesgo bajo/medio/alto).
+
+\subsection{Hábitos Dietéticos}
+
+Seleccione un paciente y haga clic en la pestaña \textbf{«HÁBITOS DIETÉTICOS»}.
+
+El formulario registra:
+\begin{itemize}[leftmargin=1.5em]
+  \item Número de comidas por día y horarios (desayuno, almuerzo, merienda, cena, snacks).
+  \item Consumo de agua (vasos por día).
+  \item Preferencias y aversiones alimentarias.
+  \item Métodos de cocción habituales.
+  \item Frecuencia de consumo de grupos de alimentos.
+\end{itemize}
+
+Haga clic en \textbf{«Guardar Hábitos»}. El registro es único por paciente; las
+actualizaciones sucesivas sobreescriben el registro existente (upsert).
+
+\subsection{Asistente de Inteligencia Artificial — NutriBot}
+
+El asistente IA se accede desde el ícono de chat en la barra de navegación o
+desde la pestaña \textbf{«MENÚ»} del paciente seleccionado.
+
+\subsubsection{Chat Individual por Paciente}
+
+Al acceder al chat con un paciente seleccionado, \textbf{NutriBot} recibe
+automáticamente el contexto clínico del paciente: datos personales, historia clínica,
+última biometría y última medición antropométrica.
+
+\begin{enumerate}[leftmargin=2em]
+  \item Seleccione el paciente en la lista del panel principal.
+  \item Haga clic en el ícono del asistente IA.
+  \item Escriba su consulta en el campo de texto inferior.
+  \item Presione \textbf{Enter} o el botón de envío.
+  \item NutriBot genera una respuesta contextualizada en menos de 10 segundos.
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im07_chat_ia.png}}
+  \caption{Módulo de chat IA — conversación con NutriBot con contexto del paciente activo.}
+  \label{fig:chat_ia}
+\end{figure}
+
+\subsubsection{Chat Global}
+
+Acceda desde la barra de navegación superior sin seleccionar un paciente. En este
+modo, NutriBot no tiene contexto de ningún paciente específico y responde consultas
+generales de nutrición clínica.
+
+\subsubsection{Historial de Conversación}
+
+El historial de cada sesión se almacena en la base de datos vinculado al paciente.
+Al reabrir el chat de un paciente, los mensajes anteriores se restauran automáticamente
+(hasta 100 mensajes). Para limpiar el historial, haga clic en el ícono de papelera
+en la cabecera del panel de chat.
+
+\subsection{Análisis de Documentos PDF — Pipeline RAG}
+
+El pipeline RAG permite al nutricionista cargar un documento PDF (resultados de
+laboratorio, informe médico, historia clínica de referencia) y hacer consultas
+contextualizadas sobre su contenido.
+
+\subsubsection{Pasos para Cargar y Consultar un PDF}
+
+\begin{enumerate}[leftmargin=2em]
+  \item En el panel del chat (individual o global), haga clic en el ícono de
+        \textbf{adjuntar archivo} (clip o ícono de documento).
+  \item Seleccione un archivo \textbf{PDF} (máximo 10~MB) o texto plano (\texttt{.txt}).
+  \item El nombre del archivo aparece como adjunto pendiente en el campo de mensaje.
+  \item Escriba su consulta sobre el documento:
+        \emph{«¿Qué indica la glucosa en ayunas de 126~mg/dL?»}
+  \item Haga clic en enviar. El sistema procesa el PDF y genera la respuesta.
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \fbox{\includegraphics[width=0.90\linewidth]{imagenes/im08_chat_pdf.png}}
+  \caption{Pipeline RAG — análisis de documento PDF cargado por el nutricionista.}
+  \label{fig:rag}
+\end{figure}
+
+\subsubsection{Flujo Interno del Pipeline RAG}
+
+\begin{enumerate}[leftmargin=2em]
+  \item El archivo PDF se envía al endpoint \texttt{POST /api/ai/chat-upload} como
+        \texttt{multipart/form-data}.
+  \item Multer recibe el archivo en memoria (\texttt{memoryStorage}).
+  \item El backend extrae el texto con la clase \texttt{PDFParse} de pdf-parse~v2,
+        limitando a los primeros 6~000 caracteres.
+  \item El texto extraído se inyecta en el \textbf{prompt del sistema} de Llama~3.3-70b
+        como contexto documental bajo el encabezado \texttt{[nombreArchivo.pdf]}.
+  \item El LLM genera una respuesta basada en el contenido del documento.
+  \item La respuesta y el nombre del archivo se almacenan en \texttt{chat\_messages}.
+\end{enumerate}
+
+\subsection{Menú Semanal}
+
+Seleccione un paciente y haga clic en la pestaña \textbf{«MENÚ»}. Desde aquí puede:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Buscar alimentos del catálogo ecuatoriano por nombre en tiempo real.
+  \item Asignar alimentos a cada día de la semana (Lunes a Domingo) y tipo de
+        comida (desayuno, almuerzo, merienda, cena).
+  \item Especificar la cantidad y la unidad de medida.
+  \item El sistema recupera automáticamente las calorías y macronutrientes (proteínas,
+        grasas, carbohidratos, fibra) del catálogo para cada alimento.
+  \item Haga clic en \textbf{«Guardar Menú Semanal»} con la fecha de inicio
+        y observaciones del nutricionista.
+\end{itemize}
+
+\subsection{Catálogo de Alimentos}
+
+Acceda al catálogo desde el enlace \textbf{«Alimentos»} en la barra de navegación.
+Permite:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Buscar alimentos por nombre en tiempo real.
+  \item Filtrar por categoría: cereales, lácteos, carnes, frutas, verduras, legumbres, etc.
+  \item Visualizar la composición nutricional por 100~g: energía (kcal), proteínas,
+        grasas totales, carbohidratos, fibra dietética.
+  \item Agregar nuevos alimentos al catálogo (disponible para administradores).
+\end{itemize}
+
+El catálogo incluye alimentos representativos del contexto ecuatoriano, basados en
+la \emph{Tabla de Composición de Alimentos} de la Universidad de Cuenca~\cite{ortiz2018}
+y los datos de la ENSANUT~\cite{ensanut}.
+
+% ============================================================
+\clearpage
+\section{Conclusiones}
+% ============================================================
+
+\begin{itemize}[leftmargin=1.5em]
+  \item La arquitectura cliente--servidor de tres capas de NutriAPP, con Node.js +
+        Express en el backend y React~18 en el frontend, demostró ser adecuada para
+        el dominio de la gestión nutricional clínica, ofreciendo una separación clara
+        de responsabilidades y facilitando el mantenimiento del código fuente.
+
+  \item Las decisiones de diseño adoptadas ---autenticación JWT sin estado, Prisma ORM,
+        integración Groq/Llama~3.3 y pipeline RAG en memoria--- mantienen el sistema
+        completamente funcional en un entorno local sin infraestructura en la nube,
+        cumpliendo el requisito de portabilidad~RNF05.
+
+  \item El manual de instalación documenta de manera reproducible el proceso de
+        despliegue del prototipo en entornos Windows, macOS y Linux, incluyendo la
+        configuración de PostgreSQL, las variables de entorno y los comandos Prisma
+        necesarios para inicializar las diez tablas del esquema.
+
+  \item La guía de uso cubre los doce requisitos funcionales del sistema (RF01--RF12),
+        proporcionando al nutricionista instrucciones claras para gestionar pacientes,
+        registrar datos clínicos y utilizar el asistente IA con y sin documentos PDF.
+
+  \item La elección de \textbf{pdf-parse~v2.4.5} con la clase \texttt{PDFParse} y el
+        modelo \textbf{Llama~3.3-70b-versatile} mediante Groq API garantiza un pipeline
+        RAG funcional, de baja latencia y costo nulo en la fase de prototipado, con
+        plena capacidad de migración a otro proveedor LLM cambiando únicamente la
+        URL base y la clave de API.
+\end{itemize}
+
+\clearpage
+
+\begin{thebibliography}{9}
+
+\bibitem{ortiz2018}
+S.~J. Ortiz~Ulloa, G.~C. Astudillo~Rubio, S.~P. Donoso~Moscoso y A.~M. Ochoa~Avilés,
+\textit{Tabla de composición de alimentos: Cuenca, Ecuador}.
+Cuenca, Ecuador: Universidad de Cuenca, 2018.
+[En línea]. Disponible en:
+\url{http://dspace.ucuenca.edu.ec/handle/123456789/34328}.
+
+\bibitem{ensanut}
+Ministerio de Salud Pública del Ecuador,
+\textit{Encuesta Nacional de Salud y Nutrición (ENSANUT)}.
+[En línea]. Disponible en:
+\url{https://www.salud.gob.ec/encuesta-nacional-de-salud-y-nutricion-ensanut/}.
+[Accedido: 3-jul-2026].
+
+\bibitem{prisma}
+Prisma~Technologies,
+\textit{Prisma ORM Documentation}.
+[En línea]. Disponible en: \url{https://www.prisma.io/docs}.
+
+\bibitem{groq}
+Groq~Inc.,
+\textit{Groq API Documentation — Chat Completions}.
+[En línea]. Disponible en: \url{https://console.groq.com/docs/openai}.
+
+\bibitem{llama}
+Meta~AI,
+\textit{Llama~3.3 Model Overview}.
+[En línea]. Disponible en: \url{https://ai.meta.com/blog/llama-3-3/}.
+
+\bibitem{jwt}
+M. Jones, J. Bradley y N. Sakimura,
+\textit{RFC~7519: JSON Web Token (JWT)}.
+Internet Engineering Task Force (IETF), 2015.
+[En línea]. Disponible en: \url{https://datatracker.ietf.org/doc/html/rfc7519}.
+
+\end{thebibliography}
+
+\end{document}

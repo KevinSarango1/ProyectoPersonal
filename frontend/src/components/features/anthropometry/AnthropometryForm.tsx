@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Ruler, CircleDot, Layers, Scale,
+  ChevronUp, ChevronDown, Save, type LucideIcon,
+} from 'lucide-react';
 import { Anthropometry } from '../../../types/patient';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import {
@@ -38,16 +42,18 @@ const EMPTY: AnthropometryInput = {
 
 const SectionHeader: React.FC<{
   title: string;
+  icon: LucideIcon;
   expanded: boolean;
   onToggle: () => void;
-}> = ({ title, expanded, onToggle }) => (
+}> = ({ title, icon: Icon, expanded, onToggle }) => (
   <button
     type="button"
     onClick={onToggle}
-    className="w-full flex justify-between items-center py-3 px-4 bg-teal-50 hover:bg-teal-100 rounded-lg text-left font-semibold text-teal-800 transition-colors"
+    className="w-full flex items-center gap-2.5 py-3 px-4 bg-teal-50 hover:bg-teal-100 text-left font-semibold text-sm text-teal-800 transition-colors"
   >
-    <span>{title}</span>
-    <span className="text-xl">{expanded ? '▲' : '▼'}</span>
+    <Icon size={15} className="shrink-0" />
+    <span className="flex-1">{title}</span>
+    {expanded ? <ChevronUp size={15} className="shrink-0" /> : <ChevronDown size={15} className="shrink-0" />}
   </button>
 );
 
@@ -146,14 +152,14 @@ export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, 
     }
   };
 
-  const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-400 focus:border-transparent';
-  const labelCls = 'block text-xs font-medium text-gray-600 mb-1';
+  const inputCls = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:bg-white focus:border-teal-300 transition';
+  const labelCls = 'block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1';
 
   const inp = (name: string) =>
     fieldErrors[name]
-      ? 'w-full border border-red-400 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent'
+      ? 'w-full bg-red-50 border border-red-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 transition'
       : inputCls;
-  const errMsg = <p className="text-xs text-red-500 mt-1">Completa este campo</p>;
+  const errMsg = <p className="text-xs text-red-500 mt-1 flex items-center gap-1">Completa este campo</p>;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -182,6 +188,7 @@ export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, 
       <div className="border border-gray-200 rounded-xl overflow-hidden">
         <SectionHeader
           title="I. Medidas Generales"
+          icon={Scale}
           expanded={expandedSections.generales}
           onToggle={() => toggleSection('generales')}
         />
@@ -213,6 +220,7 @@ export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, 
       <div className="border border-gray-200 rounded-xl overflow-hidden">
         <SectionHeader
           title="II. Circunferencias (cm)"
+          icon={CircleDot}
           expanded={expandedSections.circunferencias}
           onToggle={() => toggleSection('circunferencias')}
         />
@@ -239,6 +247,7 @@ export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, 
       <div className="border border-gray-200 rounded-xl overflow-hidden">
         <SectionHeader
           title="III. Pliegues Cutáneos (mm)"
+          icon={Layers}
           expanded={expandedSections.pliegues}
           onToggle={() => toggleSection('pliegues')}
         />
@@ -264,6 +273,7 @@ export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, 
       <div className="border border-gray-200 rounded-xl overflow-hidden">
         <SectionHeader
           title="IV. Composición Corporal"
+          icon={Ruler}
           expanded={expandedSections.composicion}
           onToggle={() => toggleSection('composicion')}
         />
@@ -296,8 +306,9 @@ export const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ onSubmit, 
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50"
       >
+        <Save size={16} />
         {loading ? 'Guardando...' : 'Registrar Medición'}
       </button>
 

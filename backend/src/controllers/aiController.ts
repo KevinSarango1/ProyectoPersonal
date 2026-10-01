@@ -101,11 +101,11 @@ export const chat = async (req: Request, res: Response) => {
     }
     const pid = patientId || null;
 
-    // Cargar últimos 10 mensajes para mantener contexto de conversación
+    // Cargar últimos 20 mensajes para mantener contexto de conversación
     const prevMessages = await db.chatMessage.findMany({
       where: { patientId: pid },
       orderBy: { createdAt: 'asc' },
-      take: 10,
+      take: 20,
     });
     const history = prevMessages.map((m: any) => ({
       role: m.role === 'ai' ? 'assistant' : 'user',

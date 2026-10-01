@@ -9,7 +9,7 @@ export const useFoods = () => {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await foodService.getAll();
+      const data = await foodService.getAll({ limit: 3000 });
       setFoods(data);
     } finally {
       setLoading(false);
