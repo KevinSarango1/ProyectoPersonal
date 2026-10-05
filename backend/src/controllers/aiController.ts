@@ -112,11 +112,23 @@ export const chat = async (req: Request, res: Response) => {
       content: m.content,
     }));
 
-    await db.chatMessage.create({ data: { role: 'user', content: message, patientId: pid } });
-    const reply = await aiService.chat(message, patientContext || undefined, history);
+    const userMsg = await db.chatMessage.create({ data: { role: 'user', content: message, patientId: pid } });
+    let reply: string | null = null;
+    try {
+      reply = await aiService.chat(message, patientContext || undefined, history);
+    } catch (aiError: any) {
+      await db.chatMessage.delete({ where: { id: userMsg.id } });
+      throw aiError;
+    }
     await db.chatMessage.create({ data: { role: 'ai', content: reply ?? '', patientId: pid } });
     res.json({ reply });
   } catch (error: any) {
+    const status = error?.status ?? error?.response?.status ?? 500;
+    if (status === 429 || status === 413 || (error?.message ?? '').toLowerCase().includes('rate limit') || (error?.message ?? '').includes('Too Many Requests') || (error?.message ?? '').includes('tokens per minute')) {
+      return res.status(429).json({
+        message: '⏳ El asistente alcanzó el límite de consultas por minuto. Espera unos 60 segundos y vuelve a intentarlo. Si el error persiste, intenta con una pregunta más corta.',
+      });
+    }
     res.status(500).json({ message: error.message || 'Error al procesar la consulta' });
   }
 };
@@ -163,6 +175,12 @@ export const chatWithFile = async (req: Request, res: Response) => {
 
     res.json({ reply, fileName: fileName || null });
   } catch (error: any) {
+    const status = error?.status ?? error?.response?.status ?? 500;
+    if (status === 429 || status === 413 || (error?.message ?? '').toLowerCase().includes('rate limit') || (error?.message ?? '').includes('Too Many Requests') || (error?.message ?? '').includes('tokens per minute')) {
+      return res.status(429).json({
+        message: '⏳ El asistente alcanzó el límite de consultas por minuto. Espera unos 60 segundos y vuelve a intentarlo.',
+      });
+    }
     res.status(500).json({ message: error.message || 'Error al procesar el documento' });
   }
 };
