@@ -1,0 +1,105 @@
+% ============================================================
+\subsubsection{Diseño del sistema}
+% ============================================================
+
+\paragraph{Modelo de casos de uso}
+
+La Figura~\ref{fig:cu_general} presenta el diagrama general de casos de uso,
+derivado de los requisitos funcionales. La Tabla~\ref{tab:traza_cu} muestra la
+correspondencia entre casos de uso y requisitos.
+
+\figura{casos_uso_general.png}{Diagrama general de casos de uso}{fig:cu_general}
+
+\begin{table}[H]
+\centering\small
+\caption{Trazabilidad entre casos de uso y requisitos funcionales}\label{tab:traza_cu}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Código} & \textbf{Caso de uso} & \textbf{RF} \\ \hline
+CU01 & Iniciar sesión & RNF02 \\ \hline
+CU02 & Gestionar paciente & RF01 \\ \hline
+CU03 & Registrar historial clínico & RF02 \\ \hline
+CU04 & Registrar medidas antropométricas & RF03, RF04 \\ \hline
+CU05 & Registrar datos biométricos & RF05 \\ \hline
+CU06 & Registrar hábitos dietéticos & RF06 \\ \hline
+CU07 & Calcular GET y distribución de macronutrientes & RF07, RF08 \\ \hline
+CU08 & Consultar asistente IA por paciente & RF09 \\ \hline
+CU09 & Consultar asistente IA global & RF10 \\ \hline
+CU10 & Cargar documento PDF & RF11 \\ \hline
+CU11 & Gestionar catálogo de alimentos & RF12 \\ \hline
+\end{tabular}
+\end{table}
+\pendiente{ajusta los códigos y nombres a los de tu diagrama}
+
+Se describen a continuación los casos de uso centrales del prototipo, con su
+flujo normal y sus flujos alternos. \pendiente{revisa que los mensajes coincidan
+con los que muestra tu interfaz}
+
+% ── Plantilla de ficha de caso de uso ───────────────────────
+\newcommand{\fichaCU}[6]{%
+\begin{longtable}{|p{3cm}|p{11cm}|}
+\caption{Descripción del caso de uso #1}\\ \hline
+\textbf{Caso de uso} & #1 \\ \hline
+\textbf{Código} & #2 \\ \hline
+\textbf{Actor} & Nutricionista \\ \hline
+\textbf{Descripción} & #3 \\ \hline
+\textbf{Precondiciones} & #4 \\ \hline
+\multicolumn{2}{|c|}{\textbf{CURSO NORMAL DE EVENTOS}} \\ \hline
+\multicolumn{2}{|p{14.5cm}|}{#5} \\ \hline
+\multicolumn{2}{|c|}{\textbf{CURSO ALTERNO DE EVENTOS}} \\ \hline
+\multicolumn{2}{|p{14.5cm}|}{#6} \\ \hline
+\end{longtable}}
+
+{\small
+\fichaCU{Registrar medidas antropométricas}{CU04}
+{El nutricionista registra las medidas antropométricas de un paciente y el sistema calcula el IMC y la relación cintura-cadera.}
+{Sesión iniciada. Paciente seleccionado.}
+{\begin{enumerate}[nosep]
+ \item El nutricionista abre la sección de medidas antropométricas del paciente.
+ \item Ingresa peso, talla, circunferencias de cintura y cadera, \% de grasa y masa muscular.
+ \item El sistema calcula el IMC y la relación cintura-cadera y muestra su clasificación.
+ \item El nutricionista guarda el registro.
+ \item El sistema almacena la medición con su fecha y actualiza el historial del paciente.
+\end{enumerate}}
+{\textbf{A. Campos obligatorios vacíos o no numéricos:} el sistema muestra un aviso por campo y no guarda.\\
+ \textbf{B. Error del servidor:} el sistema muestra un mensaje de error y conserva los datos del formulario.}
+
+\fichaCU{Consultar asistente IA por paciente}{CU08}
+{El nutricionista conversa con el asistente usando como contexto los datos clínicos del paciente seleccionado y el catálogo SMAE.}
+{Sesión iniciada. Paciente seleccionado.}
+{\begin{enumerate}[nosep]
+ \item El nutricionista escribe una consulta en el chat del paciente.
+ \item El sistema arma el contexto con los datos clínicos, antropométricos y biométricos del paciente.
+ \item Si la consulta trata sobre planes, alimentos o equivalentes, el sistema añade al contexto una muestra del catálogo SMAE por grupo.
+ \item El sistema envía al modelo de lenguaje el prompt del sistema, el contexto, el historial reciente y la consulta.
+ \item El sistema muestra la respuesta en formato de tablas y guarda ambos mensajes en el historial.
+\end{enumerate}}
+{\textbf{A. Mensaje vacío:} el sistema responde «El mensaje es requerido».\\
+ \textbf{B. Consulta fuera del dominio nutricional:} el asistente responde con el mensaje de rechazo definido en el prompt del sistema.\\
+ \textbf{C. Límite de peticiones de la API:} el sistema informa que el servicio está saturado y pide reintentar.}
+
+\fichaCU{Cargar documento PDF}{CU10}
+{El nutricionista adjunta un documento PDF para que el asistente responda con base en su contenido.}
+{Sesión iniciada.}
+{\begin{enumerate}[nosep]
+ \item El nutricionista adjunta un archivo PDF o de texto y escribe una consulta.
+ \item El sistema valida el tipo y el tamaño del archivo (máximo 10\,MB).
+ \item El sistema extrae el texto del documento.
+ \item El sistema envía al modelo el texto extraído junto con la consulta.
+ \item El sistema muestra la respuesta basada en el documento.
+\end{enumerate}}
+{\textbf{A. Tipo de archivo no permitido:} el sistema rechaza la carga.\\
+ \textbf{B. Archivo mayor a 10\,MB:} el sistema rechaza la carga.\\
+ \textbf{C. PDF sin texto extraíble (escaneado):} \pendiente{describe el comportamiento observado}.}
+}
+
+\paragraph{Modelo de dominio y comportamiento}
+
+El modelo conceptual se refinó en el diagrama de clases de la
+Figura~\ref{fig:clases}, con atributos, tipos y cardinalidades. Los diagramas
+de secuencia de las Figuras~\ref{fig:seq_chat} y~\ref{fig:seq_pdf} describen los
+dos flujos principales del asistente.
+
+\figura{diagrama_clases.png}{Diagrama de clases de NutriAPP}{fig:clases}
+\figura{secuencia_chat_paciente.png}{Diagrama de secuencia «Consultar asistente IA por paciente»}{fig:seq_chat}
+\figura{secuencia_carga_pdf.png}{Diagrama de secuencia «Cargar documento PDF»}{fig:seq_pdf}

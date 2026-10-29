@@ -1,0 +1,120 @@
+% ============================================================
+\subsubsection{Arquitectura C4 y configuración del RAG}
+% ============================================================
+
+La arquitectura se documentó con el modelo C4~\cite{brown2024c4}, que describe
+el sistema en cuatro niveles de abstracción.
+
+\paragraph{Nivel 1: Contexto}
+
+NutriAPP es el sistema central (Figura~\ref{fig:c4_contexto}). El nutricionista
+accede desde un navegador web y la única dependencia externa es la API de Groq,
+que provee la inferencia del modelo de lenguaje (RNF05).
+
+\figura{c4_contexto.png}{Diagrama C4, nivel 1: contexto del sistema}{fig:c4_contexto}
+
+\paragraph{Nivel 2: Contenedores}
+
+El sistema se compone de tres contenedores (Figura~\ref{fig:c4_contenedores}):
+una aplicación de página única en React servida por Vite, una API REST en
+Express con TypeScript y una base de datos PostgreSQL accedida mediante Prisma ORM.
+
+\figura{c4_contenedores.png}{Diagrama C4, nivel 2: contenedores}{fig:c4_contenedores}
+
+\paragraph{Nivel 3: Componentes del backend}
+
+El backend se organiza en cuatro routers con su controlador
+(Tabla~\ref{tab:c4_comp} y Figura~\ref{fig:c4_componentes}). El servicio
+\texttt{aiService} concentra la comunicación con la API de Groq y el middleware
+de autenticación verifica el token JWT en cada ruta protegida (RNF02).
+
+\begin{table}[H]
+\centering\small
+\caption{Componentes del backend (nivel 3 C4)}\label{tab:c4_comp}
+\begin{tabularx}{\linewidth}{|l|l|X|}
+\hline
+\textbf{Router} & \textbf{Controlador} & \textbf{Responsabilidad} \\ \hline
+\texttt{/api/auth} & \texttt{authController} & Inicio de sesión y administración de nutricionistas \\ \hline
+\texttt{/api/patients} & \texttt{patientController} & Pacientes, historia clínica, biometría, antropometría, hábitos dietéticos y menú semanal \\ \hline
+\texttt{/api/foods} & \texttt{foodController} & Catálogo de alimentos y grupos SMAE \\ \hline
+\texttt{/api/ai} & \texttt{aiController} & Chat, recomendaciones, análisis de alimentos, planes de comida, carga de documentos e historial \\ \hline
+\end{tabularx}
+\end{table}
+
+\figura{c4_componentes.png}{Diagrama C4, nivel 3: componentes del backend}{fig:c4_componentes}
+
+\paragraph{Nivel 4: Código}
+
+La Figura~\ref{fig:c4_codigo} detalla el servicio \texttt{aiService}, que expone
+los métodos \texttt{chat}, \texttt{chatWithDocument},
+\texttt{generateNutritionRecommendation}, \texttt{generateMealPlan} y
+\texttt{analyzeFood}, además de la función interna \texttt{buildSmaeContext}.
+
+\figura{c4_codigo.png}{Diagrama C4, nivel 4: código del servicio de IA}{fig:c4_codigo}
+
+\paragraph{Configuración del pipeline RAG}
+
+El asistente combina tres fuentes de contexto antes de cada llamada al modelo:
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Datos clínicos del paciente}: historial, antropometría,
+        biometría y hábitos del paciente seleccionado (RF09) o de todos los
+        pacientes en el chat global (RF10).
+  \item \textbf{Catálogo SMAE}: cuando la consulta contiene términos como
+        \emph{plan}, \emph{alimento}, \emph{menú}, \emph{equivalente} o
+        \emph{kcal}, el sistema recupera de la base de datos ocho alimentos por
+        cada uno de siete grupos de equivalentes (56 alimentos) y los añade al
+        prompt con su porción, energía, macronutrientes e índice glucémico.
+  \item \textbf{Documento del nutricionista}: el texto extraído del PDF cargado
+        (RF11), limitado a los primeros 6000 caracteres.
+\end{enumerate}
+
+\pendiente{precisa en el texto qué entiendes por «recuperación»: hoy el sistema
+selecciona alimentos por grupo y trunca el PDF, no hace búsqueda semántica con
+embeddings. Descríbelo tal cual o implementa la búsqueda antes de redactarlo}.
+
+La Tabla~\ref{tab:rag_param} resume los parámetros configurados.
+
+\begin{table}[H]
+\centering\small
+\caption{Parámetros de configuración del asistente de IA}\label{tab:rag_param}
+\begin{tabularx}{\linewidth}{|p{5cm}|X|}
+\hline
+\textbf{Parámetro} & \textbf{Valor} \\ \hline
+Proveedor de inferencia & API de Groq (compatible con OpenAI) \\ \hline
+Modelo por defecto & \pendiente{confirma: el código usa \texttt{openai/gpt-oss-120b}; la metodología dice Llama~3.3~70B} \\ \hline
+Modelos seleccionables & \texttt{gpt-oss-120b}, \texttt{llama-3.3-70b-versatile}, \texttt{llama-3.1-8b-instant} \\ \hline
+Temperatura & 0.3 \\ \hline
+Máximo de tokens de respuesta & 8000 \\ \hline
+Historial enviado al modelo & 20 mensajes de la conversación \\ \hline
+Contexto SMAE & 7 grupos $\times$ 8 alimentos, activado por palabras clave \\ \hline
+Documentos admitidos & PDF o texto plano, hasta 10\,MB \\ \hline
+Texto del documento usado & primeros 6000 caracteres \\ \hline
+Extracción de texto & \texttt{pdf-parse} 2.x \\ \hline
+\end{tabularx}
+\end{table}
+
+El comportamiento del asistente se restringe mediante un prompt del sistema
+(\texttt{backend/prompts/system.md}) que define su alcance clínico, rechaza
+solicitudes fuera del dominio nutricional, obliga a presentar los valores en
+tablas y declara las fórmulas y referencias admitidas (Mifflin-St~Jeor,
+Harris-Benedict, FAO/OMS, SMAE 4.ª ed.).
+
+\begin{lstlisting}[caption={Construcción del contexto SMAE por grupo (extracto de \texttt{aiService.ts})},label={lst:smae}]
+async function buildSmaeContext(grupos?: string[]): Promise<string> {
+  const targetGroups = grupos ?? [
+    'Verduras', 'Frutas', 'Cereales', 'Leguminosas', 'AOA', 'Leche', 'Aceites y grasas',
+  ];
+  const perGroup = 8;
+  const perGroupResults = await Promise.all(
+    targetGroups.map(g =>
+      prisma.food.findMany({
+        where: { source: 'SMAE', grupoSmae: g },
+        select, orderBy: { name: 'asc' }, take: perGroup,
+      })
+    )
+  );
+  // ... se formatea cada alimento como:
+  // "- Nombre (porción): kcal P:g G:g HC:g Fib:g IG"
+}
+\end{lstlisting}

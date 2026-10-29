@@ -34,8 +34,8 @@ export const aiService = {
   },
 
   // Chat libre (con historial por paciente y contexto clínico opcional)
-  chat: async (message: string, patientId?: string | null, patientContext?: string): Promise<{ reply: string }> => {
-    const { data } = await api.post<{ reply: string }>('/ai/chat', { message, patientId, patientContext });
+  chat: async (message: string, patientId?: string | null, patientContext?: string, model?: string): Promise<{ reply: string }> => {
+    const { data } = await api.post<{ reply: string }>('/ai/chat', { message, patientId, patientContext, model });
     return data;
   },
 
@@ -51,11 +51,12 @@ export const aiService = {
   },
 
   // Chat con documento PDF/TXT (RAG)
-  chatWithFile: async (message: string, file: File, patientId?: string | null): Promise<{ reply: string; fileName: string }> => {
+  chatWithFile: async (message: string, file: File, patientId?: string | null, model?: string): Promise<{ reply: string; fileName: string }> => {
     const form = new FormData();
     form.append('file', file);
     if (message) form.append('message', message);
     if (patientId) form.append('patientId', patientId);
+    if (model) form.append('model', model);
     const { data } = await api.post('/ai/chat-upload', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });

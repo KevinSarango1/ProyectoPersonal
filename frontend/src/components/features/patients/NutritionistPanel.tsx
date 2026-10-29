@@ -225,12 +225,16 @@ const NutritionistPanel: React.FC = () => {
 
   // Foods
   const { foods, loading: loadingFoods, fetchAll: fetchFoods, create: createFood, update: updateFood, remove: removeFood } = useFoods();
+  const foodFormRef = useRef<HTMLDivElement>(null);
   const [foodSearch, setFoodSearch]           = useState('');
   const [showFoodForm, setShowFoodForm]       = useState(false);
   const [editingFoodId, setEditingFoodId]     = useState<string | null>(null);
   const [foodForm, setFoodForm]               = useState(EMPTY_FOOD);
   const [foodErrors, setFoodErrors]           = useState<Record<string, string>>({});
   const [foodFormLoading, setFoodFormLoading] = useState(false);
+  const [expandedFoodSections, setExpandedFoodSections] = useState({ id: true, porcion: true, macro: true });
+  const toggleFoodSection = (s: keyof typeof expandedFoodSections) =>
+    setExpandedFoodSections(prev => ({ ...prev, [s]: !prev[s] }));
   const [deleteFood, setDeleteFood]           = useState<{ open: boolean; food: Food | null }>({ open: false, food: null });
   const [infoFood,   setInfoFood]             = useState<Food | null>(null);
   // Table sort, filter, pagination
@@ -255,6 +259,7 @@ const NutritionistPanel: React.FC = () => {
 
   // AI panel
   const [aiInput, setAiInput]       = useState('');
+  const [aiModel, setAiModel]       = useState('gpt-oss-120b');
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([
     { role: 'ai', text: 'Hola. Soy el Asistente Nutricional IA. Puedo ayudarte a generar recomendaciones, analizar alimentos y también puedes subir documentos PDF para que los analice.' },
   ]);
@@ -393,7 +398,10 @@ const NutritionistPanel: React.FC = () => {
   };
 
   // ── Food CRUD ─────────────────────────────────────────────────────────────
-  const openCreateFood = () => { setEditingFoodId(null); setFoodForm(EMPTY_FOOD); setFoodErrors({}); setShowFoodForm(true); };
+  const openCreateFood = () => {
+    setEditingFoodId(null); setFoodForm(EMPTY_FOOD); setFoodErrors({}); setShowFoodForm(true);
+    setTimeout(() => foodFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
   const openEditFood   = (f: Food) => {
     setEditingFoodId(f.id);
     setFoodForm({
@@ -409,6 +417,7 @@ const NutritionistPanel: React.FC = () => {
     });
     setFoodErrors({});
     setShowFoodForm(true);
+    setTimeout(() => foodFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   const validateFood = () => {
@@ -485,10 +494,10 @@ const NutritionistPanel: React.FC = () => {
       }
 
       if (fileToSend) {
-        const res = await aiService.chatWithFile(text, fileToSend, pid);
+        const res = await aiService.chatWithFile(text, fileToSend, pid, aiModel);
         reply = res.reply ?? 'Sin respuesta.';
       } else {
-        const res = await aiService.chat(text, pid, patientContext);
+        const res = await aiService.chat(text, pid, patientContext, aiModel);
         reply = res.reply ?? 'Sin respuesta.';
       }
 
@@ -1186,6 +1195,20 @@ const NutritionistPanel: React.FC = () => {
 
             {/* Input */}
             <div className="border-t border-slate-100 px-3 py-2 bg-white flex-shrink-0 space-y-2">
+              {/* Model selector */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-slate-400 flex-shrink-0">Modelo:</span>
+                <select
+                  value={aiModel}
+                  onChange={e => setAiModel(e.target.value)}
+                  disabled={aiLoading}
+                  className="flex-1 text-[10px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-400 disabled:opacity-50 cursor-pointer"
+                >
+                  <option value="gpt-oss-120b">GPT-OSS 120B — Alta calidad</option>
+                  <option value="qwen-27b">Qwen 3.8 27B — Equilibrado</option>
+                  <option value="gpt-oss-20b">GPT-OSS 20B — Más rápido</option>
+                </select>
+              </div>
               {aiFile && (
                 <div className="flex items-center gap-2 text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded-lg px-2 py-1">
                   <Paperclip size={11} className="shrink-0 text-violet-500" />
@@ -1226,7 +1249,7 @@ const NutritionistPanel: React.FC = () => {
       {/* FOODS VIEW                                                          */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {mainView === 'foods' && (
-        <div className="flex-1 p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           <div className="flex flex-wrap gap-3 items-end justify-between">
             <div>
               <h2 className="text-base font-bold text-slate-900">Base de Datos de Alimentos</h2>
@@ -1243,128 +1266,192 @@ const NutritionistPanel: React.FC = () => {
 
           {/* Food form */}
           {showFoodForm && (
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-              <div className="flex justify-between items-center mb-5">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">{editingFoodId ? 'Editar Alimento' : 'Registrar Nuevo Alimento'}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Los campos marcados con * son obligatorios</p>
-                </div>
-                <button onClick={() => setShowFoodForm(false)} className="text-slate-300 hover:text-slate-600 text-2xl leading-none transition-colors">×</button>
-              </div>
+            <div ref={foodFormRef} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
 
-              {/* Sección 1 — Identidad */}
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Identificación</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-                <div className="md:col-span-2">
-                  <label className={labelCls}>Nombre *</label>
-                  <input className={inputCls} value={foodForm.name}
-                    onChange={e => setFoodForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="Ej: Arroz blanco cocido" />
-                  {foodErrors.name && <p className={errCls}>{foodErrors.name}</p>}
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${editingFoodId ? 'bg-amber-100' : 'bg-emerald-100'}`}>
+                    <UtensilsCrossed size={15} className={editingFoodId ? 'text-amber-600' : 'text-emerald-600'} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">{editingFoodId ? 'Editar Alimento' : 'Registrar Nuevo Alimento'}</h3>
+                    <p className="text-xs text-slate-400">Campos marcados con * son obligatorios</p>
+                  </div>
                 </div>
-                <div>
-                  <label className={labelCls}>Grupo SMAE</label>
-                  <select className={inputCls} value={foodForm.grupoSmae}
-                    onChange={e => setFoodForm(f => ({ ...f, grupoSmae: e.target.value }))}>
-                    <option value="">— Sin grupo —</option>
-                    {smaeGroups.map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>Subgrupo</label>
-                  <input className={inputCls} value={foodForm.subgrupoSmae}
-                    onChange={e => setFoodForm(f => ({ ...f, subgrupoSmae: e.target.value }))}
-                    placeholder="Ej: Sin proteína añadida" />
-                </div>
-              </div>
-
-              {/* Sección 2 — Porción */}
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Porción sugerida</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-                <div>
-                  <label className={labelCls}>Cantidad</label>
-                  <input type="number" className={inputCls} value={foodForm.porcionSugerida}
-                    onChange={e => setFoodForm(f => ({ ...f, porcionSugerida: e.target.value }))}
-                    placeholder="Ej: 0.5" min="0" step="0.01" />
-                </div>
-                <div>
-                  <label className={labelCls}>Unidad</label>
-                  <input className={inputCls} value={foodForm.unidadPorcion}
-                    onChange={e => setFoodForm(f => ({ ...f, unidadPorcion: e.target.value }))}
-                    placeholder="Ej: taza, pieza, g" />
-                </div>
-                <div>
-                  <label className={labelCls}>Peso bruto (g)</label>
-                  <input type="number" className={inputCls} value={foodForm.grossWeight}
-                    onChange={e => setFoodForm(f => ({ ...f, grossWeight: e.target.value }))}
-                    placeholder="0" min="0" step="0.1" />
-                </div>
-                <div>
-                  <label className={labelCls}>Peso neto (g) *</label>
-                  <input type="number" className={inputCls} value={foodForm.netWeight}
-                    onChange={e => setFoodForm(f => ({ ...f, netWeight: e.target.value }))}
-                    placeholder="0" min="0" step="0.1" />
-                  {foodErrors.netWeight && <p className={errCls}>{foodErrors.netWeight}</p>}
-                </div>
-              </div>
-
-              {/* Sección 3 — Macronutrimentos */}
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Composición nutrimental</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-                <div>
-                  <label className={labelCls}>Energía (Kcal) *</label>
-                  <input type="number" className={inputCls} value={foodForm.energyKcal}
-                    onChange={e => setFoodForm(f => ({ ...f, energyKcal: e.target.value }))}
-                    placeholder="0" min="0" step="0.1" />
-                  {foodErrors.energyKcal && <p className={errCls}>{foodErrors.energyKcal}</p>}
-                </div>
-                <div>
-                  <label className={labelCls}>Proteína (g)</label>
-                  <input type="number" className={inputCls} value={foodForm.protein}
-                    onChange={e => setFoodForm(f => ({ ...f, protein: e.target.value }))}
-                    placeholder="0" min="0" step="0.1" />
-                </div>
-                <div>
-                  <label className={labelCls}>Lípidos (g)</label>
-                  <input type="number" className={inputCls} value={foodForm.fats}
-                    onChange={e => setFoodForm(f => ({ ...f, fats: e.target.value }))}
-                    placeholder="0" min="0" step="0.1" />
-                </div>
-                <div>
-                  <label className={labelCls}>HCO (g)</label>
-                  <input type="number" className={inputCls} value={foodForm.carbohydrates}
-                    onChange={e => setFoodForm(f => ({ ...f, carbohydrates: e.target.value }))}
-                    placeholder="0" min="0" step="0.1" />
-                </div>
-                <div>
-                  <label className={labelCls}>Fibra (g)</label>
-                  <input type="number" className={inputCls} value={foodForm.fiber}
-                    onChange={e => setFoodForm(f => ({ ...f, fiber: e.target.value }))}
-                    placeholder="0" min="0" step="0.1" />
-                </div>
-                <div>
-                  <label className={labelCls}>Índ. glucémico</label>
-                  <input type="number" className={inputCls} value={foodForm.indiceGlucemico}
-                    onChange={e => setFoodForm(f => ({ ...f, indiceGlucemico: e.target.value }))}
-                    placeholder="0–100" min="0" max="100" step="1" />
-                </div>
-                <div>
-                  <label className={labelCls}>Carga glucémica</label>
-                  <input type="number" className={inputCls} value={foodForm.cargaGlucemica}
-                    onChange={e => setFoodForm(f => ({ ...f, cargaGlucemica: e.target.value }))}
-                    placeholder="0" min="0" step="0.1" />
-                </div>
-                <div className="flex items-end pb-1">
-                  <p className="text-xs text-slate-400">kJ se calcula automáticamente<br />(Kcal × 4.184)</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-1 border-t border-slate-100">
-                <button onClick={handleSaveFood} disabled={foodFormLoading}
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
-                  {foodFormLoading ? 'Guardando...' : editingFoodId ? 'Actualizar Alimento' : 'Registrar Alimento'}
+                <button onClick={() => setShowFoodForm(false)}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors">
+                  <X size={15} />
                 </button>
-                <button onClick={() => setShowFoodForm(false)} className="px-5 py-2.5 border border-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-50 transition-colors">
+              </div>
+
+              <div className="p-4 space-y-3">
+
+                {/* ── Sección I: Identificación ─────────────────────────── */}
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <button type="button" onClick={() => toggleFoodSection('id')}
+                    className="w-full flex items-center gap-2.5 py-3 px-4 text-left font-semibold text-sm bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition-colors">
+                    <UtensilsCrossed size={14} className="shrink-0" />
+                    <span className="flex-1">I. IDENTIFICACIÓN</span>
+                    {(foodErrors.name) && (
+                      <span className="text-xs text-red-500 font-normal flex items-center gap-1">
+                        <AlertTriangle size={11} /> incompleto
+                      </span>
+                    )}
+                    {expandedFoodSections.id ? <ChevronUp size={14} className="shrink-0" /> : <ChevronDown size={14} className="shrink-0" />}
+                  </button>
+                  {expandedFoodSections.id && (
+                    <div className="p-4 space-y-4">
+                      <div>
+                        <label className={labelCls}>Nombre *</label>
+                        <input className={inputCls} value={foodForm.name}
+                          onChange={e => setFoodForm(f => ({ ...f, name: e.target.value }))}
+                          placeholder="Ej: Arroz blanco cocido" />
+                        {foodErrors.name && <p className={errCls}>{foodErrors.name}</p>}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className={labelCls}>Grupo SMAE</label>
+                          <select className={inputCls} value={foodForm.grupoSmae}
+                            onChange={e => setFoodForm(f => ({ ...f, grupoSmae: e.target.value }))}>
+                            <option value="">— Sin grupo —</option>
+                            {smaeGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className={labelCls}>Subgrupo</label>
+                          <input className={inputCls} value={foodForm.subgrupoSmae}
+                            onChange={e => setFoodForm(f => ({ ...f, subgrupoSmae: e.target.value }))}
+                            placeholder="Ej: Sin proteína añadida" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Sección II: Porción sugerida ──────────────────────── */}
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <button type="button" onClick={() => toggleFoodSection('porcion')}
+                    className="w-full flex items-center gap-2.5 py-3 px-4 text-left font-semibold text-sm bg-blue-50 hover:bg-blue-100 text-blue-800 transition-colors">
+                    <Ruler size={14} className="shrink-0" />
+                    <span className="flex-1">II. PORCIÓN SUGERIDA</span>
+                    {foodErrors.netWeight && (
+                      <span className="text-xs text-red-500 font-normal flex items-center gap-1">
+                        <AlertTriangle size={11} /> incompleto
+                      </span>
+                    )}
+                    {expandedFoodSections.porcion ? <ChevronUp size={14} className="shrink-0" /> : <ChevronDown size={14} className="shrink-0" />}
+                  </button>
+                  {expandedFoodSections.porcion && (
+                    <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <label className={labelCls}>Cantidad</label>
+                        <input type="number" className={inputCls} value={foodForm.porcionSugerida}
+                          onChange={e => setFoodForm(f => ({ ...f, porcionSugerida: e.target.value }))}
+                          placeholder="0.5" min="0" step="0.01" />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Unidad</label>
+                        <input className={inputCls} value={foodForm.unidadPorcion}
+                          onChange={e => setFoodForm(f => ({ ...f, unidadPorcion: e.target.value }))}
+                          placeholder="taza, pieza, g" />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Peso bruto (g)</label>
+                        <input type="number" className={inputCls} value={foodForm.grossWeight}
+                          onChange={e => setFoodForm(f => ({ ...f, grossWeight: e.target.value }))}
+                          placeholder="0" min="0" step="0.1" />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Peso neto (g) *</label>
+                        <input type="number" className={inputCls} value={foodForm.netWeight}
+                          onChange={e => setFoodForm(f => ({ ...f, netWeight: e.target.value }))}
+                          placeholder="0" min="0" step="0.1" />
+                        {foodErrors.netWeight && <p className={errCls}>{foodErrors.netWeight}</p>}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Sección III: Composición nutrimental ──────────────── */}
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <button type="button" onClick={() => toggleFoodSection('macro')}
+                    className="w-full flex items-center gap-2.5 py-3 px-4 text-left font-semibold text-sm bg-amber-50 hover:bg-amber-100 text-amber-800 transition-colors">
+                    <Activity size={14} className="shrink-0" />
+                    <span className="flex-1">III. COMPOSICIÓN NUTRIMENTAL</span>
+                    {foodErrors.energyKcal && (
+                      <span className="text-xs text-red-500 font-normal flex items-center gap-1">
+                        <AlertTriangle size={11} /> incompleto
+                      </span>
+                    )}
+                    {expandedFoodSections.macro ? <ChevronUp size={14} className="shrink-0" /> : <ChevronDown size={14} className="shrink-0" />}
+                  </button>
+                  {expandedFoodSections.macro && (
+                    <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <label className={labelCls}>Energía (kcal) *</label>
+                        <input type="number" className={inputCls} value={foodForm.energyKcal}
+                          onChange={e => setFoodForm(f => ({ ...f, energyKcal: e.target.value }))}
+                          placeholder="0" min="0" step="0.1" />
+                        {foodErrors.energyKcal && <p className={errCls}>{foodErrors.energyKcal}</p>}
+                      </div>
+                      <div>
+                        <label className={labelCls}>Proteína (g)</label>
+                        <input type="number" className={inputCls} value={foodForm.protein}
+                          onChange={e => setFoodForm(f => ({ ...f, protein: e.target.value }))}
+                          placeholder="0" min="0" step="0.1" />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Lípidos (g)</label>
+                        <input type="number" className={inputCls} value={foodForm.fats}
+                          onChange={e => setFoodForm(f => ({ ...f, fats: e.target.value }))}
+                          placeholder="0" min="0" step="0.1" />
+                      </div>
+                      <div>
+                        <label className={labelCls}>HCO (g)</label>
+                        <input type="number" className={inputCls} value={foodForm.carbohydrates}
+                          onChange={e => setFoodForm(f => ({ ...f, carbohydrates: e.target.value }))}
+                          placeholder="0" min="0" step="0.1" />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Fibra (g)</label>
+                        <input type="number" className={inputCls} value={foodForm.fiber}
+                          onChange={e => setFoodForm(f => ({ ...f, fiber: e.target.value }))}
+                          placeholder="0" min="0" step="0.1" />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Índ. glucémico</label>
+                        <input type="number" className={inputCls} value={foodForm.indiceGlucemico}
+                          onChange={e => setFoodForm(f => ({ ...f, indiceGlucemico: e.target.value }))}
+                          placeholder="0–100" min="0" max="100" step="1" />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Carga glucémica</label>
+                        <input type="number" className={inputCls} value={foodForm.cargaGlucemica}
+                          onChange={e => setFoodForm(f => ({ ...f, cargaGlucemica: e.target.value }))}
+                          placeholder="0" min="0" step="0.1" />
+                      </div>
+                      <div className="flex items-end pb-1">
+                        <p className="text-xs text-slate-400 leading-relaxed">kJ se calcula<br />automáticamente<br />(kcal × 4.184)</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Footer */}
+              <div className="flex gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50">
+                <button onClick={handleSaveFood} disabled={foodFormLoading}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 ${editingFoodId ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+                  {foodFormLoading
+                    ? 'Guardando...'
+                    : editingFoodId
+                      ? <><Pencil size={14} /> Actualizar Alimento</>
+                      : <><Plus size={14} /> Registrar Alimento</>}
+                </button>
+                <button onClick={() => setShowFoodForm(false)}
+                  className="px-5 py-2.5 border border-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-100 transition-colors">
                   Cancelar
                 </button>
               </div>

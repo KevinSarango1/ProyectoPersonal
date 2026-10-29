@@ -1,0 +1,95 @@
+% ============================================================
+%  Resultados — Objetivo Específico 1 (NutriAPP)
+%  Compilar con: pdflatex -> bibtex -> pdflatex -> pdflatex
+%  Las figuras faltantes se muestran como recuadro gris con el
+%  nombre de archivo esperado (ver imagenes/LEEME.md).
+% ============================================================
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm]{geometry}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+
+\usepackage[backend=bibtex, style=ieee, sorting=none]{biblatex}
+\addbibresource{../referencias.bib}
+\addbibresource{referencias_obj1.bib}
+
+% ── Numeración tipo memoria UNL: 6. / 6.1 / 6.1.1 / 6.1.1.1 ──
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+\setcounter{section}{5}
+
+% ── Rutas de imágenes ───────────────────────────────────────
+\graphicspath{{imagenes/}{../documentacion_tecnica/imagenes/}}
+
+% ── Figura con marcador si el archivo aún no existe ─────────
+% \figura[ancho]{archivo}{pie de figura}{etiqueta}
+\newcommand{\figura}[4][0.85\linewidth]{%
+  \begin{figure}[H]
+    \centering
+    \IfFileExists{imagenes/#2}{\includegraphics[width=#1]{#2}}{%
+      \IfFileExists{../documentacion_tecnica/imagenes/#2}{\includegraphics[width=#1]{#2}}{%
+        \fbox{\parbox[c][4cm][c]{0.8\linewidth}{\centering\color{gray}%
+          \textbf{FALTA IMAGEN}\\\texttt{imagenes/\detokenize{#2}}}}}}
+    \caption{#3}
+    \label{#4}
+  \end{figure}}
+
+% Marca visible para lo que aún debes completar
+\newcommand{\pendiente}[1]{\textcolor{red}{\textbf{[PENDIENTE: #1]}}}
+
+% ── Código TypeScript ───────────────────────────────────────
+\definecolor{codebg}{RGB}{248,248,248}
+\lstdefinelanguage{TypeScript}{
+  keywords={const,let,function,return,export,import,from,async,await,
+            try,catch,if,else,new,true,false,null,undefined},
+  sensitive=true, morecomment=[l]{//}, morecomment=[s]{/*}{*/},
+  morestring=[b]', morestring=[b]", morestring=[b]`,
+}
+\lstset{
+  language=TypeScript, backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize, keywordstyle=\color{blue!70!black}\bfseries,
+  stringstyle=\color{green!40!black}, commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray}, frame=single,
+  rulecolor=\color{gray!40}, breaklines=true, captionpos=b, tabsize=2,
+  showstringspaces=false, extendedchars=true,
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'\i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+           {ñ}{{\~n}}1 {Á}{{\'A}}1 {É}{{\'E}}1 {Ó}{{\'O}}1 {×}{{$\times$}}1
+           {—}{{---}}1,
+}
+\renewcommand{\lstlistingname}{Código}
+
+\begin{document}
+
+\section{Resultados}
+
+\input{secciones/00_introduccion}
+\input{secciones/01_requisitos}
+\input{secciones/02_catalogo}
+\input{secciones/03_diseno}
+\input{secciones/04_arquitectura_rag}
+\input{secciones/05_implementacion}
+\input{secciones/06_pruebas}
+
+\printbibliography[title={Referencias de esta sección}]
+
+\end{document}

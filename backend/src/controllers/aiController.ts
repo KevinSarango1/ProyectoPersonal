@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import multer from 'multer';
 import prisma from '../config/database';
-import { aiService } from '../services/aiService';
+import { aiService, ALLOWED_MODELS } from '../services/aiService';
 
 // pdf-parse v2 usa clase PDFParse en lugar de función directa
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -22,14 +22,17 @@ export const upload = multer({
 
 export const generateRecommendation = async (req: Request, res: Response) => {
   try {
-    const { name, age, gender, weight, height, objective } = req.body;
+    const { name, age, gender, weight, height, objective, model } = req.body;
     if (!name || !age || !gender || !weight || !height) {
       return res.status(400).json({ message: 'Faltan datos del paciente' });
+    }
+    if (model && !ALLOWED_MODELS[model]) {
+      return res.status(400).json({ message: `Modelo no permitido. Opciones: ${Object.keys(ALLOWED_MODELS).join(', ')}` });
     }
     const recommendation = await aiService.generateNutritionRecommendation({
       name, age: parseInt(age), gender,
       weight: parseFloat(weight), height: parseFloat(height), objective,
-    });
+    }, model);
     res.json({ recommendation });
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Error al generar recomendación' });
@@ -38,11 +41,14 @@ export const generateRecommendation = async (req: Request, res: Response) => {
 
 export const analyzeFood = async (req: Request, res: Response) => {
   try {
-    const { foodName, quantity } = req.body;
+    const { foodName, quantity, model } = req.body;
     if (!foodName || !quantity) {
       return res.status(400).json({ message: 'Nombre y cantidad son requeridos' });
     }
-    const analysis = await aiService.analyzeFood(foodName, parseInt(quantity));
+    if (model && !ALLOWED_MODELS[model]) {
+      return res.status(400).json({ message: `Modelo no permitido. Opciones: ${Object.keys(ALLOWED_MODELS).join(', ')}` });
+    }
+    const analysis = await aiService.analyzeFood(foodName, parseInt(quantity), model);
     res.json({ analysis });
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Error al analizar alimento' });
@@ -51,13 +57,16 @@ export const analyzeFood = async (req: Request, res: Response) => {
 
 export const generateMealPlan = async (req: Request, res: Response) => {
   try {
-    const { calories, restrictions, meals } = req.body;
+    const { calories, restrictions, meals, model } = req.body;
     if (!calories || !meals) {
       return res.status(400).json({ message: 'Calorías y número de comidas son requeridos' });
     }
+    if (model && !ALLOWED_MODELS[model]) {
+      return res.status(400).json({ message: `Modelo no permitido. Opciones: ${Object.keys(ALLOWED_MODELS).join(', ')}` });
+    }
     const mealPlan = await aiService.generateMealPlan({
       calories: parseInt(calories), restrictions: restrictions || [], meals: parseInt(meals),
-    });
+    }, model);
     res.json({ mealPlan });
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Error al generar plan' });
@@ -95,9 +104,12 @@ export const getChatHistory = async (req: Request, res: Response) => {
 // POST /api/ai/chat
 export const chat = async (req: Request, res: Response) => {
   try {
-    const { message, patientId, patientContext } = req.body;
+    const { message, patientId, patientContext, model } = req.body;
     if (!message?.trim()) {
       return res.status(400).json({ message: 'El mensaje es requerido' });
+    }
+    if (model && !ALLOWED_MODELS[model]) {
+      return res.status(400).json({ message: `Modelo no permitido. Opciones: ${Object.keys(ALLOWED_MODELS).join(', ')}` });
     }
     const pid = patientId || null;
 
@@ -115,7 +127,7 @@ export const chat = async (req: Request, res: Response) => {
     const userMsg = await db.chatMessage.create({ data: { role: 'user', content: message, patientId: pid } });
     let reply: string | null = null;
     try {
-      reply = await aiService.chat(message, patientContext || undefined, history);
+      reply = await aiService.chat(message, patientContext || undefined, history, model);
     } catch (aiError: any) {
       await db.chatMessage.delete({ where: { id: userMsg.id } });
       throw aiError;
@@ -136,10 +148,13 @@ export const chat = async (req: Request, res: Response) => {
 // POST /api/ai/chat-upload — RAG con documento PDF/TXT
 export const chatWithFile = async (req: Request, res: Response) => {
   try {
-    const { message, patientId } = req.body;
+    const { message, patientId, model } = req.body;
     const file = req.file;
     if (!file && !message?.trim()) {
       return res.status(400).json({ message: 'Se requiere un mensaje o un documento' });
+    }
+    if (model && !ALLOWED_MODELS[model]) {
+      return res.status(400).json({ message: `Modelo no permitido. Opciones: ${Object.keys(ALLOWED_MODELS).join(', ')}` });
     }
 
     const pid = patientId || null;
@@ -169,6 +184,7 @@ export const chatWithFile = async (req: Request, res: Response) => {
       message || 'Analiza este documento.',
       extractedText,
       fileName,
+      model,
     );
 
     await db.chatMessage.create({ data: { role: 'ai', content: reply ?? '', patientId: pid } });

@@ -1,0 +1,69 @@
+% ============================================================
+\subsubsection{Pruebas de caja negra}
+% ============================================================
+
+Los endpoints de la API se validaron con pruebas de caja negra ejecutadas en
+Thunder Client. Cada caso define la petición, el código HTTP esperado y, cuando
+aplica, un texto que debe aparecer en la respuesta. La colección completa se
+encuentra en el archivo \texttt{NutriApp\_ThunderClient.json}
+\pendiente{referencia al anexo}. La Tabla~\ref{tab:pcn} resume los resultados.
+
+\pendiente{ejecuta la colección y llena la columna «Estado» con lo que
+realmente obtuviste; anota los casos fallidos y qué se corrigió}
+
+{\footnotesize
+\begin{longtable}{|p{1.2cm}|p{2.9cm}|p{5.6cm}|p{2.6cm}|p{1.6cm}|}
+\caption{Pruebas de caja negra de la API REST}\label{tab:pcn}\\
+\hline
+\textbf{ID} & \textbf{Endpoint} & \textbf{Descripción} & \textbf{Esperado} & \textbf{Estado} \\ \hline
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Endpoint} & \textbf{Descripción} & \textbf{Esperado} & \textbf{Estado} \\ \hline
+\endhead
+TC-01 & GET /health & Verificar que el servidor está disponible & 200, «ok» & \pendiente{} \\ \hline
+TC-02 & POST /api/auth/login & Rechazar inicio de sesión sin cuerpo & 400, «requeridos» & \pendiente{} \\ \hline
+TC-03 & POST /api/auth/login & Rechazar contraseña incorrecta & 401, «incorrectos» & \pendiente{} \\ \hline
+TC-04 & GET /api/auth/me & Impedir acceso a ruta protegida sin token & 401, «Token requerido» & \pendiente{} \\ \hline
+TC-05 & GET /api/auth/me & Rechazar token malformado & 401, «inválido» & \pendiente{} \\ \hline
+TC-06 & GET /api/auth/me & Token válido de usuario inexistente en BD & 200 & \pendiente{} \\ \hline
+TC-07 & GET /api/patients & Listar pacientes registrados & 200, arreglo & \pendiente{} \\ \hline
+TC-08 & POST /api/patients & Rechazar paciente con campos faltantes & 400, «campos requeridos» & \pendiente{} \\ \hline
+TC-09 & GET /api/patients/:id & Paciente con ID inexistente & 404, «no encontrado» & \pendiente{} \\ \hline
+TC-10 & GET /api/foods & Listar alimentos del catálogo SMAE & 200, arreglo & \pendiente{} \\ \hline
+TC-11 & GET /api/foods/smae-groups & Obtener grupos SMAE disponibles & 200 & \pendiente{} \\ \hline
+TC-12 & GET /api/foods/:id & Alimento con ID inexistente & 404 & \pendiente{} \\ \hline
+TC-13 & POST /api/ai/chat & Rechazar mensaje vacío & 400, «requerido» & \pendiente{} \\ \hline
+TC-14 & POST /api/ai/chat & Rechazar petición sin campo \texttt{message} & 400 & \pendiente{} \\ \hline
+TC-15 & POST /api/ai/recommendation & Rechazar recomendación con datos del paciente faltantes & 400 & \pendiente{} \\ \hline
+TC-16 & POST /api/ai/analyze-food & Rechazar análisis sin campos requeridos & 400 & \pendiente{} \\ \hline
+TC-17 & POST /api/ai/meal-plan & Rechazar plan sin calorías objetivo & 400 & \pendiente{} \\ \hline
+TC-18 & GET /api/ai/chat-history/global & Obtener historial del chat global & 200, arreglo & \pendiente{} \\ \hline
+TC-19 & POST /api/ai/chat & Solicitar cálculo de GET nutricional & 200, «kcal» & \pendiente{} \\ \hline
+TC-20 & POST /api/ai/chat & Rechazar solicitud fuera de dominio (código Python) & 200, «Solo puedo asistirte» & \pendiente{} \\ \hline
+TC-21 & POST /api/ai/recommendation & Recomendación completa con equivalentes SMAE & 200, «SMAE» & \pendiente{} \\ \hline
+TC-22 & POST /api/ai/analyze-food & Análisis de un alimento SMAE (tortilla de maíz) & 200, «kcal» & \pendiente{} \\ \hline
+\end{longtable}
+}
+
+\figura{im10_postman_rag.png}{Ejemplo de ejecución de una prueba sobre el asistente de IA}{fig:prueba_rag}
+
+\paragraph{Verificación de requisitos no funcionales}
+
+\pendiente{opcional pero recomendable: mide y reporta RNF01 (tiempo de respuesta
+del asistente, p.\,ej. promedio de 10 consultas) y RNF03 (compara IMC, ICC y GET
+del sistema contra cálculo manual en 3--5 pacientes de prueba)}
+
+\begin{table}[H]
+\centering\small
+\caption{Verificación de requisitos no funcionales}\label{tab:rnf_verif}
+\begin{tabularx}{\linewidth}{|l|X|X|}
+\hline
+\textbf{RNF} & \textbf{Criterio} & \textbf{Resultado} \\ \hline
+RNF01 & Respuesta del asistente $\leq$ 10\,s & \pendiente{tiempo medido} \\ \hline
+RNF02 & Contraseñas con bcrypt y sesión con JWT & Verificado en TC-02 a TC-05 \\ \hline
+RNF03 & Error $\leq$ 1\,\% en IMC, ICC y GET & \pendiente{error medido} \\ \hline
+RNF04 & Funciona en Chrome, Firefox y Edge & \pendiente{} \\ \hline
+RNF05 & Ejecución local con Groq como único servicio externo & \pendiente{} \\ \hline
+RNF07 & Repositorio con ramas \texttt{main} y \texttt{develop} & \pendiente{} \\ \hline
+\end{tabularx}
+\end{table}

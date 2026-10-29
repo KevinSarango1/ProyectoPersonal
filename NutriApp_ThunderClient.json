@@ -1,0 +1,286 @@
+{
+  "_type": "ThunderCollection",
+  "version": "1.1",
+  "name": "NutriApp — Pruebas Caja Negra",
+  "colId": "nutriapp-blackbox-2026",
+  "created": 1760313600,
+  "sortNum": 0,
+  "client": "Thunder Client",
+  "folders": [
+    { "_id": "f-infra",   "name": "1 · Infraestructura",            "containerId": "" },
+    { "_id": "f-auth",    "name": "2 · Autenticación",              "containerId": "" },
+    { "_id": "f-patients","name": "3 · Gestión de Pacientes",       "containerId": "" },
+    { "_id": "f-foods",   "name": "4 · Catálogo de Alimentos SMAE", "containerId": "" },
+    { "_id": "f-ai-val",  "name": "5 · IA — Validaciones de entrada","containerId": "" },
+    { "_id": "f-ai-llm",  "name": "6 · IA — Generación con LLM",   "containerId": "" }
+  ],
+  "environments": [
+    {
+      "_id": "env-local",
+      "name": "Local",
+      "variables": [
+        { "name": "baseUrl", "value": "http://localhost:3000", "isSecret": false },
+        { "name": "token",   "value": "",                      "isSecret": true,
+          "note": "Pegar el JWT obtenido de POST /api/auth/login" }
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "_id": "tc-01", "colId": "nutriapp-blackbox-2026", "containerId": "f-infra",
+      "name": "TC-01 · Health check del servidor",
+      "method": "GET", "url": "{{baseUrl}}/health", "sortNum": 1,
+      "headers": [],
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "200" },
+        { "type": "res-body",   "action": "contains", "value": "ok" }
+      ]
+    },
+    {
+      "_id": "tc-02", "colId": "nutriapp-blackbox-2026", "containerId": "f-auth",
+      "name": "TC-02 · Login sin body",
+      "method": "POST", "url": "{{baseUrl}}/api/auth/login", "sortNum": 2,
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "type": "json", "raw": "{}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "400" },
+        { "type": "res-body", "action": "contains", "value": "requeridos" }
+      ]
+    },
+    {
+      "_id": "tc-03", "colId": "nutriapp-blackbox-2026", "containerId": "f-auth",
+      "name": "TC-03 · Login con contraseña incorrecta",
+      "method": "POST", "url": "{{baseUrl}}/api/auth/login", "sortNum": 3,
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "type": "json", "raw": "{\"email\":\"admin@nutriapp.com\",\"password\":\"wrong\"}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "401" },
+        { "type": "res-body", "action": "contains", "value": "incorrectos" }
+      ]
+    },
+    {
+      "_id": "tc-04", "colId": "nutriapp-blackbox-2026", "containerId": "f-auth",
+      "name": "TC-04 · Acceso a ruta protegida sin token",
+      "method": "GET", "url": "{{baseUrl}}/api/auth/me", "sortNum": 4,
+      "headers": [],
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "401" },
+        { "type": "res-body", "action": "contains", "value": "Token requerido" }
+      ]
+    },
+    {
+      "_id": "tc-05", "colId": "nutriapp-blackbox-2026", "containerId": "f-auth",
+      "name": "TC-05 · Acceso con token malformado",
+      "method": "GET", "url": "{{baseUrl}}/api/auth/me", "sortNum": 5,
+      "headers": [{ "name": "Authorization", "value": "Bearer token.invalido.aqui" }],
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "401" },
+        { "type": "res-body", "action": "contains", "value": "inválido" }
+      ]
+    },
+    {
+      "_id": "tc-06", "colId": "nutriapp-blackbox-2026", "containerId": "f-auth",
+      "name": "TC-06 · Token válido — usuario inexistente en BD",
+      "method": "GET", "url": "{{baseUrl}}/api/auth/me", "sortNum": 6,
+      "headers": [{ "name": "Authorization", "value": "Bearer {{token}}" }],
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "200",
+          "note": "200 si el token tiene un userId real. 404 si el userId no existe en BD." }
+      ]
+    },
+    {
+      "_id": "tc-07", "colId": "nutriapp-blackbox-2026", "containerId": "f-patients",
+      "name": "TC-07 · Listar pacientes registrados",
+      "method": "GET", "url": "{{baseUrl}}/api/patients", "sortNum": 7,
+      "headers": [{ "name": "Authorization", "value": "Bearer {{token}}" }],
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "200" },
+        { "type": "res-body", "action": "type", "value": "array" }
+      ]
+    },
+    {
+      "_id": "tc-08", "colId": "nutriapp-blackbox-2026", "containerId": "f-patients",
+      "name": "TC-08 · Crear paciente con campos faltantes",
+      "method": "POST", "url": "{{baseUrl}}/api/patients", "sortNum": 8,
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" },
+        { "name": "Content-Type",  "value": "application/json" }
+      ],
+      "body": { "type": "json", "raw": "{\"firstName\":\"Solo\"}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "400" },
+        { "type": "res-body", "action": "contains", "value": "campos requeridos" }
+      ]
+    },
+    {
+      "_id": "tc-09", "colId": "nutriapp-blackbox-2026", "containerId": "f-patients",
+      "name": "TC-09 · Obtener paciente — ID inexistente",
+      "method": "GET", "url": "{{baseUrl}}/api/patients/id-que-no-existe-000", "sortNum": 9,
+      "headers": [{ "name": "Authorization", "value": "Bearer {{token}}" }],
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "404" },
+        { "type": "res-body", "action": "contains", "value": "no encontrado" }
+      ]
+    },
+    {
+      "_id": "tc-10", "colId": "nutriapp-blackbox-2026", "containerId": "f-foods",
+      "name": "TC-10 · Listar alimentos del catálogo SMAE",
+      "method": "GET", "url": "{{baseUrl}}/api/foods", "sortNum": 10,
+      "headers": [{ "name": "Authorization", "value": "Bearer {{token}}" }],
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "200" },
+        { "type": "res-body", "action": "type", "value": "array" }
+      ]
+    },
+    {
+      "_id": "tc-11", "colId": "nutriapp-blackbox-2026", "containerId": "f-foods",
+      "name": "TC-11 · Obtener grupos SMAE disponibles",
+      "method": "GET", "url": "{{baseUrl}}/api/foods/smae-groups", "sortNum": 11,
+      "headers": [{ "name": "Authorization", "value": "Bearer {{token}}" }],
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "200" }
+      ]
+    },
+    {
+      "_id": "tc-12", "colId": "nutriapp-blackbox-2026", "containerId": "f-foods",
+      "name": "TC-12 · Obtener alimento — ID inexistente",
+      "method": "GET", "url": "{{baseUrl}}/api/foods/id-falso-999", "sortNum": 12,
+      "headers": [{ "name": "Authorization", "value": "Bearer {{token}}" }],
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "404" }
+      ]
+    },
+    {
+      "_id": "tc-13", "colId": "nutriapp-blackbox-2026", "containerId": "f-ai-val",
+      "name": "TC-13 · Chat — mensaje vacío",
+      "method": "POST", "url": "{{baseUrl}}/api/ai/chat", "sortNum": 13,
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" },
+        { "name": "Content-Type",  "value": "application/json" }
+      ],
+      "body": { "type": "json", "raw": "{\"message\":\"\"}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "400" },
+        { "type": "res-body", "action": "contains", "value": "requerido" }
+      ]
+    },
+    {
+      "_id": "tc-14", "colId": "nutriapp-blackbox-2026", "containerId": "f-ai-val",
+      "name": "TC-14 · Chat — sin campo message",
+      "method": "POST", "url": "{{baseUrl}}/api/ai/chat", "sortNum": 14,
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" },
+        { "name": "Content-Type",  "value": "application/json" }
+      ],
+      "body": { "type": "json", "raw": "{}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "400" }
+      ]
+    },
+    {
+      "_id": "tc-15", "colId": "nutriapp-blackbox-2026", "containerId": "f-ai-val",
+      "name": "TC-15 · Recomendación — campos del paciente faltantes",
+      "method": "POST", "url": "{{baseUrl}}/api/ai/recommendation", "sortNum": 15,
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" },
+        { "name": "Content-Type",  "value": "application/json" }
+      ],
+      "body": { "type": "json", "raw": "{\"name\":\"Ana\"}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "400" }
+      ]
+    },
+    {
+      "_id": "tc-16", "colId": "nutriapp-blackbox-2026", "containerId": "f-ai-val",
+      "name": "TC-16 · Análisis de alimento — sin campos requeridos",
+      "method": "POST", "url": "{{baseUrl}}/api/ai/analyze-food", "sortNum": 16,
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" },
+        { "name": "Content-Type",  "value": "application/json" }
+      ],
+      "body": { "type": "json", "raw": "{}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "400" }
+      ]
+    },
+    {
+      "_id": "tc-17", "colId": "nutriapp-blackbox-2026", "containerId": "f-ai-val",
+      "name": "TC-17 · Plan alimenticio — sin calorías objetivo",
+      "method": "POST", "url": "{{baseUrl}}/api/ai/meal-plan", "sortNum": 17,
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" },
+        { "name": "Content-Type",  "value": "application/json" }
+      ],
+      "body": { "type": "json", "raw": "{\"meals\":3}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "400" }
+      ]
+    },
+    {
+      "_id": "tc-18", "colId": "nutriapp-blackbox-2026", "containerId": "f-ai-val",
+      "name": "TC-18 · Historial de chat global",
+      "method": "GET", "url": "{{baseUrl}}/api/ai/chat-history/global", "sortNum": 18,
+      "headers": [{ "name": "Authorization", "value": "Bearer {{token}}" }],
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "200" },
+        { "type": "res-body", "action": "type", "value": "array" }
+      ]
+    },
+    {
+      "_id": "tc-19", "colId": "nutriapp-blackbox-2026", "containerId": "f-ai-llm",
+      "name": "TC-19 · Chat — cálculo GET nutricional",
+      "method": "POST", "url": "{{baseUrl}}/api/ai/chat", "sortNum": 19,
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" },
+        { "name": "Content-Type",  "value": "application/json" }
+      ],
+      "body": { "type": "json", "raw": "{\"message\":\"Calcula el GET para mujer de 30 años, 60 kg, 1.60 m, actividad moderada\"}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "200" },
+        { "type": "res-body", "action": "contains", "value": "kcal" }
+      ]
+    },
+    {
+      "_id": "tc-20", "colId": "nutriapp-blackbox-2026", "containerId": "f-ai-llm",
+      "name": "TC-20 · Chat — rechazo fuera de dominio (Python)",
+      "method": "POST", "url": "{{baseUrl}}/api/ai/chat", "sortNum": 20,
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" },
+        { "name": "Content-Type",  "value": "application/json" }
+      ],
+      "body": { "type": "json", "raw": "{\"message\":\"Escríbeme un script de Python para ordenar una lista\"}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "200" },
+        { "type": "res-body", "action": "contains", "value": "Solo puedo asistirte" }
+      ]
+    },
+    {
+      "_id": "tc-21", "colId": "nutriapp-blackbox-2026", "containerId": "f-ai-llm",
+      "name": "TC-21 · Recomendación nutricional completa con SMAE",
+      "method": "POST", "url": "{{baseUrl}}/api/ai/recommendation", "sortNum": 21,
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" },
+        { "name": "Content-Type",  "value": "application/json" }
+      ],
+      "body": { "type": "json", "raw": "{\"name\":\"Ana López\",\"age\":35,\"gender\":\"F\",\"weight\":65,\"height\":162,\"objective\":\"Pérdida de peso\"}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "200" },
+        { "type": "res-body", "action": "contains", "value": "SMAE" }
+      ]
+    },
+    {
+      "_id": "tc-22", "colId": "nutriapp-blackbox-2026", "containerId": "f-ai-llm",
+      "name": "TC-22 · Análisis de alimento SMAE — Tortilla de maíz",
+      "method": "POST", "url": "{{baseUrl}}/api/ai/analyze-food", "sortNum": 22,
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" },
+        { "name": "Content-Type",  "value": "application/json" }
+      ],
+      "body": { "type": "json", "raw": "{\"foodName\":\"Tortilla de maíz\",\"quantity\":60}" },
+      "tests": [
+        { "type": "res-status", "action": "equal", "value": "200" },
+        { "type": "res-body", "action": "contains", "value": "kcal" }
+      ]
+    }
+  ]
+}

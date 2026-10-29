@@ -1,0 +1,114 @@
+% ============================================================
+\subsubsection{Desarrollo de la interfaz del sistema}
+% ============================================================
+
+\paragraph{Tecnologías}
+
+Las Tablas~\ref{tab:tec_back} y~\ref{tab:tec_front} presentan las tecnologías
+empleadas y sus versiones, tomadas de los archivos \texttt{package.json} del
+proyecto.
+
+\begin{table}[H]
+\centering\small
+\caption{Tecnologías y librerías principales del backend}\label{tab:tec_back}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Librería} & \textbf{Versión} & \textbf{Propósito} \\ \hline
+Node.js & \pendiente{v} & Entorno de ejecución \\ \hline
+TypeScript & \^{}5.4.5 & Tipado estático \\ \hline
+Express & \^{}4.22.2 & API REST \\ \hline
+Prisma (\texttt{@prisma/client}) & \^{}5.14.0 & ORM sobre PostgreSQL \\ \hline
+PostgreSQL & \pendiente{v} & Base de datos relacional \\ \hline
+openai (SDK, apuntando a Groq) & \^{}6.37.0 & Cliente de la API de inferencia \\ \hline
+pdf-parse & \^{}2.4.5 & Extracción de texto de PDF \\ \hline
+multer & \^{}2.2.0 & Recepción de archivos \\ \hline
+jsonwebtoken & \^{}9.0.2 & Tokens de sesión JWT \\ \hline
+bcryptjs & \^{}2.4.3 & Cifrado de contraseñas \\ \hline
+helmet & \^{}8.2.0 & Cabeceras de seguridad HTTP \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\caption{Tecnologías y librerías principales del frontend}\label{tab:tec_front}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Librería} & \textbf{Versión} & \textbf{Propósito} \\ \hline
+React & \^{}18.3.1 & Construcción de la interfaz \\ \hline
+Vite & \^{}5.3.1 & Empaquetado y servidor de desarrollo \\ \hline
+TailwindCSS & \^{}3.4.4 & Estilos \\ \hline
+axios & \^{}1.7.2 & Consumo de la API REST \\ \hline
+react-markdown + remark-gfm & \^{}10.1.0 / \^{}4.0.1 & Renderizado de respuestas del asistente con tablas \\ \hline
+lucide-react & \^{}1.48.0 & Iconografía \\ \hline
+\end{tabular}
+\end{table}
+
+\paragraph{Estructura del proyecto}
+
+El backend sigue una organización por capas: \texttt{routes} define los
+endpoints, \texttt{controllers} contiene la lógica de cada recurso,
+\texttt{services} encapsula la integración con el modelo de lenguaje,
+\texttt{middleware} gestiona autenticación y errores, y \texttt{prisma} contiene
+el esquema, las migraciones y la carga inicial del catálogo
+(Figura~\ref{fig:estructura_back}). El frontend organiza sus componentes por
+módulo funcional en \texttt{components/features} (pacientes, historia clínica,
+antropometría, biometría, hábitos dietéticos, alimentos, menús, progreso y
+administración) (Figura~\ref{fig:estructura_front}).
+
+\figura[0.4\linewidth]{estructura_backend.png}{Estructura del backend}{fig:estructura_back}
+\figura[0.4\linewidth]{estructura_frontend.png}{Estructura del frontend}{fig:estructura_front}
+
+\paragraph{Modelo de base de datos}
+
+El esquema de Prisma define diez entidades: \texttt{User}, \texttt{Patient},
+\texttt{ClinicalHistory}, \texttt{Biometrics}, \texttt{Anthropometry},
+\texttt{DietaryHabits}, \texttt{ChatMessage}, \texttt{Food},
+\texttt{WeeklyMenu} y \texttt{WeeklyMenuItem} (Figura~\ref{fig:er}).
+
+\figura{diagrama_er.png}{Modelo entidad-relación de la base de datos}{fig:er}
+
+\paragraph{Trazabilidad de requisitos en la implementación}
+
+La Tabla~\ref{tab:traza_impl} relaciona cada requisito funcional con el
+componente que lo implementa.
+
+\begin{table}[H]
+\centering\footnotesize
+\caption{Requisitos funcionales y componente que los implementa}\label{tab:traza_impl}
+\begin{tabularx}{\linewidth}{|l|X|X|}
+\hline
+\textbf{RF} & \textbf{Endpoint} & \textbf{Componente de interfaz} \\ \hline
+RF01 & \texttt{POST/PUT /api/patients} & \texttt{features/patients} \\ \hline
+RF02 & \texttt{PUT /api/patients/:id/clinical-history} & \texttt{features/clinical} \\ \hline
+RF03 & \texttt{POST /api/patients/:id/anthropometry} & \texttt{features/anthropometry} \\ \hline
+RF04 & --- (cálculo en cliente) & \texttt{utils/nutritionCalculations.ts} \\ \hline
+RF05 & \texttt{POST /api/patients/:id/biometrics} & \texttt{features/biometrics} \\ \hline
+RF06 & \texttt{POST /api/patients/:id/dietary-habits} & \texttt{features/dietary} \\ \hline
+RF07 & --- (cálculo en cliente) & \texttt{NutritionistPanel.tsx} \\ \hline
+RF08 & --- (cálculo en cliente) & \pendiente{componente del gráfico de dona} \\ \hline
+RF09 & \texttt{POST /api/ai/chat} (con \texttt{patientId}) & \texttt{NutritionistPanel.tsx} \\ \hline
+RF10 & \texttt{POST /api/ai/chat} (global) & \texttt{NutritionistPanel.tsx} \\ \hline
+RF11 & \texttt{POST /api/ai/chat-upload} & \texttt{NutritionistPanel.tsx} \\ \hline
+RF12 & \texttt{GET/POST/PUT/DELETE /api/foods} & \texttt{features/foods} \\ \hline
+\end{tabularx}
+\end{table}
+
+\paragraph{Interfaz del sistema}
+
+Las Figuras~\ref{fig:ui_login} a~\ref{fig:ui_pdf} muestran los módulos
+principales del prototipo en funcionamiento.
+
+\figura{im02_login.png}{Pantalla de inicio de sesión}{fig:ui_login}
+\figura{im01_dashboard.png}{Panel principal del nutricionista}{fig:ui_dashboard}
+\figura{im03_pacientes.png}{Listado de pacientes}{fig:ui_pacientes}
+\figura{im04_registro_paciente.png}{Registro de paciente}{fig:ui_registro}
+\figura{im05_antropometria.png}{Registro de medidas antropométricas con cálculo de IMC e ICC}{fig:ui_antropo}
+\figura{im06_biometria.png}{Registro de datos biométricos}{fig:ui_bio}
+\figura{im07_chat_ia.png}{Asistente de IA con contexto del paciente}{fig:ui_chat}
+\figura{im08_chat_pdf.png}{Consulta al asistente con un documento PDF}{fig:ui_pdf}
+
+\pendiente{añade capturas del cálculo de GET, del gráfico de macronutrientes
+(RF07, RF08) y del catálogo de alimentos (RF12) si existen en la interfaz}
+
+El código fuente se encuentra en el repositorio
+\pendiente{URL del repositorio de GitHub}.

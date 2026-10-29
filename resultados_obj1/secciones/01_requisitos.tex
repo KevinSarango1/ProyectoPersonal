@@ -1,0 +1,99 @@
+% ============================================================
+\subsubsection{Planificación de requisitos}
+% ============================================================
+
+\paragraph{Requisitos funcionales y no funcionales}
+
+Los requisitos se obtuvieron a partir del levantamiento de información con el
+actor principal del sistema, el nutricionista.
+\pendiente{indica cómo se levantaron: reunión/entrevista con quién, fecha y si
+fueron validados por el director o un nutricionista}.
+La Tabla~\ref{tab:rf} presenta los doce requisitos funcionales y la
+Tabla~\ref{tab:rnf} los siete requisitos no funcionales.
+
+{\small
+\begin{longtable}{|p{1.3cm}|p{12.2cm}|}
+\caption{Requisitos funcionales del prototipo NutriAPP}\label{tab:rf}\\
+\hline
+\textbf{Código} & \textbf{Descripción} \\ \hline
+\endfirsthead
+\hline
+\textbf{Código} & \textbf{Descripción} \\ \hline
+\endhead
+RF01 & El sistema debe permitir al nutricionista registrar un nuevo paciente con sus datos personales básicos (nombre, apellido, correo electrónico, teléfono, fecha de nacimiento y sexo). \\ \hline
+RF02 & El sistema debe permitir al nutricionista registrar y actualizar el historial clínico del paciente, incluyendo antecedentes médicos, quirúrgicos y familiares, motivo de consulta, medicamentos, alergias e intolerancias alimentarias. \\ \hline
+RF03 & El sistema debe permitir al nutricionista registrar medidas antropométricas del paciente: peso, talla, circunferencia de cintura y cadera, porcentaje de grasa corporal y masa muscular. \\ \hline
+RF04 & El sistema debe calcular automáticamente el Índice de Masa Corporal (IMC) y la relación cintura-cadera, mostrando los resultados al nutricionista para su análisis clínico. \\ \hline
+RF05 & El sistema debe permitir al nutricionista registrar datos biométricos del paciente: glucosa, HbA1c, colesterol total, triglicéridos, HDL, LDL, presión arterial y hemoglobina. \\ \hline
+RF06 & El sistema debe permitir al nutricionista registrar los hábitos dietéticos del paciente, incluyendo frecuencia de comidas, consumo de agua, preferencias y restricciones alimentarias. \\ \hline
+RF07 & El sistema debe calcular y proporcionar al nutricionista el Gasto Energético Total (GET) del paciente mediante la fórmula de Harris-Benedict, considerando sexo, peso, talla, edad y factor de actividad física seleccionado. \\ \hline
+RF08 & El sistema debe calcular y proporcionar al nutricionista la distribución de macronutrientes diarios (proteínas, carbohidratos y grasas) en gramos y porcentajes, visualizando los resultados mediante un gráfico de dona interactivo. \\ \hline
+RF09 & El sistema debe permitir al nutricionista interactuar con un asistente de inteligencia artificial mediante un chat individual por paciente, utilizando los datos clínicos, antropométricos y biométricos del paciente seleccionado como contexto. \\ \hline
+RF10 & El sistema debe permitir al nutricionista consultar un chat global con el asistente de inteligencia artificial, el cual tiene acceso al contexto clínico de todos los pacientes registrados en el sistema. \\ \hline
+RF11 & El sistema debe permitir al nutricionista cargar documentos PDF como base de conocimiento del asistente de inteligencia artificial, mediante un pipeline de generación aumentada por recuperación (RAG). \\ \hline
+RF12 & El sistema debe permitir al nutricionista gestionar el catálogo de alimentos ecuatorianos almacenado en la base de datos, incluyendo nombre, grupo alimentario y composición nutricional por cada 100 gramos. \\ \hline
+\end{longtable}
+}
+
+{\small
+\begin{longtable}{|p{1.5cm}|p{2.6cm}|p{9.4cm}|}
+\caption{Requisitos no funcionales del prototipo NutriAPP}\label{tab:rnf}\\
+\hline
+\textbf{Código} & \textbf{Categoría} & \textbf{Descripción} \\ \hline
+\endfirsthead
+\hline
+\textbf{Código} & \textbf{Categoría} & \textbf{Descripción} \\ \hline
+\endhead
+RNF01 & Rendimiento & El sistema debe procesar y responder las consultas al asistente de inteligencia artificial en un tiempo máximo de 10 segundos bajo condiciones normales de conectividad. \\ \hline
+RNF02 & Seguridad & El sistema debe garantizar la protección de las credenciales del nutricionista mediante cifrado de contraseñas con bcrypt y gestión de sesiones mediante tokens JWT en cabeceras HTTP. \\ \hline
+RNF03 & Precisión & El margen de error en los cálculos automáticos de indicadores corporales (IMC, relación cintura-cadera) y gasto energético (Harris-Benedict) no debe exceder el 1\,\% respecto a los valores de referencia establecidos por las fórmulas oficiales. \\ \hline
+RNF04 & Usabilidad & El sistema debe ofrecer una interfaz web clara e intuitiva, accesible desde navegadores modernos (Chrome, Firefox, Edge), sin necesidad de instalación adicional por parte del nutricionista. \\ \hline
+RNF05 & Portabilidad & El sistema debe poder ejecutarse en un entorno de desarrollo local sin dependencia de infraestructura en la nube, utilizando únicamente la API de Groq para la inferencia del modelo de lenguaje durante la fase de prototipado. \\ \hline
+RNF06 & Privacidad & Los datos clínicos procesados por el sistema corresponden a perfiles de prueba construidos con fines experimentales; en una implementación productiva, el sistema deberá cumplir con la Ley Orgánica de Protección de Datos Personales, garantizando el consentimiento explícito y el cifrado de la información del paciente. \\ \hline
+RNF07 & Mantenibilidad & El código fuente del sistema debe estar versionado en GitHub con ramas \texttt{main} y \texttt{develop}, garantizando la trazabilidad del desarrollo y facilitando futuras actualizaciones. \\ \hline
+\end{longtable}
+}
+
+\paragraph{Actores}
+
+Se identificó un único actor humano, descrito en la Tabla~\ref{tab:actores}.
+La API de Groq interviene como sistema externo de inferencia, no como actor
+que inicie casos de uso.
+
+\begin{table}[H]
+\centering\small
+\caption{Actores identificados}\label{tab:actores}
+\begin{tabularx}{\linewidth}{|p{2.6cm}|X|}
+\hline
+\textbf{Actor} & \textbf{Descripción} \\ \hline
+Nutricionista & Profesional de la salud que utiliza el sistema para registrar y gestionar los datos clínicos, antropométricos y biométricos de sus pacientes, consultar el asistente de inteligencia artificial y visualizar recomendaciones de planes nutricionales personalizados. \\ \hline
+\end{tabularx}
+\end{table}
+
+\paragraph{Modelo conceptual}
+
+A partir de los requisitos funcionales se elaboró el modelo conceptual de la
+Figura~\ref{fig:conceptual}, que identifica las entidades principales del
+dominio y sus relaciones. La Tabla~\ref{tab:glosario} define cada término.
+
+\figura{modelo_conceptual.png}{Modelo conceptual de NutriAPP}{fig:conceptual}
+
+\begin{table}[H]
+\centering\small
+\caption{Glosario de términos del modelo conceptual}\label{tab:glosario}
+\begin{tabularx}{\linewidth}{|p{3.8cm}|X|}
+\hline
+\textbf{Término} & \textbf{Definición} \\ \hline
+Nutricionista & Usuario autenticado que registra pacientes, valida planes y conversa con el asistente de IA. \\ \hline
+Paciente & Persona atendida por el nutricionista; no posee credenciales de acceso al sistema. \\ \hline
+HistorialClinico & Antecedentes médicos, quirúrgicos y familiares, motivo de consulta, medicación, alergias e intolerancias. \\ \hline
+MedidasAntropometricas & Registro fechado de peso, talla, circunferencias, \% de grasa y masa muscular. \\ \hline
+DatosBiometricos & Registro fechado de valores bioquímicos (glucosa, HbA1c, perfil lipídico, hemoglobina) y presión arterial. \\ \hline
+HabitosDieteticos & Frecuencia de comidas, consumo de agua, preferencias y restricciones alimentarias. \\ \hline
+SessionChat & Conversación del nutricionista con el asistente, individual por paciente o global. \\ \hline
+MensajeChat & Mensaje del nutricionista o respuesta del asistente dentro de una sesión. \\ \hline
+DocumentoConocimiento & Archivo PDF cargado por el nutricionista como contexto adicional del asistente. \\ \hline
+PlanNutricional & Recomendación generada por el asistente y validada por el nutricionista. \\ \hline
+Alimento & Elemento del catálogo con su grupo de equivalentes y composición nutricional. \\ \hline
+\end{tabularx}
+\end{table}

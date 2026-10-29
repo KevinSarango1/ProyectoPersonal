@@ -1,0 +1,82 @@
+% ============================================================
+\subsubsection{Identificación del catálogo de alimentos ecuatoriano}
+% ============================================================
+
+\paragraph{Fuentes de referencia}
+
+Para construir un catálogo de alimentos adaptado al contexto ecuatoriano se
+emplearon tres fuentes con funciones distintas (Tabla~\ref{tab:fuentes}).
+
+\begin{table}[H]
+\centering\small
+\caption{Fuentes utilizadas para el catálogo de alimentos}\label{tab:fuentes}
+\begin{tabularx}{\linewidth}{|p{4.2cm}|X|}
+\hline
+\textbf{Fuente} & \textbf{Uso en el catálogo} \\ \hline
+ENSANUT~\cite{msp_ensanut} & Contexto epidemiológico de la malnutrición en Ecuador e identificación de alimentos representativos del consumo nacional. \\ \hline
+Tabla de Composición de Alimentos, Cuenca~\cite{ortiz2018tabla} & Valores nutricionales por cada 100\,g de alimentos de producción local y preparaciones de la región andina sur (129 alimentos analizados entre 2011 y 2017). \\ \hline
+SMAE, 4.ª ed.~\cite{perez2014smae} & Criterio de agrupación por equivalentes y porción sugerida, que permite intercambiar alimentos de un mismo grupo sin alterar de forma importante la energía y los macronutrientes del plan. \\ \hline
+\end{tabularx}
+\end{table}
+
+La Tabla de Cuenca aporta la composición de los alimentos locales y el SMAE
+aporta la estructura de grupos y porciones sobre la que el asistente arma las
+recomendaciones (Figuras~\ref{fig:tabla_cuenca} y~\ref{fig:smae_frutas}).
+
+\figura{tabla_cuenca_cereales.png}{Fragmento de la Tabla de Composición de Alimentos de Cuenca, grupo Cereales y derivados~\cite{ortiz2018tabla}}{fig:tabla_cuenca}
+\figura{smae_frutas.png}{Fragmento del grupo Frutas del SMAE~\cite{perez2014smae}}{fig:smae_frutas}
+
+\paragraph{Procesamiento e incorporación al sistema}
+
+El contenido del SMAE se extrajo del documento fuente mediante scripts de
+conversión y se generó un archivo de carga inicial
+(\texttt{backend/prisma/smae\_seed\_data.ts}) con 2392 alimentos. Cada registro
+se almacena en la tabla \texttt{foods} con los campos de la
+Tabla~\ref{tab:campos_food}; el campo \texttt{source} distingue los alimentos
+cargados del SMAE de los registrados manualmente por el nutricionista (RF12).
+
+\pendiente{describe cómo se adaptaron los alimentos locales: cuántos alimentos
+de la Tabla de Cuenca se añadieron o sustituyeron, con qué criterio, y si se
+marcaron con otro valor en \texttt{source}. Hoy la carga inicial sólo contiene
+registros SMAE}.
+
+\begin{table}[H]
+\centering\small
+\caption{Estructura de un alimento en el catálogo}\label{tab:campos_food}
+\begin{tabularx}{\linewidth}{|p{3.6cm}|X|}
+\hline
+\textbf{Campo} & \textbf{Descripción} \\ \hline
+\texttt{name}, \texttt{description} & Nombre y descripción del alimento. \\ \hline
+\texttt{grupoSmae}, \texttt{subgrupoSmae} & Grupo y subgrupo de equivalentes (p.\,ej. AOA / muy bajo aporte de grasa). \\ \hline
+\texttt{porcionSugerida}, \texttt{unidadPorcion} & Cantidad de un equivalente y su unidad (taza, pieza, g). \\ \hline
+\texttt{grossWeight}, \texttt{netWeight} & Peso bruto y neto de la porción (g). \\ \hline
+\texttt{energyKcal}, \texttt{energyKj} & Energía de la porción. \\ \hline
+\texttt{protein}, \texttt{fats}, \texttt{carbohydrates}, \texttt{fiber} & Macronutrientes y fibra (g). \\ \hline
+\texttt{indiceGlucemico}, \texttt{cargaGlucemica} & Índice y carga glucémica, cuando la fuente los reporta. \\ \hline
+\texttt{source} & Origen del registro (\texttt{SMAE} o manual). \\ \hline
+\end{tabularx}
+\end{table}
+
+\paragraph{Distribución del catálogo}
+
+La Tabla~\ref{tab:grupos} resume el número de alimentos por grupo de
+equivalentes.
+
+\begin{table}[H]
+\centering\small
+\caption{Alimentos del catálogo por grupo de equivalentes}\label{tab:grupos}
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Grupo} & \textbf{N.º de alimentos} \\ \hline
+Verduras & \pendiente{n} \\ \hline
+Frutas & \pendiente{n} \\ \hline
+Cereales y tubérculos & \pendiente{n} \\ \hline
+Leguminosas & \pendiente{n} \\ \hline
+Alimentos de origen animal (AOA) & \pendiente{n} \\ \hline
+Leche & \pendiente{n} \\ \hline
+Aceites y grasas & \pendiente{n} \\ \hline
+Azúcares & \pendiente{n} \\ \hline
+Alimentos libres en energía & \pendiente{n} \\ \hline
+\textbf{Total} & \textbf{\pendiente{n}} \\ \hline
+\end{tabular}
+\end{table}
