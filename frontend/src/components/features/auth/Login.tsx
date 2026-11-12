@@ -151,9 +151,6 @@ const Login: React.FC = () => {
             </button>
           </form>
 
-          <p className="text-slate-400 text-xs text-center mt-10">
-            NutriApp — v1.0
-          </p>
         </div>
       </div>
     </div>

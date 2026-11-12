@@ -214,7 +214,7 @@ export const BiometricsForm: React.FC<BiometricsFormProps> = ({ onSubmit, initia
         </div>
         <div className="p-4">
           <input type="date" name="testDate" value={formData.testDate} onChange={handleChange}
-            min={TODAY} max={TODAY} required className={inp('testDate')} />
+            max={TODAY} required className={inp('testDate')} />
           {fieldErrors.testDate && errMsg}
         </div>
       </div>
